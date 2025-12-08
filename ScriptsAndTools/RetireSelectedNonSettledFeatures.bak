@@ -1,0 +1,168 @@
+from Utils.Configs import CNFG
+from Utils.Helpers import get_RecordGUID, start_editing, stop_editing, timestamp, reopen_map,get_layer
+from Utils.ValidationsNewCadaster import layer_exists
+from arcpy.mp import ArcGISProject
+from arcpy import AddMessage, AddError, GetParameterAsText
+from arcpy.da import SearchCursor, UpdateCursor
+from arcpy.management import SelectLayerByAttribute, SelectLayerByLocation, Dissolve, GetCount, CalculateField
+
+
+def get_number_of_selections(LayerName:str) -> int:
+    """
+    Get the number of selections in a layer.
+
+    Parameters:
+    LayerName (str): The name of the layer.
+
+    Returns:
+    int: The number of selections in the layer.
+    """
+
+    layer = get_layer(LayerName)
+    selection_set = layer.getSelectionSet()
+
+    if selection_set:
+        return len(selection_set)
+    else:
+        return 0
+
+
+
+def RetireSelectedFeatures(ProcessName:str) -> None:
+    """
+    Retires selected non-settled features and its related fronts and points, the RetiredByProcess field is set to the record with the name ProcessName
+    Parameters:
+    ProcessName (str): The name of the retiring record.
+
+    Returns:
+    None
+    """
+    
+
+    Record_GUID = get_RecordGUID(ProcessName,'MAP')
+    
+    Block_GlobalIDs = [] 
+    if layer_exists('גושים לא מוסדרים'):
+        non_settled_blocks_selections = get_number_of_selections('גושים לא מוסדרים')
+        if non_settled_blocks_selections > 0:
+            Non_Settled_Blocks_layer = get_layer('גושים לא מוסדרים')
+            
+            editor = start_editing(CNFG.ParcelFabricDatabase)
+            with UpdateCursor(Non_Settled_Blocks_layer, ["GlobalID", "RetiredByRecord"]) as cursor:
+                for row in cursor:
+                    Block_GlobalIDs.append(row[0])
+                    row[1] = Record_GUID
+                    cursor.updateRow(row)
+            stop_editing(editor)
+            
+            AddMessage(f'{timestamp()} | ✴️ {non_settled_blocks_selections} non-settled blocks were retired by the process {ProcessName}') 
+        else:
+            AddMessage(f'{timestamp()} | ✴️ No non-settled blocks selected for retirenment') 
+    else:
+        AddMessage(f'{timestamp()} | ✴️ No non-settled blocks layer exists') 
+
+    Parcel_GlobalIDs = [] 
+    if layer_exists('חלקות לא מוסדרות'):
+        Non_Settled_Parcels_layer = get_layer('חלקות לא מוסדרות') 
+
+        if Block_GlobalIDs:
+            if len(Block_GlobalIDs) == 1:
+                query = f"""BlockUniqueID = '{Block_GlobalIDs[0]}'"""
+            else:
+                query = f"BlockUniqueID IN {tuple(Block_GlobalIDs)}"
+            Non_Settled_Parcels_layer = SelectLayerByAttribute(Non_Settled_Parcels_layer, selection_type="ADD_TO_SELECTION", where_clause=query)
+        non_settled_parcels_selections = get_number_of_selections('חלקות לא מוסדרות')
+        if non_settled_parcels_selections > 0:
+
+            editor = start_editing(CNFG.ParcelFabricDatabase)
+            with UpdateCursor(Non_Settled_Parcels_layer, ["GlobalID","RetiredByRecord","CancelProcessType"]) as cursor:
+                for row in cursor:
+                    Parcel_GlobalIDs.append(row[0])
+                    row[1] = Record_GUID
+                    row[2] = 5
+                    cursor.updateRow(row)
+            stop_editing(editor)
+            AddMessage(f'{timestamp()} | ✴️ {non_settled_parcels_selections} non-settled parcels were retired by the process {ProcessName}') 
+        else:
+            AddMessage(f'{timestamp()} | ✴️ No non-settled parcels selected for retirenment') 
+    else:
+        AddMessage(f'{timestamp()} | ✴️ No non-settled parcels layer exists') 
+
+    if Parcel_GlobalIDs:
+            if len(Parcel_GlobalIDs) > 1:
+                query = f"GlobalID IN {tuple(Parcel_GlobalIDs)}"
+                
+                All_Parcels_layer = get_layer('חלקות מבוטלות')
+                Retired_Parcels_layer = SelectLayerByAttribute(All_Parcels_layer, selection_type="NEW_SELECTION", where_clause=query)
+                
+
+                Dissolved_parcels = Dissolve(in_features=Retired_Parcels_layer,dissolve_field=None,statistics_fields=None,multi_part="MULTI_PART",unsplit_lines="DISSOLVE_LINES",concatenation_separator="")
+
+
+                Fronts = get_layer('חזיתות')
+                BorderPoints = get_layer('נקודות גבול')
+               
+                Fronts_for_retirement = SelectLayerByLocation(in_layer=Fronts,overlap_type="WITHIN",select_features=Dissolved_parcels,
+                                        search_distance=None,selection_type="NEW_SELECTION",invert_spatial_relationship="NOT_INVERT")
+                
+                
+                Fronts_for_retirement = SelectLayerByLocation(in_layer=Fronts_for_retirement,overlap_type="SHARE_A_LINE_SEGMENT_WITH",select_features=Dissolved_parcels,
+                                        search_distance=None,selection_type="REMOVE_FROM_SELECTION",invert_spatial_relationship="NOT_INVERT")
+                
+                
+                
+                Fronts_for_retirement = SelectLayerByAttribute(in_layer_or_view=Fronts_for_retirement,selection_type="REMOVE_FROM_SELECTION",
+                                        where_clause=f"CreatedByRecord = '{Record_GUID}'",invert_where_clause=None)
+                
+                
+
+                Points_for_retirement = SelectLayerByLocation(in_layer=BorderPoints,overlap_type="COMPLETELY_WITHIN",select_features=Dissolved_parcels,
+                                        search_distance=None,selection_type="NEW_SELECTION",invert_spatial_relationship="NOT_INVERT")
+                
+                
+                
+                Points_for_retirement = SelectLayerByAttribute(in_layer_or_view=BorderPoints,selection_type="REMOVE_FROM_SELECTION",
+                                        where_clause=f"CreatedByRecord = '{Record_GUID}'",invert_where_clause=None)
+                
+                
+                
+
+                count = int(GetCount(Fronts_for_retirement)[0])
+
+                CalculateField(
+                    in_table=Fronts_for_retirement,
+                    field="RetiredByRecord",
+                    expression=f"'{Record_GUID}'",
+                    expression_type="SQL",
+                    code_block="",
+                    field_type="TEXT",
+                    enforce_domains="NO_ENFORCE_DOMAINS"
+                )
+
+                
+                AddMessage(f'{timestamp()} | ✴️ {count} fronts were retired by the process {ProcessName}')
+                
+
+                count = int(GetCount(Points_for_retirement)[0])
+                CalculateField(
+                    in_table=Points_for_retirement,
+                    field="RetiredByRecord",
+                    expression=f"'{Record_GUID}'",
+                    expression_type="SQL",
+                    code_block="",
+                    field_type="TEXT",
+                    enforce_domains="NO_ENFORCE_DOMAINS"
+                )
+                AddMessage(f'{timestamp()} | ✴️ {count} points were retired by the process {ProcessName}')
+
+                
+                
+
+                del [Dissolved_parcels]      
+    
+    
+if __name__ == "__main__":
+
+    ProcessName = GetParameterAsText(0)
+    RetireSelectedFeatures(ProcessName)
+    reopen_map()

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Updated Title -->
+    <title>National Cadaster Tasks</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the cartography/hi-tech theme */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Dark background with only the Base Grid */
+            background-color: #0d1117; /* GitHub Dark Theme Background */
+            color: #c9d1d9; /* Light text for dark background */
+
+            /* Layer 1: Subtle, Dark Grid Pattern (Vertical and Horizontal lines) */
+            background-image: 
+                linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%),
+                linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%);
+            
+            /* Sizing and repeating for Layer 1 only (two patterns) */
+            background-size: 50px 50px, 50px 50px;
+        }
+        .section-header {
+            border-bottom: 2px solid #238636; /* Accent color: bright green */
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            color: #58a6ff; /* Accent color: blue */
+            text-shadow: 0 0 5px rgba(88, 166, 255, 0.5);
+        }
+        /* Custom class for smooth transition height */
+        .collapse-content {
+            transition: all 0.3s ease-in-out;
+            max-height: 500px; /* Max height to allow transition */
+            overflow: hidden;
+        }
+        .collapse-content.hidden {
+            max-height: 0;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen p-4 sm:p-8">
+
+    <div class="max-w-4xl mx-auto space-y-12">
+
+        <!-- Header -->
+        <header class="text-center pt-8 pb-4">
+            <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-white mb-2">
+                National Cadaster Tasks
+            </h1>
+            <!-- Subtitle -->
+            <p class="text-xl text-[#58a6ff] font-light">
+                Wizardy Workflows for Land Parcel Management
+            </p>
+        </header>
+
+        <!-- DOWNLOAD SECTION -->
+        <section class="bg-gray-800/50 p-6 sm:p-10 rounded-xl shadow-2xl border-2 border-[#58a6ff]/50 backdrop-blur-sm flex flex-col items-center">
+            <h2 class="text-3xl font-bold mb-4 text-white section-header border-none">
+                Acquire the latest version
+            </h2>
+            <p class="text-center text-lg mb-6 text-gray-300">
+                Download the complete, versioned repository contents as a single compressed ZIP file.
+            </p>
+
+            <!-- IMPORTANT: REPLACE THIS LINK! -->
+            <!-- The URL format is: https://github.com/USER/REPO/archive/refs/heads/BRANCH.zip -->
+            <a id="downloadButton"
+               href= "https://github.com/Yoavtt/parcel_fabric_tasks/archive/refs/heads/ofir.zip"
+               target="_blank"
+               download
+               class="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold text-white bg-[#238636] rounded-lg shadow-lg hover:bg-[#2eaa47] transition duration-300 ease-in-out transform hover:scale-[1.03] active:scale-[0.98]
+                      ring-4 ring-[#238636]/50 hover:ring-[#238636] focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#58a6ff] focus:ring-offset-gray-900">
+                <!-- Inline SVG Icon for Download (Lucide: DownloadCloud) -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3">
+                    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 18v3M15 21H9"/>
+                    <path d="M12 11v10"/>
+                    <path d="m8 17 4 4 4-4"/>
+                </svg>
+                Download (ZIP)
+            </a>
+            <p class="mt-4 text-sm text-gray-500">
+                Current Version: v1.1.0
+            </p>
+        </section>
+
+        <!-- DESCRIPTION SECTION -->
+        <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
+            <h2 class="text-2xl section-header">
+                Project Description
+            </h2>
+            <div class="space-y-4 text-gray-400">
+                <p>
+                    This project focuses on designing and implementing standardized, wizard-based workflows within ArcGIS Tasks. These step-by-step processes will be used to manage and execute cadastral changes and modifications directly within the Israeli National Cadaster dataset, which is maintained using ESRI's Parcel Fabric technology. The goal is to ensure consistency and efficiency in data updates.
+                </p>
+            </div>
+        </section>
+
+        <!-- CHANGELOG SECTION -->
+        <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
+            <h2 class="text-2xl section-header">
+                Changelog
+            </h2>
+            <ul class="list-none space-y-4 text-gray-400">
+                
+                <!-- Version 1.1.0 (Open by default) -->
+                <li class="border-b border-gray-700 pb-2">
+                    <button onclick="toggleChangelog('v110')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
+                        <span class="font-semibold text-[#238636] text-lg mr-3">v1.1.0 (2025-12-05) - Minor release focusing on stability and performance.</span>
+                        <!-- Down/Up Arrow (Initially pointing up for open state) -->
+                        <svg id="arrow-v110" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                    </button>
+                    <!-- Content (Initially visible - no 'hidden' class) -->
+                    <div id="v110-content" class="pt-1 collapse-content">
+                        <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
+                            <li>Optimized data ingestion pipeline (30% faster processing).</li>
+                            <li>Updated configuration file schema to v2.0.</li>
+                            <li>Fixed critical bug in coordinate transformation module.</li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- Version 1.0.0 (Closed by default) -->
+                <li class="border-b border-gray-700 pb-2">
+                    <button onclick="toggleChangelog('v100')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
+                        <span class="font-semibold text-gray-500 text-lg mr-3">v1.0.0 (2025-11-18)</span>
+                        <!-- Down/Up Arrow (Initially pointing down for closed state) -->
+                        <svg id="arrow-v100" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                    </button>
+                    <!-- Content (Initially hidden) -->
+                    <div id="v100-content" class="pt-1 collapse-content hidden">
+                        <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
+                            <li>Added initial set of land classification models.</li>
+                            <li>Complete documentation for Python API.</li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- Version 0.9 Beta (Closed by default) -->
+                <li>
+                    <button onclick="toggleChangelog('v090')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
+                        <span class="font-semibold text-gray-500 text-lg mr-3">v0.9 Beta (2025-10-20).</span>
+                        <!-- Down/Up Arrow (Initially pointing down for closed state) -->
+                        <svg id="arrow-v090" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                    </button>
+                    <!-- Content (Initially hidden) -->
+                    <div id="v090-content" class="pt-1 collapse-content hidden">
+                        <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
+                            <li>First public beta release.</li>
+                        </ul>
+                    </div>
+                </li>
+
+            </ul>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center py-6 text-sm text-gray-500 border-t border-gray-800 mt-12">
+            Hosted securely on GitHub Pages. | Project data last updated 2025.
+        </footer>
+
+    </div>
+
+    <!-- JavaScript for Collapsible Changelog -->
+    <script>
+        /**
+         * Toggles the visibility of a changelog content section.
+         * @param {string} versionId - The ID prefix for the content div and arrow svg (e.g., 'v110').
+         */
+        function toggleChangelog(versionId) {
+            const content = document.getElementById(versionId + '-content');
+            const arrow = document.getElementById('arrow-' + versionId);
+
+            // Toggle the 'hidden' class on the content
+            content.classList.toggle('hidden');
+
+            // Toggle the arrow rotation for visual feedback
+            arrow.classList.toggle('rotate-180');
+        }
+    </script>
+</body>
+</html>

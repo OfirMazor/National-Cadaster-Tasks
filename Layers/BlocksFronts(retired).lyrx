@@ -1,0 +1,1471 @@
+{
+  "type" : "CIMLayerDocument",
+  "version" : "3.1.0",
+  "build" : 41833,
+  "layers" : [
+    "CIMPATH=map/historic_blocks_lines.json"
+  ],
+  "layerDefinitions" : [
+    {
+      "type" : "CIMFeatureLayer",
+      "name" : "חזיתות גושים מבוטלות",
+      "uRI" : "CIMPATH=map/historic_blocks_lines.json",
+      "sourceModifiedTime" : {
+        "type" : "TimeInstant",
+        "start" : 978307200000
+      },
+      "metadataURI" : "CIMPATH=Metadata/9a1c1e4cf2e8ab75d22f40b7c9a927c4.xml",
+      "useSourceMetadata" : false,
+      "description" : "Lines",
+      "layerElevation" : {
+        "type" : "CIMLayerElevationSurface"
+      },
+      "layer3DProperties" : {
+        "type" : "CIM3DLayerProperties",
+        "castShadows" : true,
+        "isLayerLit" : true,
+        "layerFaceCulling" : "None",
+        "maxDistance" : -1,
+        "minDistance" : -1,
+        "preloadTextureCutoffHigh" : 0,
+        "preloadTextureCutoffLow" : 0.25,
+        "textureCutoffHigh" : 0.25,
+        "textureCutoffLow" : 1,
+        "useCompressedTextures" : true,
+        "verticalExaggeration" : 1,
+        "exaggerationMode" : "ScaleZ",
+        "verticalUnit" : {
+          "uwkid" : 9001
+        },
+        "lighting" : "OneSideDataNormal",
+        "optimizeMarkerTransparency" : true
+      },
+      "layerType" : "Operational",
+      "showLegends" : true,
+      "visibility" : true,
+      "displayCacheType" : "Permanent",
+      "maxDisplayCacheAge" : 5,
+      "layerTemplate" : {
+        "type" : "CIMLayerTemplate",
+        "layerTemplateId" : "esriHistoricParcelLines"
+      },
+      "popupInfo" : {
+        "type" : "CIMPopupInfo",
+        "title" : "{expression/ParcelLines}",
+        "expressionInfos" : [
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "ParcelLines",
+            "expression" : "// Change the settings portion to configure direction format, rounding and abbreviations\n// This is an Arcade expression\n\n// SETTINGS\nvar ShowDistance = true;   //set as 'true' to show distance\nvar ShowDirection = true;  //set as 'true' to show direction\nvar DirectionType = 1; // 1 = Quadrant Bearing; 2 = North Azimuth; 3 = South Azimuth\nvar ShowRadius = true;     //set as 'true' to show radius\nvar ShowCurveParameter = true;    //set as 'true' to show a curve parameter\nvar ShowCOGOType = true;  //set as 'true' to show prefixes and postfixes defined below for each cogo line label\nvar COGOType_Entered = ['', ''] //Change prefix and postfix for Entered courses\nvar COGOType_Computed = ['±', '']  //Change prefix and postfix for Computed courses\nvar COGOType_FromGeom = ['<', '>'] //Change for prefix and postfix From Geometry courses. The &lt; is a special character to represent the left angle bracket\nvar CurveParameter = \"ArcLength\"; //set as 'ArcLength' or 'Chord' or 'Angle' for central angle. Case sensitive!\nvar ErrorString = \"COGO ERROR\";   //set to display invalid COGO combinations\nvar RadiusAbbr = 'R=';     //radius abbreviation\nvar Radius2Abbr = 'R2=';     //radius2 abbreviation for spiral curves\nvar ArclengthAbrr = 'L=';  //arclength abbreviation\nvar ChordAbbr = 'C=';      //chord abbreviation\nvar AngleAbbr = 'A=';      //central Angle abbreviation\nvar DistUnitRounding = 2;  //number of decimal places for distance units: distance, radius, arclength & chord\nvar NumberFormat = \"#,###.00\" //number format. In this example: thousands separator with padding of 2 zeros\n\n// VARIABLES\nvar cogo_direction = $feature.Direction;\nvar cogo_distance = $feature.Distance;\nvar cogo_radius = $feature.Radius;\nvar cogo_arclength = $feature.Arclength;\nvar cogo_radius2 = $feature.Radius2\nvar cogotype = $feature.COGOType\nvar binaryDictionary; //binary dictionary to check COGO combinations\nvar checksum = 0; //initialize checksum\nvar validValuesArray; //array of valid values for COGO combinations\nvar partialValuesArray; //array of partial values for COGO\nvar directionStr = \"\"; //direction string using for label\nvar distanceStr = \"\";  //distance string using for label\nvar radiusStr = \"\";    //radius string using for label\nvar radius2Str = \"\";    //radius2 string using for labeling spiral curves\nvar curveStr = \"\";     //curve parameter string using for label\nvar prefixPostfix = ['', '']  //Used for prefix and postfix of COGO Type\nvar angleRad; //curve angle in radians\nvar COGOValidity; //COGO combinations validity. can be valid, partial or invalid.\n\nif (IsEmpty(cogo_direction) && IsEmpty(cogo_distance) && IsEmpty(cogo_radius) && IsEmpty(cogo_radius2) && IsEmpty(cogo_arclength)){\n    return \"\"\n}\n\nfunction NorthAzimuth2Quadbearing(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'Quadrant', angleType: 'DMS', outputType: 'text', format: 'pd[°]mm[\\']ss[\"]b'})\n}\n\nfunction DMS_North(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'North', angleType: 'DMS', outputType: 'text', format: 'd[°]mm[\\']ss[\"]'})\n}\n\nfunction DMS_South(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'South', angleType: 'DMS', outputType: 'text', format: 'd[°]mm[\\']ss[\"]'})\n}\n\nfunction IsValidCOGO(cogo_direction, cogo_distance, cogo_radius, cogo_arclength, cogo_radius2) {\n    binaryDictionary= Dictionary('dir', 1, 'dist',2, 'rad',4, 'arc',8, 'rad2',16)\n    if (!IsEmpty(cogo_direction)) {checksum+=binaryDictionary.dir}\n    if (!IsEmpty(cogo_distance)) {checksum+=binaryDictionary.dist}\n    if (!IsEmpty(cogo_radius)) {checksum+=binaryDictionary.rad}\n    if (!IsEmpty(cogo_arclength)) {checksum+=binaryDictionary.arc}\n    if (!IsEmpty(cogo_radius2)) {checksum+=binaryDictionary.rad2}\n    \n    validValuesArray=[0,3,13,29]; //array of valid combinations: '0' for nothing, ... '13' for direction & radius & arclength ...\n    partialValuesArray=[1,2,4,5,8,9,12,16,17,20,21,24,25,27,28]; //array of partial combinations: '1' for only direction, '2' for only distance, '4' for only radius...\n    //Invalid Values = [6,7,10,11,14,15,18,19,22,23,26,30,31]\n\n    if (IndexOf(validValuesArray,checksum)>-1) { // a negative value is returned if checksum value is not in the a valid combination array\n        return \"valid\";\n    }\n    if (IndexOf(partialValuesArray,checksum)>-1){\n        return \"partial\";\n    }\n    return \"invalid\";\n}\n\nfunction COGOTypePrefixPostfix(cogotypeValue){\n    if (ShowCOGOType){\n        if (cogotypeValue == 1) { //Entered\n           return COGOType_Entered\n        }\n        else if(cogotypeValue == 2) { //From Geometry\n           return COGOType_FromGeom\n        }\n        else if(cogotypeValue == 3) { //Computed\n           return COGOType_Computed\n        }\n        else { //If not set or invalid value\n           return ['', '']\n        }\n    }\n    else{\n       return(['', ''])\n    }\n}\n\nCOGOValidity = IsValidCOGO(cogo_direction, cogo_distance, cogo_radius, cogo_arclength, cogo_radius2);\nif ( COGOValidity == \"invalid\") { //if invalid COGO return error string\n    return ErrorString;\n}\n\n\n// Direction string\nif (ShowDirection) {\n    if (IsEmpty(cogo_direction)==false) {\n        if (DirectionType == 1) {  //using quadrant bearing format\n            directionStr = NorthAzimuth2Quadbearing(cogo_direction);\n        }\n        else if (DirectionType == 2) {  //using north azimuth format\n            directionStr = DMS_North(cogo_direction);\n        }\n        else if (DirectionType == 3) { //using south azimuth format\n            directionStr = DMS_South(cogo_direction);\n        }\n    }\n}\n\n// Distance string\nif (ShowDistance) {\n    if (IsEmpty(cogo_distance)==false) {\n    distanceStr = text(round(cogo_distance,DistUnitRounding), NumberFormat);\n    }\n}\n\n//Radius String\nif (ShowRadius) {\n    if (!IsEmpty(cogo_radius)) { //it can be a curve or a spiral\n        if (IsEmpty(cogo_radius2)) { //if radius2 is empty this is a curve\n            radiusStr = RadiusAbbr + \" \" + text(round(cogo_radius, DistUnitRounding), NumberFormat);\n        }\n        else { // it is a spiral\n            radiusStr = RadiusAbbr + \" \" + text(round(cogo_radius, DistUnitRounding),NumberFormat);\n            radius2Str = Radius2Abbr + \" \" + text(round(cogo_radius2, DistUnitRounding),NumberFormat);\n            if (cogo_radius == 0) { //substitute to infinity sign\n                radiusStr = RadiusAbbr + \" \u221E \";\n            }\n            if (cogo_radius2 == 0) { //substitute to infinity sign\n                radius2Str = Radius2Abbr + \" \u221E \";\n            }\n        }\n\n    }\n}\n\n// Curve Parameter\nif (ShowCurveParameter) {\n        if (!IsEmpty(cogo_arclength)) {\n            if (CurveParameter == 'ArcLength') {\n                curveStr = text(round(cogo_arclength, DistUnitRounding), NumberFormat); //return Arc length\n            }\n            angleRad = cogo_arclength/(abs(cogo_radius)) //calculate angle in radians\n            if (CurveParameter == 'Angle') {\n                curveStr = DMS_North(angleRad * 180 / pi); // convert radian to degrees and show as DMS\n            }\n            if (CurveParameter == 'Chord') {\n                curveStr = text(round((2 * abs(cogo_radius) * Sin(angleRad/2)),DistUnitRounding), NumberFormat); //calculate chord length\n            }\n        }\n}\n\n//Determine type of curve displayed\nvar CurveTypePrefix = \"\"\nif (!IsEmpty(curveStr)){\n    if (CurveParameter == 'ArcLength'){\n        CurveTypePrefix = ArclengthAbrr\n    }\n    else if (CurveParameter == 'Angle'){\n        CurveTypePrefix = AngleAbbr\n    }\n    else if (CurveParameter == 'Chord'){\n        CurveTypePrefix = ChordAbbr\n    }\n}\n\nvar isStraightLine = IsEmpty(radiusStr) && IsEmpty(radius2Str) && IsEmpty(curveStr)\n\n//Get prefix and postfix if either distance or curve is not empty. NOTE If both aren't empty it's invalid COGO\nif (!IsEmpty(distanceStr) || !IsEmpty(curveStr)){\n    prefixPostfix = COGOTypePrefixPostfix(cogotype)\n}\n\n// Assemble label string\nif (isStraightLine){\n    if (!IsEmpty(directionStr) && !IsEmpty(distanceStr)){ //If Direction and Distance are both NOT Empty\n        return directionStr + '  ' + prefixPostfix[0] + distanceStr + prefixPostfix[1];\n    }\n    else if (IsEmpty(directionStr)){  //If Direction is empty\n        return prefixPostfix[0] + distanceStr + prefixPostfix[1];\n    }\n    else{  //If Distance is empty\n        return directionStr\n    }\n}\n\n//Curves\n//If one or both radii and the curve string are NOT empty show the full curve\nif ((!IsEmpty(radiusStr) || !IsEmpty(radius2Str)) && !IsEmpty(curveStr)){\n        return radiusStr + \" \" + radius2Str + '  ' + CurveTypePrefix + ' ' + prefixPostfix[0] + curveStr + prefixPostfix[1];\n}\n//If the curve is empty\nelse if (IsEmpty(curveStr)){\n    return radiusStr + \" \" + radius2Str\n}\n//If both radius are empty\nelse{\n    return CurveTypePrefix + ' ' + prefixPostfix[0] + curveStr + prefixPostfix[1];\n}\n\n\n",
+            "name" : "ParcelLines",
+            "returnType" : "String"
+          }
+        ],
+        "mediaInfos" : [
+          {
+            "type" : "CIMTextMediaInfo",
+            "refreshRateUnit" : "esriTimeUnitsSeconds",
+            "rowSpan" : 1,
+            "columnSpan" : 1,
+            "text" : "<div><p><span style=\"font-weight:bold;text-decoration:underline;\">COGO Measurements</span></p></div>"
+          },
+          {
+            "type" : "CIMTableMediaInfo",
+            "row" : 1,
+            "refreshRateUnit" : "esriTimeUnitsSeconds",
+            "rowSpan" : 1,
+            "columnSpan" : 1,
+            "fields" : [
+              "OBJECTID",
+              "ParcelID",
+              "CreatedByRecord",
+              "RetiredByRecord",
+              "ParcelSubtype",
+              "Direction",
+              "Distance",
+              "Radius",
+              "ArcLength",
+              "Radius2",
+              "COGOType",
+              "IsCOGOGround",
+              "Rotation",
+              "Scale",
+              "created_user",
+              "create_date",
+              "last_edited_user",
+              "last_edited_date",
+              "Shape_Length",
+              "GlobalID"
+            ],
+            "caption" : "<div><p style=\"text-align:Center;\"><span></span></p></div>",
+            "title" : "<div><p><span></span></p></div>"
+          }
+        ],
+        "gridLayout" : {
+          "type" : "CIMPopupLayout",
+          "columnWidths" : [
+            100
+          ],
+          "borderWidth" : 0,
+          "borderColor" : {
+            "type" : "CIMRGBColor",
+            "values" : [
+              0,
+              0,
+              0,
+              100
+            ]
+          }
+        }
+      },
+      "showPopups" : true,
+      "serviceLayerID" : -1,
+      "refreshRate" : -1,
+      "refreshRateUnit" : "esriTimeUnitsSeconds",
+      "blendingMode" : "Alpha",
+      "allowDrapingOnIntegratedMesh" : true,
+      "featureElevationExpression" : "Shape.Z",
+      "featureTable" : {
+        "type" : "CIMFeatureTable",
+        "definitionExpression" : "retiredbyrecord IS NOT NULL",
+        "displayField" : "created_user",
+        "editable" : true,
+        "fieldDescriptions" : [
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "Shape.STLength()",
+            "fieldName" : "Shape__Length",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "readOnly" : true,
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "OBJECTID",
+            "fieldName" : "OBJECTID",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "readOnly" : true,
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מזהה תהליך יוצר",
+            "fieldName" : "CreatedByRecord",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מזהה תהליך מבטל",
+            "fieldName" : "RetiredByRecord",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מזהה חזית קודמת",
+            "fieldName" : "ParentLineID",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "כיוון",
+            "fieldName" : "Direction",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "אורך רשום",
+            "fieldName" : "Distance",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "רדיוס",
+            "fieldName" : "Radius",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "אורך קשת",
+            "fieldName" : "ArcLength",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "רדיוס כפול",
+            "fieldName" : "Radius2",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מקור COGO",
+            "fieldName" : "COGOType",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "Is COGO Ground",
+            "fieldName" : "IsCOGOGround",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "סיבוב",
+            "fieldName" : "Rotation",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "קנה מידה",
+            "fieldName" : "Scale",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "דיוק כיוון",
+            "fieldName" : "DirectionAccuracy",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "דיוק אורך",
+            "fieldName" : "DistanceAccuracy",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מיקום תווית",
+            "fieldName" : "LabelPosition",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "משתמש יוצר",
+            "fieldName" : "created_user",
+            "readOnly" : true,
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "תאריך יצירה",
+            "fieldName" : "created_date",
+            "readOnly" : true,
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "משתמש עידכן",
+            "fieldName" : "last_edited_user",
+            "readOnly" : true,
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "תאריך עידכון",
+            "fieldName" : "last_edited_date",
+            "readOnly" : true,
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מזהה חזית",
+            "fieldName" : "GlobalID",
+            "readOnly" : true,
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "תקינות",
+            "fieldName" : "VALIDATIONSTATUS",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "readOnly" : true,
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "סוג הקו",
+            "fieldName" : "LineType",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מזהה נקודת התחלה",
+            "fieldName" : "StartPointUniqueID",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מזהה נקודת סיום",
+            "fieldName" : "EndPointUniqueID",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "גיאומטריה",
+            "fieldName" : "Shape",
+            "visible" : true,
+            "searchMode" : "Exact"
+          }
+        ],
+        "displayExpressionInfo" : {
+          "type" : "CIMExpressionInfo",
+          "title" : "DisplayExpression",
+          "expression" : "// Change the settings portion to configure direction format, rounding and abbreviations\n// This is an Arcade expression\n\n// SETTINGS\nvar ShowDistance = true;   //set as 'true' to show distance\nvar ShowDirection = true;  //set as 'true' to show direction\nvar DirectionType = 1; // 1 = Quadrant Bearing; 2 = North Azimuth; 3 = South Azimuth\nvar ShowRadius = true;     //set as 'true' to show radius\nvar ShowCurveParameter = true;    //set as 'true' to show a curve parameter\nvar ShowCOGOType = true;  //set as 'true' to show prefixes and postfixes defined below for each cogo line label\nvar COGOType_Entered = ['', ''] //Change prefix and postfix for Entered courses\nvar COGOType_Computed = ['±', '']  //Change prefix and postfix for Computed courses\nvar COGOType_FromGeom = ['<', '>'] //Change for prefix and postfix From Geometry courses. The &lt; is a special character to represent the left angle bracket\nvar CurveParameter = \"ArcLength\"; //set as 'ArcLength' or 'Chord' or 'Angle' for central angle. Case sensitive!\nvar ErrorString = \"COGO ERROR\";   //set to display invalid COGO combinations\nvar RadiusAbbr = 'R=';     //radius abbreviation\nvar Radius2Abbr = 'R2=';     //radius2 abbreviation for spiral curves\nvar ArclengthAbrr = 'L=';  //arclength abbreviation\nvar ChordAbbr = 'C=';      //chord abbreviation\nvar AngleAbbr = 'A=';      //central Angle abbreviation\nvar DistUnitRounding = 2;  //number of decimal places for distance units: distance, radius, arclength & chord\nvar NumberFormat = \"#,###.00\" //number format. In this example: thousands separator with padding of 2 zeros\n\n// VARIABLES\nvar cogo_direction = $feature.Direction;\nvar cogo_distance = $feature.Distance;\nvar cogo_radius = $feature.Radius;\nvar cogo_arclength = $feature.Arclength;\nvar cogo_radius2 = $feature.Radius2\nvar cogotype = $feature.COGOType\nvar binaryDictionary; //binary dictionary to check COGO combinations\nvar checksum = 0; //initialize checksum\nvar validValuesArray; //array of valid values for COGO combinations\nvar partialValuesArray; //array of partial values for COGO\nvar directionStr = \"\"; //direction string using for label\nvar distanceStr = \"\";  //distance string using for label\nvar radiusStr = \"\";    //radius string using for label\nvar radius2Str = \"\";    //radius2 string using for labeling spiral curves\nvar curveStr = \"\";     //curve parameter string using for label\nvar prefixPostfix = ['', '']  //Used for prefix and postfix of COGO Type\nvar angleRad; //curve angle in radians\nvar COGOValidity; //COGO combinations validity. can be valid, partial or invalid.\n\nif (IsEmpty(cogo_direction) && IsEmpty(cogo_distance) && IsEmpty(cogo_radius) && IsEmpty(cogo_radius2) && IsEmpty(cogo_arclength)){\n    return \"\"\n}\n\nfunction NorthAzimuth2Quadbearing(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'Quadrant', angleType: 'DMS', outputType: 'text', format: 'pd[°]mm[\\']ss[\"]b'})\n}\n\nfunction DMS_North(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'North', angleType: 'DMS', outputType: 'text', format: 'd[°]mm[\\']ss[\"]'})\n}\n\nfunction DMS_South(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'South', angleType: 'DMS', outputType: 'text', format: 'd[°]mm[\\']ss[\"]'})\n}\n\nfunction IsValidCOGO(cogo_direction, cogo_distance, cogo_radius, cogo_arclength, cogo_radius2) {\n    binaryDictionary= Dictionary('dir', 1, 'dist',2, 'rad',4, 'arc',8, 'rad2',16)\n    if (!IsEmpty(cogo_direction)) {checksum+=binaryDictionary.dir}\n    if (!IsEmpty(cogo_distance)) {checksum+=binaryDictionary.dist}\n    if (!IsEmpty(cogo_radius)) {checksum+=binaryDictionary.rad}\n    if (!IsEmpty(cogo_arclength)) {checksum+=binaryDictionary.arc}\n    if (!IsEmpty(cogo_radius2)) {checksum+=binaryDictionary.rad2}\n    \n    validValuesArray=[0,3,13,29]; //array of valid combinations: '0' for nothing, ... '13' for direction & radius & arclength ...\n    partialValuesArray=[1,2,4,5,8,9,12,16,17,20,21,24,25,27,28]; //array of partial combinations: '1' for only direction, '2' for only distance, '4' for only radius...\n    //Invalid Values = [6,7,10,11,14,15,18,19,22,23,26,30,31]\n\n    if (IndexOf(validValuesArray,checksum)>-1) { // a negative value is returned if checksum value is not in the a valid combination array\n        return \"valid\";\n    }\n    if (IndexOf(partialValuesArray,checksum)>-1){\n        return \"partial\";\n    }\n    return \"invalid\";\n}\n\nfunction COGOTypePrefixPostfix(cogotypeValue){\n    if (ShowCOGOType){\n        if (cogotypeValue == 1) { //Entered\n           return COGOType_Entered\n        }\n        else if(cogotypeValue == 2) { //From Geometry\n           return COGOType_FromGeom\n        }\n        else if(cogotypeValue == 3) { //Computed\n           return COGOType_Computed\n        }\n        else { //If not set or invalid value\n           return ['', '']\n        }\n    }\n    else{\n       return(['', ''])\n    }\n}\n\nCOGOValidity = IsValidCOGO(cogo_direction, cogo_distance, cogo_radius, cogo_arclength, cogo_radius2);\nif ( COGOValidity == \"invalid\") { //if invalid COGO return error string\n    return ErrorString;\n}\n\n\n// Direction string\nif (ShowDirection) {\n    if (IsEmpty(cogo_direction)==false) {\n        if (DirectionType == 1) {  //using quadrant bearing format\n            directionStr = NorthAzimuth2Quadbearing(cogo_direction);\n        }\n        else if (DirectionType == 2) {  //using north azimuth format\n            directionStr = DMS_North(cogo_direction);\n        }\n        else if (DirectionType == 3) { //using south azimuth format\n            directionStr = DMS_South(cogo_direction);\n        }\n    }\n}\n\n// Distance string\nif (ShowDistance) {\n    if (IsEmpty(cogo_distance)==false) {\n    distanceStr = text(round(cogo_distance,DistUnitRounding), NumberFormat);\n    }\n}\n\n//Radius String\nif (ShowRadius) {\n    if (!IsEmpty(cogo_radius)) { //it can be a curve or a spiral\n        if (IsEmpty(cogo_radius2)) { //if radius2 is empty this is a curve\n            radiusStr = RadiusAbbr + \" \" + text(round(cogo_radius, DistUnitRounding), NumberFormat);\n        }\n        else { // it is a spiral\n            radiusStr = RadiusAbbr + \" \" + text(round(cogo_radius, DistUnitRounding),NumberFormat);\n            radius2Str = Radius2Abbr + \" \" + text(round(cogo_radius2, DistUnitRounding),NumberFormat);\n            if (cogo_radius == 0) { //substitute to infinity sign\n                radiusStr = RadiusAbbr + \" \u221E \";\n            }\n            if (cogo_radius2 == 0) { //substitute to infinity sign\n                radius2Str = Radius2Abbr + \" \u221E \";\n            }\n        }\n\n    }\n}\n\n// Curve Parameter\nif (ShowCurveParameter) {\n        if (!IsEmpty(cogo_arclength)) {\n            if (CurveParameter == 'ArcLength') {\n                curveStr = text(round(cogo_arclength, DistUnitRounding), NumberFormat); //return Arc length\n            }\n            angleRad = cogo_arclength/(abs(cogo_radius)) //calculate angle in radians\n            if (CurveParameter == 'Angle') {\n                curveStr = DMS_North(angleRad * 180 / pi); // convert radian to degrees and show as DMS\n            }\n            if (CurveParameter == 'Chord') {\n                curveStr = text(round((2 * abs(cogo_radius) * Sin(angleRad/2)),DistUnitRounding), NumberFormat); //calculate chord length\n            }\n        }\n}\n\n//Determine type of curve displayed\nvar CurveTypePrefix = \"\"\nif (!IsEmpty(curveStr)){\n    if (CurveParameter == 'ArcLength'){\n        CurveTypePrefix = ArclengthAbrr\n    }\n    else if (CurveParameter == 'Angle'){\n        CurveTypePrefix = AngleAbbr\n    }\n    else if (CurveParameter == 'Chord'){\n        CurveTypePrefix = ChordAbbr\n    }\n}\n\nvar isStraightLine = IsEmpty(radiusStr) && IsEmpty(radius2Str) && IsEmpty(curveStr)\n\n//Get prefix and postfix if either distance or curve is not empty. NOTE If both aren't empty it's invalid COGO\nif (!IsEmpty(distanceStr) || !IsEmpty(curveStr)){\n    prefixPostfix = COGOTypePrefixPostfix(cogotype)\n}\n\n// Assemble label string\nif (isStraightLine){\n    if (!IsEmpty(directionStr) && !IsEmpty(distanceStr)){ //If Direction and Distance are both NOT Empty\n        return directionStr + '  ' + prefixPostfix[0] + distanceStr + prefixPostfix[1];\n    }\n    else if (IsEmpty(directionStr)){  //If Direction is empty\n        return prefixPostfix[0] + distanceStr + prefixPostfix[1];\n    }\n    else{  //If Distance is empty\n        return directionStr\n    }\n}\n\n//Curves\n//If one or both radii and the curve string are NOT empty show the full curve\nif ((!IsEmpty(radiusStr) || !IsEmpty(radius2Str)) && !IsEmpty(curveStr)){\n        return radiusStr + \" \" + radius2Str + '  ' + CurveTypePrefix + ' ' + prefixPostfix[0] + curveStr + prefixPostfix[1];\n}\n//If the curve is empty\nelse if (IsEmpty(curveStr)){\n    return radiusStr + \" \" + radius2Str\n}\n//If both radius are empty\nelse{\n    return CurveTypePrefix + ' ' + prefixPostfix[0] + curveStr + prefixPostfix[1];\n}\n\n\n",
+          "returnType" : "Default"
+        },
+        "dataConnection" : {
+          "type" : "CIMStandardDataConnection",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/PF_EDIT_BANKALMODDEV/FeatureServer;VERSION=sde.DEFAULT;VERSIONGUID={BD3F4817-9A00-41AC-B0CC-58F78DBAE0A1}",
+          "workspaceFactory" : "FeatureService",
+          "dataset" : "17",
+          "datasetType" : "esriDTFeatureClass"
+        },
+        "studyAreaSpatialRel" : "esriSpatialRelUndefined",
+        "searchOrder" : "esriSearchOrderSpatial"
+      },
+      "htmlPopupEnabled" : true,
+      "selectable" : true,
+      "featureCacheType" : "Session",
+      "displayFilters" : [
+        {
+          "type" : "CIMDisplayFilter",
+          "name" : "Large Scale"
+        }
+      ],
+      "displayFiltersType" : "ByScale",
+      "featureBlendingMode" : "Alpha",
+      "labelClasses" : [
+        {
+          "type" : "CIMLabelClass",
+          "expressionTitle" : "COGORight",
+          "expression" : "// Change the settings portion to configure direction format, color, rounding and abbreviations\n// This is an Arcade expression\n\n// SETTINGS\nvar ShowDistance = true;   //set as 'true' to show distance\nvar ShowDirection = true;  //set as 'true' to show direction\nvar DirectionType = 1; // 1 = Quadrant Bearing; 2 = North Azimuth; 3 = South Azimuth\nvar ShowRadius = true;     //set as 'true' to show radius\nvar ShowCurveParameter = true;    //set as 'true' to show a curve parameter\nvar ShowCOGOType = true;  //set as 'true' to show prefixes and postfixes defined below for each cogo line label\nvar COGOType_Entered = ['', ''] //Change prefix and postfix for Entered courses\nvar COGOType_Computed = ['±', '']  //Change prefix and postfix for Computed courses\nvar COGOType_FromGeom = ['&lt;', '>'] //Change for prefix and postfix From Geometry courses. The &lt; is a special character to represent the left angle bracket\nvar CurveParameter = \"ArcLength\"; //set as 'ArcLength' or 'Chord' or 'Angle' for central angle. Case sensitive!\nvar ErrorString = \"COGO ERROR\";   //set to display invalid COGO combinations\nvar RadiusAbbr = 'R=';     //radius abbreviation\nvar Radius2Abbr = 'R2=';     //radius2 abbreviation for spiral curves\nvar ArclengthAbrr = 'L=';  //arclength abbreviation\nvar ChordAbbr = 'C=';      //chord abbreviation\nvar AngleAbbr = 'A=';      //central Angle abbreviation\nvar DistUnitRounding = 2;  //number of decimal places for distance units: distance, radius, arclength & chord\nvar NumberFormat = \"#,###.00\" //number format. In this example: thousands separator with padding of 2 zeros \nvar directionColor = \"blue='255'\"; //direction color: red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar distanceColor = \"black='255'\"; //distance color: red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar radiusColor = \"blue='255'\";    //radius color:  red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar curveParamColor = \"black='255'\"; //curve parameter color:  red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar partialCOGOColor = \"magenta='255'\"; //partial COGO color: red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar invalidCOGOColor = \"red='255'\"; //invalid COGO color: red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar fontNameSize = \"<FNT name = 'Arial' size = '10'>\"; //font type and size\n\n// VARIABLES\nvar cogo_direction = $feature.Direction;\nvar cogo_distance = $feature.Distance;\nvar cogo_radius = $feature.Radius;\nvar cogo_arclength = $feature.Arclength;\nvar cogo_radius2 = $feature.Radius2\nvar cogotype = $feature.COGOType\nif (HasKey($feature, \"labelPosition\")){\n   var labelPosition = $feature.labelPosition\n}\nelse {\n   var labelPosition = 1\n}\nvar binaryDictionary; //binary dictionary to check COGO combinations\nvar checksum = 0; //initialize checksum\nvar validValuesArray; //array of valid values for COGO combinations\nvar partialValuesArray; //array of partial values for COGO\nvar directionStr = \"\"; //direction string using for label\nvar distanceStr = \"\";  //distance string using for label\nvar radiusStr = \"\";    //radius string using for label\nvar radius2Str = \"\";    //radius2 string using for labeling spiral curves\nvar curveStr = \"\";     //curve parameter string using for label\nvar prefixPostfix = ['', '']  //Used for prefix and postfix of COGO Type\nvar angleRad; //curve angle in radians\nvar COGOValidity; //COGO combinations validity. can be valid, partial or invalid.\n\nif (IsEmpty(cogo_direction) && IsEmpty(cogo_distance) && IsEmpty(cogo_radius) && IsEmpty(cogo_radius2) && IsEmpty(cogo_arclength)){\n    return \"\"\n}\n\nfunction NorthAzimuth2Quadbearing(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'Quadrant', angleType: 'DMS', outputType: 'text', format: 'pd[°]mm[\\']ss[\"]b'})\n}\n\nfunction DMS_North(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'North', angleType: 'DMS', outputType: 'text', format: 'd[°]mm[\\']ss[\"]'})\n}\n\nfunction DMS_South(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'South', angleType: 'DMS', outputType: 'text', format: 'd[°]mm[\\']ss[\"]'})\n}\n\nfunction IsValidCOGO(cogo_direction, cogo_distance, cogo_radius, cogo_arclength, cogo_radius2) {\n    binaryDictionary= Dictionary('dir', 1, 'dist',2, 'rad',4, 'arc',8, 'rad2',16)\n    if (!IsEmpty(cogo_direction)) {checksum+=binaryDictionary.dir}\n    if (!IsEmpty(cogo_distance)) {checksum+=binaryDictionary.dist}\n    if (!IsEmpty(cogo_radius)) {checksum+=binaryDictionary.rad}\n    if (!IsEmpty(cogo_arclength)) {checksum+=binaryDictionary.arc}\n    if (!IsEmpty(cogo_radius2)) {checksum+=binaryDictionary.rad2}\n    \n    validValuesArray=[0,3,13,29]; //array of valid combinations: '0' for nothing, ... '13' for direction & radius & arclength ...\n    partialValuesArray=[1,2,4,5,8,9,12,16,17,20,21,24,25,27,28]; //array of partial combinations: '1' for only direction, '2' for only distance, '4' for only radius...\n    //Invalid Values = [6,7,10,11,14,15,18,19,22,23,26,30,31]\n\n    if (IndexOf(validValuesArray,checksum)>-1) { // a negative value is returned if checksum value is not in the a valid combination array\n        return \"valid\";\n    }\n    if (IndexOf(partialValuesArray,checksum)>-1){\n        return \"partial\";        \n    }\n    return \"invalid\";\n}\n\nfunction COGOTypePrefixPostfix(cogotypeValue){\n    if (ShowCOGOType){\n        if (cogotypeValue == 1) { //Entered\n           return COGOType_Entered\n        }\n        else if(cogotypeValue == 2) { //From Geometry\n           return COGOType_FromGeom\n        }\n        else if(cogotypeValue == 3) { //Computed\n           return COGOType_Computed\n        }\n        else { //If not set or invalid value\n           return ['', '']\n        }\n    }\n    else{\n       return(['', ''])\n    }\n}\n\nCOGOValidity = IsValidCOGO(cogo_direction, cogo_distance, cogo_radius, cogo_arclength, cogo_radius2);\nif ( COGOValidity == \"invalid\") { //if invalid COGO return error string\n    return \"<BOL><CLR \" + invalidCOGOColor + \">\" + fontNameSize + ErrorString + \"</FNT></CLR></BOL>\";    \n}\n\nelse if (COGOValidity == \"partial\") { //if a partial COGO change colors\n    distanceColor = partialCOGOColor;\n    directionColor = partialCOGOColor;\n    radiusColor = partialCOGOColor;\n    curveParamColor = partialCOGOColor;\n}\n\n// Direction string\nif (ShowDirection) {\n    if (IsEmpty(cogo_direction)==false) {\n        if (DirectionType == 1) {  //using quadrant bearing format\n            directionStr = NorthAzimuth2Quadbearing(cogo_direction);\n        }\n        else if (DirectionType == 2) {  //using north azimuth format\n            directionStr = DMS_North(cogo_direction);\n        }\n        else if (DirectionType == 3) { //using south azimuth format\n            directionStr = DMS_South(cogo_direction);\n        }\n    }\n}\n\n// Distance string\nif (ShowDistance) {\n    if (IsEmpty(cogo_distance)==false) {\n    distanceStr = text(round(cogo_distance,DistUnitRounding), NumberFormat);\n    }\n}\n\n//Radius String\nif (ShowRadius) {\n    if (!IsEmpty(cogo_radius)) { //it can be a curve or a spiral\n        if (IsEmpty(cogo_radius2)) { //if radius2 is empty this is a curve\n            radiusStr = RadiusAbbr + \" \" + text(round(cogo_radius, DistUnitRounding), NumberFormat);\n        }\n        else { // it is a spiral\n            radiusStr = RadiusAbbr + \" \" + text(round(cogo_radius, DistUnitRounding),NumberFormat);\n            radius2Str = Radius2Abbr + \" \" + text(round(cogo_radius2, DistUnitRounding),NumberFormat);\n            if (cogo_radius == 0) { //substitute to infinity sign\n                radiusStr = RadiusAbbr + \" \u221E \";\n            }\n            if (cogo_radius2 == 0) { //substitute to infinity sign\n                radius2Str = Radius2Abbr + \" \u221E \";\n            }\n        }    \n        \n    }\n}\n\n// Curve Parameter\nif (ShowCurveParameter) {\n        if (!IsEmpty(cogo_arclength)) {\n            if (CurveParameter == 'ArcLength') {\n                curveStr = text(round(cogo_arclength, DistUnitRounding), NumberFormat); //return Arc length\n            }\n            angleRad = cogo_arclength/(abs(cogo_radius)) //calculate angle in radians\n            if (CurveParameter == 'Angle') {\n                curveStr = DMS_North(angleRad * 180 / pi); // convert radian to degrees and show as DMS\n            }\n            if (CurveParameter == 'Chord') {\n                curveStr = text(round((2 * abs(cogo_radius) * Sin(angleRad/2)),DistUnitRounding), NumberFormat); //calculate chord length\n            }            \n        }\n}\n\n//Determine type of curve displayed\nvar CurveTypePrefix = \"\"\nif (!IsEmpty(curveStr)){\n    if (CurveParameter == 'ArcLength'){\n        CurveTypePrefix = ArclengthAbrr\n    }\n    else if (CurveParameter == 'Angle'){\n        CurveTypePrefix = AngleAbbr\n    }\n    else if (CurveParameter == 'Chord'){\n        CurveTypePrefix = ChordAbbr\n    }\n}\n\nvar isStraightLine = IsEmpty(radiusStr) && IsEmpty(radius2Str) && IsEmpty(curveStr)\n\n// Assemble label string\n\n//Get prefix and postfix if either distance or curve is not empty. NOTE If both aren't empty it's invalid COGO\nif (!IsEmpty(distanceStr) || !IsEmpty(curveStr)){\n    prefixPostfix = COGOTypePrefixPostfix(cogotype)\n}\n\nvar sharedLabelBuffer = \"\"\nif (labelPosition == 3) {\n    sharedLabelBuffer = \" \\n\"\n}\n\n//Straight lines\nif (isStraightLine){\n    if (!IsEmpty(directionStr) && !IsEmpty(distanceStr)){ //If Direction and Distance are both NOT Empty\n        return fontNameSize + \"<CLR \" + directionColor + \">\" + directionStr  + \"</CLR>\" + \"\\n\" +\n                              \"<CLR \" + distanceColor + \">\" + prefixPostfix[0] + distanceStr + prefixPostfix[1] + \"</CLR></FNT>\";\n    }\n    else if (IsEmpty(directionStr)){  //If Direction is empty\n        return fontNameSize + sharedLabelBuffer + \"<CLR \" + distanceColor + \">\" +\n                               prefixPostfix[0] + distanceStr + prefixPostfix[1] + \"</CLR></FNT>\";\n    }\n    else{  //If Distance is empty\n        return fontNameSize + sharedLabelBuffer + \"<CLR \" + directionColor + \">\" + directionStr +  \"</CLR></FNT>\";\n    }\n}\n\n//Curves\n//If one or both radii and the curve string are NOT empty show the full curve\nif ((!IsEmpty(radiusStr) || !IsEmpty(radius2Str)) && !IsEmpty(curveStr)){\n    return fontNameSize + \"<CLR \" + radiusColor + \">\" + radiusStr + \"</CLR>\" + \" \" +\n                          \"<CLR \" + radiusColor + \">\" + radius2Str + \"</CLR>\" + \"\\n\" +\n                          \"<CLR \" + curveParamColor + \">\" + CurveTypePrefix + ' ' +\n                          prefixPostfix[0] + curveStr + prefixPostfix[1] + \"</CLR></FNT>\";\n}\n//If the curve is empty\nelse if (IsEmpty(curveStr)){\n    return fontNameSize + sharedLabelBuffer + \"<CLR \" + radiusColor + \">\" + radiusStr + \"</CLR>\" + \"  \" +\n                          \"<CLR \" + radiusColor + \">\" + radius2Str + \"</CLR></FNT>\"\n}\n//If both radius are empty\nelse{\n    return fontNameSize + sharedLabelBuffer + \"<CLR \" + curveParamColor + \">\" + CurveTypePrefix + ' ' +\n                          prefixPostfix[0] + curveStr + prefixPostfix[1] + \"</CLR></FNT>\";\n}\n",
+          "expressionEngine" : "Arcade",
+          "featuresToLabel" : "AllVisibleFeatures",
+          "maplexLabelPlacementProperties" : {
+            "type" : "CIMMaplexLabelPlacementProperties",
+            "featureType" : "Line",
+            "avoidPolygonHoles" : true,
+            "canOverrunFeature" : false,
+            "canPlaceLabelOutsidePolygon" : true,
+            "canRemoveOverlappingLabel" : true,
+            "canStackLabel" : false,
+            "centerLabelAnchorType" : "Symbol",
+            "connectionType" : "MinimizeLabels",
+            "constrainOffset" : "RightOfLine",
+            "contourAlignmentType" : "Page",
+            "contourLadderType" : "Straight",
+            "contourMaximumAngle" : 90,
+            "enableConnection" : false,
+            "featureWeight" : 0,
+            "fontHeightReductionLimit" : 4,
+            "fontHeightReductionStep" : 0.5,
+            "fontWidthReductionLimit" : 90,
+            "fontWidthReductionStep" : 5,
+            "graticuleAlignmentType" : "Straight",
+            "keyNumberGroupName" : "Default",
+            "labelBuffer" : 15,
+            "labelLargestPolygon" : true,
+            "labelPriority" : -1,
+            "labelStackingProperties" : {
+              "type" : "CIMMaplexLabelStackingProperties",
+              "stackAlignment" : "ChooseBest",
+              "maximumNumberOfLines" : 3,
+              "minimumNumberOfCharsPerLine" : 3,
+              "maximumNumberOfCharsPerLine" : 24,
+              "separators" : [
+                {
+                  "type" : "CIMMaplexStackingSeparator",
+                  "separator" : " ",
+                  "splitAfter" : true
+                },
+                {
+                  "type" : "CIMMaplexStackingSeparator",
+                  "separator" : ",",
+                  "visible" : true,
+                  "splitAfter" : true
+                }
+              ],
+              "trimStackingSeparators" : true
+            },
+            "lineFeatureType" : "General",
+            "linePlacementMethod" : "OffsetCurvedFromLine",
+            "maximumLabelOverrun" : 0,
+            "maximumLabelOverrunUnit" : "Point",
+            "minimumFeatureSizeUnit" : "Map",
+            "multiPartOption" : "OneLabelPerFeature",
+            "offsetAlongLineProperties" : {
+              "type" : "CIMMaplexOffsetAlongLineProperties",
+              "placementMethod" : "AlongLineFromStart",
+              "labelAnchorPoint" : "CenterOfLabel",
+              "distance" : 50,
+              "tolerance" : 5,
+              "distanceUnit" : "Percentage",
+              "useLineDirection" : true
+            },
+            "pointExternalZonePriorities" : {
+              "type" : "CIMMaplexExternalZonePriorities",
+              "aboveLeft" : 4,
+              "aboveCenter" : 2,
+              "aboveRight" : 1,
+              "centerRight" : 3,
+              "belowRight" : 5,
+              "belowCenter" : 7,
+              "belowLeft" : 8,
+              "centerLeft" : 6
+            },
+            "pointPlacementMethod" : "AroundPoint",
+            "polygonAnchorPointType" : "GeometricCenter",
+            "polygonBoundaryWeight" : 0,
+            "polygonExternalZones" : {
+              "type" : "CIMMaplexExternalZonePriorities",
+              "aboveLeft" : 4,
+              "aboveCenter" : 2,
+              "aboveRight" : 1,
+              "centerRight" : 3,
+              "belowRight" : 5,
+              "belowCenter" : 7,
+              "belowLeft" : 8,
+              "centerLeft" : 6
+            },
+            "polygonFeatureType" : "General",
+            "polygonInternalZones" : {
+              "type" : "CIMMaplexInternalZonePriorities",
+              "center" : 1
+            },
+            "polygonPlacementMethod" : "CurvedInPolygon",
+            "primaryOffset" : 3,
+            "primaryOffsetUnit" : "Point",
+            "removeAmbiguousLabels" : "All",
+            "removeExtraWhiteSpace" : false,
+            "repetitionIntervalUnit" : "Map",
+            "rotationProperties" : {
+              "type" : "CIMMaplexRotationProperties",
+              "rotationType" : "Arithmetic",
+              "alignmentType" : "Straight"
+            },
+            "secondaryOffset" : 100,
+            "secondaryOffsetUnit" : "Percentage",
+            "strategyPriorities" : {
+              "type" : "CIMMaplexStrategyPriorities",
+              "stacking" : 1,
+              "overrun" : 2,
+              "fontCompression" : 3,
+              "fontReduction" : 4,
+              "abbreviation" : 5
+            },
+            "thinningDistanceUnit" : "Point",
+            "truncationMarkerCharacter" : ".",
+            "truncationMinimumLength" : 1,
+            "truncationPreferredCharacters" : "aeiou",
+            "polygonAnchorPointPerimeterInsetUnit" : "Point"
+          },
+          "minimumScale" : 2000,
+          "name" : "COGO Right",
+          "priority" : -1,
+          "standardLabelPlacementProperties" : {
+            "type" : "CIMStandardLabelPlacementProperties",
+            "featureType" : "Line",
+            "featureWeight" : "None",
+            "labelWeight" : "High",
+            "numLabelsOption" : "OneLabelPerName",
+            "lineLabelPosition" : {
+              "type" : "CIMStandardLineLabelPosition",
+              "above" : true,
+              "inLine" : true,
+              "parallel" : true
+            },
+            "lineLabelPriorities" : {
+              "type" : "CIMStandardLineLabelPriorities",
+              "aboveStart" : 3,
+              "aboveAlong" : 3,
+              "aboveEnd" : 3,
+              "centerStart" : 3,
+              "centerAlong" : 3,
+              "centerEnd" : 3,
+              "belowStart" : 3,
+              "belowAlong" : 3,
+              "belowEnd" : 3
+            },
+            "pointPlacementMethod" : "AroundPoint",
+            "pointPlacementPriorities" : {
+              "type" : "CIMStandardPointPlacementPriorities",
+              "aboveLeft" : 2,
+              "aboveCenter" : 2,
+              "aboveRight" : 1,
+              "centerLeft" : 3,
+              "centerRight" : 2,
+              "belowLeft" : 3,
+              "belowCenter" : 3,
+              "belowRight" : 2
+            },
+            "rotationType" : "Arithmetic",
+            "polygonPlacementMethod" : "AlwaysHorizontal"
+          },
+          "textSymbol" : {
+            "type" : "CIMSymbolReference",
+            "symbol" : {
+              "type" : "CIMTextSymbol",
+              "blockProgression" : "TTB",
+              "depth3D" : 1,
+              "extrapolateBaselines" : true,
+              "fontEffects" : "Normal",
+              "fontEncoding" : "Unicode",
+              "fontFamilyName" : "Tahoma",
+              "fontStyleName" : "Regular",
+              "fontType" : "Unspecified",
+              "haloSize" : 2,
+              "haloSymbol" : {
+                "type" : "CIMPolygonSymbol",
+                "symbolLayers" : [
+                  {
+                    "type" : "CIMSolidFill",
+                    "enable" : true,
+                    "color" : {
+                      "type" : "CIMRGBColor",
+                      "values" : [
+                        255,
+                        255,
+                        255,
+                        100
+                      ]
+                    }
+                  }
+                ],
+                "angleAlignment" : "Map"
+              },
+              "height" : 10,
+              "hinting" : "Default",
+              "horizontalAlignment" : "Left",
+              "kerning" : true,
+              "letterWidth" : 100,
+              "ligatures" : true,
+              "lineGapType" : "ExtraLeading",
+              "symbol" : {
+                "type" : "CIMPolygonSymbol",
+                "symbolLayers" : [
+                  {
+                    "type" : "CIMSolidFill",
+                    "enable" : true,
+                    "color" : {
+                      "type" : "CIMRGBColor",
+                      "values" : [
+                        0,
+                        0,
+                        0,
+                        100
+                      ]
+                    }
+                  }
+                ],
+                "angleAlignment" : "Map"
+              },
+              "symbol3DProperties" : {
+                "type" : "CIM3DSymbolProperties",
+                "dominantSizeAxis3D" : "Z",
+                "rotationOrder3D" : "XYZ",
+                "scaleZ" : 1,
+                "scaleY" : 1
+              },
+              "textCase" : "Normal",
+              "textDirection" : "LTR",
+              "verticalAlignment" : "Bottom",
+              "verticalGlyphOrientation" : "Right",
+              "wordSpacing" : 100,
+              "billboardMode3D" : "FaceNearPlane"
+            }
+          },
+          "useCodedValue" : false,
+          "whereClause" : "LabelPosition IS NULL Or LabelPosition = 1",
+          "visibility" : true,
+          "iD" : -1
+        },
+        {
+          "type" : "CIMLabelClass",
+          "expressionTitle" : "COGOLeft",
+          "expression" : "// Change the settings portion to configure direction format, color, rounding and abbreviations\n// This is an Arcade expression\n\n// SETTINGS\nvar ShowDistance = true;   //set as 'true' to show distance\nvar ShowDirection = true;  //set as 'true' to show direction\nvar DirectionType = 1; // 1 = Quadrant Bearing; 2 = North Azimuth; 3 = South Azimuth\nvar ShowRadius = true;     //set as 'true' to show radius\nvar ShowCurveParameter = true;    //set as 'true' to show a curve parameter\nvar ShowCOGOType = true;  //set as 'true' to show prefixes and postfixes defined below for each cogo line label\nvar COGOType_Entered = ['', ''] //Change prefix and postfix for Entered courses\nvar COGOType_Computed = ['±', '']  //Change prefix and postfix for Computed courses\nvar COGOType_FromGeom = ['&lt;', '>'] //Change for prefix and postfix From Geometry courses. The &lt; is a special character to represent the left angle bracket\nvar CurveParameter = \"ArcLength\"; //set as 'ArcLength' or 'Chord' or 'Angle' for central angle. Case sensitive!\nvar ErrorString = \"COGO ERROR\";   //set to display invalid COGO combinations\nvar RadiusAbbr = 'R=';     //radius abbreviation\nvar Radius2Abbr = 'R2=';     //radius2 abbreviation for spiral curves\nvar ArclengthAbrr = 'L=';  //arclength abbreviation\nvar ChordAbbr = 'C=';      //chord abbreviation\nvar AngleAbbr = 'A=';      //central Angle abbreviation\nvar DistUnitRounding = 2;  //number of decimal places for distance units: distance, radius, arclength & chord\nvar NumberFormat = \"#,###.00\" //number format. In this example: thousands separator with padding of 2 zeros \nvar directionColor = \"blue='255'\"; //direction color: red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar distanceColor = \"black='255'\"; //distance color: red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar radiusColor = \"blue='255'\";    //radius color:  red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar curveParamColor = \"black='255'\"; //curve parameter color:  red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar partialCOGOColor = \"magenta='255'\"; //partial COGO color: red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar invalidCOGOColor = \"red='255'\"; //invalid COGO color: red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar fontNameSize = \"<FNT name = 'Arial' size = '10'>\"; //font type and size\n\n// VARIABLES\nvar cogo_direction = $feature.Direction;\nvar cogo_distance = $feature.Distance;\nvar cogo_radius = $feature.Radius;\nvar cogo_arclength = $feature.Arclength;\nvar cogo_radius2 = $feature.Radius2\nvar cogotype = $feature.COGOType\nif (HasKey($feature, \"labelPosition\")){\n   var labelPosition = $feature.labelPosition\n}\nelse {\n   var labelPosition = 1\n}\nvar binaryDictionary; //binary dictionary to check COGO combinations\nvar checksum = 0; //initialize checksum\nvar validValuesArray; //array of valid values for COGO combinations\nvar partialValuesArray; //array of partial values for COGO\nvar directionStr = \"\"; //direction string using for label\nvar distanceStr = \"\";  //distance string using for label\nvar radiusStr = \"\";    //radius string using for label\nvar radius2Str = \"\";    //radius2 string using for labeling spiral curves\nvar curveStr = \"\";     //curve parameter string using for label\nvar prefixPostfix = ['', '']  //Used for prefix and postfix of COGO Type\nvar angleRad; //curve angle in radians\nvar COGOValidity; //COGO combinations validity. can be valid, partial or invalid.\n\nif (IsEmpty(cogo_direction) && IsEmpty(cogo_distance) && IsEmpty(cogo_radius) && IsEmpty(cogo_radius2) && IsEmpty(cogo_arclength)){\n    return \"\"\n}\n\nfunction NorthAzimuth2Quadbearing(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'Quadrant', angleType: 'DMS', outputType: 'text', format: 'pd[°]mm[\\']ss[\"]b'})\n}\n\nfunction DMS_North(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'North', angleType: 'DMS', outputType: 'text', format: 'd[°]mm[\\']ss[\"]'})\n}\n\nfunction DMS_South(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'South', angleType: 'DMS', outputType: 'text', format: 'd[°]mm[\\']ss[\"]'})\n}\n\nfunction IsValidCOGO(cogo_direction, cogo_distance, cogo_radius, cogo_arclength, cogo_radius2) {\n    binaryDictionary= Dictionary('dir', 1, 'dist',2, 'rad',4, 'arc',8, 'rad2',16)\n    if (!IsEmpty(cogo_direction)) {checksum+=binaryDictionary.dir}\n    if (!IsEmpty(cogo_distance)) {checksum+=binaryDictionary.dist}\n    if (!IsEmpty(cogo_radius)) {checksum+=binaryDictionary.rad}\n    if (!IsEmpty(cogo_arclength)) {checksum+=binaryDictionary.arc}\n    if (!IsEmpty(cogo_radius2)) {checksum+=binaryDictionary.rad2}\n    \n    validValuesArray=[0,3,13,29]; //array of valid combinations: '0' for nothing, ... '13' for direction & radius & arclength ...\n    partialValuesArray=[1,2,4,5,8,9,12,16,17,20,21,24,25,27,28]; //array of partial combinations: '1' for only direction, '2' for only distance, '4' for only radius...\n    //Invalid Values = [6,7,10,11,14,15,18,19,22,23,26,30,31]\n\n    if (IndexOf(validValuesArray,checksum)>-1) { // a negative value is returned if checksum value is not in the a valid combination array\n        return \"valid\";\n    }\n    if (IndexOf(partialValuesArray,checksum)>-1){\n        return \"partial\";        \n    }\n    return \"invalid\";\n}\n\nfunction COGOTypePrefixPostfix(cogotypeValue){\n    if (ShowCOGOType){\n        if (cogotypeValue == 1) { //Entered\n           return COGOType_Entered\n        }\n        else if(cogotypeValue == 2) { //From Geometry\n           return COGOType_FromGeom\n        }\n        else if(cogotypeValue == 3) { //Computed\n           return COGOType_Computed\n        }\n        else { //If not set or invalid value\n           return ['', '']\n        }\n    }\n    else{\n       return(['', ''])\n    }\n}\n\nCOGOValidity = IsValidCOGO(cogo_direction, cogo_distance, cogo_radius, cogo_arclength, cogo_radius2);\nif ( COGOValidity == \"invalid\") { //if invalid COGO return error string\n    return \"<BOL><CLR \" + invalidCOGOColor + \">\" + fontNameSize + ErrorString + \"</FNT></CLR></BOL>\";    \n}\n\nelse if (COGOValidity == \"partial\") { //if a partial COGO change colors\n    distanceColor = partialCOGOColor;\n    directionColor = partialCOGOColor;\n    radiusColor = partialCOGOColor;\n    curveParamColor = partialCOGOColor;\n}\n\n// Direction string\nif (ShowDirection) {\n    if (IsEmpty(cogo_direction)==false) {\n        if (DirectionType == 1) {  //using quadrant bearing format\n            directionStr = NorthAzimuth2Quadbearing(cogo_direction);\n        }\n        else if (DirectionType == 2) {  //using north azimuth format\n            directionStr = DMS_North(cogo_direction);\n        }\n        else if (DirectionType == 3) { //using south azimuth format\n            directionStr = DMS_South(cogo_direction);\n        }\n    }\n}\n\n// Distance string\nif (ShowDistance) {\n    if (IsEmpty(cogo_distance)==false) {\n    distanceStr = text(round(cogo_distance,DistUnitRounding), NumberFormat);\n    }\n}\n\n//Radius String\nif (ShowRadius) {\n    if (!IsEmpty(cogo_radius)) { //it can be a curve or a spiral\n        if (IsEmpty(cogo_radius2)) { //if radius2 is empty this is a curve\n            radiusStr = RadiusAbbr + \" \" + text(round(cogo_radius, DistUnitRounding), NumberFormat);\n        }\n        else { // it is a spiral\n            radiusStr = RadiusAbbr + \" \" + text(round(cogo_radius, DistUnitRounding),NumberFormat);\n            radius2Str = Radius2Abbr + \" \" + text(round(cogo_radius2, DistUnitRounding),NumberFormat);\n            if (cogo_radius == 0) { //substitute to infinity sign\n                radiusStr = RadiusAbbr + \" \u221E \";\n            }\n            if (cogo_radius2 == 0) { //substitute to infinity sign\n                radius2Str = Radius2Abbr + \" \u221E \";\n            }\n        }    \n        \n    }\n}\n\n// Curve Parameter\nif (ShowCurveParameter) {\n        if (!IsEmpty(cogo_arclength)) {\n            if (CurveParameter == 'ArcLength') {\n                curveStr = text(round(cogo_arclength, DistUnitRounding), NumberFormat); //return Arc length\n            }\n            angleRad = cogo_arclength/(abs(cogo_radius)) //calculate angle in radians\n            if (CurveParameter == 'Angle') {\n                curveStr = DMS_North(angleRad * 180 / pi); // convert radian to degrees and show as DMS\n            }\n            if (CurveParameter == 'Chord') {\n                curveStr = text(round((2 * abs(cogo_radius) * Sin(angleRad/2)),DistUnitRounding), NumberFormat); //calculate chord length\n            }            \n        }\n}\n\n//Determine type of curve displayed\nvar CurveTypePrefix = \"\"\nif (!IsEmpty(curveStr)){\n    if (CurveParameter == 'ArcLength'){\n        CurveTypePrefix = ArclengthAbrr\n    }\n    else if (CurveParameter == 'Angle'){\n        CurveTypePrefix = AngleAbbr\n    }\n    else if (CurveParameter == 'Chord'){\n        CurveTypePrefix = ChordAbbr\n    }\n}\n\nvar isStraightLine = IsEmpty(radiusStr) && IsEmpty(radius2Str) && IsEmpty(curveStr)\n\n// Assemble label string\n\n//Get prefix and postfix if either distance or curve is not empty. NOTE If both aren't empty it's invalid COGO\nif (!IsEmpty(distanceStr) || !IsEmpty(curveStr)){\n    prefixPostfix = COGOTypePrefixPostfix(cogotype)\n}\n\nvar sharedLabelBuffer = \"\"\nif (labelPosition == 3) {\n    sharedLabelBuffer = \" \\n\"\n}\n\n//Straight lines\nif (isStraightLine){\n    if (!IsEmpty(directionStr) && !IsEmpty(distanceStr)){ //If Direction and Distance are both NOT Empty\n        return fontNameSize + \"<CLR \" + directionColor + \">\" + directionStr  + \"</CLR>\" + \"\\n\" +\n                              \"<CLR \" + distanceColor + \">\" + prefixPostfix[0] + distanceStr + prefixPostfix[1] + \"</CLR></FNT>\";\n    }\n    else if (IsEmpty(directionStr)){  //If Direction is empty\n        return fontNameSize + sharedLabelBuffer + \"<CLR \" + distanceColor + \">\" +\n                               prefixPostfix[0] + distanceStr + prefixPostfix[1] + \"</CLR></FNT>\";\n    }\n    else{  //If Distance is empty\n        return fontNameSize + sharedLabelBuffer + \"<CLR \" + directionColor + \">\" + directionStr +  \"</CLR></FNT>\";\n    }\n}\n\n//Curves\n//If one or both radii and the curve string are NOT empty show the full curve\nif ((!IsEmpty(radiusStr) || !IsEmpty(radius2Str)) && !IsEmpty(curveStr)){\n    return fontNameSize + \"<CLR \" + radiusColor + \">\" + radiusStr + \"</CLR>\" + \" \" +\n                          \"<CLR \" + radiusColor + \">\" + radius2Str + \"</CLR>\" + \"\\n\" +\n                          \"<CLR \" + curveParamColor + \">\" + CurveTypePrefix + ' ' +\n                          prefixPostfix[0] + curveStr + prefixPostfix[1] + \"</CLR></FNT>\";\n}\n//If the curve is empty\nelse if (IsEmpty(curveStr)){\n    return fontNameSize + sharedLabelBuffer + \"<CLR \" + radiusColor + \">\" + radiusStr + \"</CLR>\" + \"  \" +\n                          \"<CLR \" + radiusColor + \">\" + radius2Str + \"</CLR></FNT>\"\n}\n//If both radius are empty\nelse{\n    return fontNameSize + sharedLabelBuffer + \"<CLR \" + curveParamColor + \">\" + CurveTypePrefix + ' ' +\n                          prefixPostfix[0] + curveStr + prefixPostfix[1] + \"</CLR></FNT>\";\n}\n",
+          "expressionEngine" : "Arcade",
+          "featuresToLabel" : "AllVisibleFeatures",
+          "maplexLabelPlacementProperties" : {
+            "type" : "CIMMaplexLabelPlacementProperties",
+            "featureType" : "Line",
+            "avoidPolygonHoles" : true,
+            "canOverrunFeature" : false,
+            "canPlaceLabelOutsidePolygon" : true,
+            "canRemoveOverlappingLabel" : true,
+            "canStackLabel" : false,
+            "centerLabelAnchorType" : "Symbol",
+            "connectionType" : "MinimizeLabels",
+            "constrainOffset" : "LeftOfLine",
+            "contourAlignmentType" : "Page",
+            "contourLadderType" : "Straight",
+            "contourMaximumAngle" : 90,
+            "enableConnection" : false,
+            "featureWeight" : 0,
+            "fontHeightReductionLimit" : 4,
+            "fontHeightReductionStep" : 0.5,
+            "fontWidthReductionLimit" : 90,
+            "fontWidthReductionStep" : 5,
+            "graticuleAlignmentType" : "Straight",
+            "keyNumberGroupName" : "Default",
+            "labelBuffer" : 15,
+            "labelLargestPolygon" : true,
+            "labelPriority" : -1,
+            "labelStackingProperties" : {
+              "type" : "CIMMaplexLabelStackingProperties",
+              "stackAlignment" : "ChooseBest",
+              "maximumNumberOfLines" : 3,
+              "minimumNumberOfCharsPerLine" : 3,
+              "maximumNumberOfCharsPerLine" : 24,
+              "separators" : [
+                {
+                  "type" : "CIMMaplexStackingSeparator",
+                  "separator" : " ",
+                  "splitAfter" : true
+                },
+                {
+                  "type" : "CIMMaplexStackingSeparator",
+                  "separator" : ",",
+                  "visible" : true,
+                  "splitAfter" : true
+                }
+              ],
+              "trimStackingSeparators" : true
+            },
+            "lineFeatureType" : "General",
+            "linePlacementMethod" : "OffsetCurvedFromLine",
+            "maximumLabelOverrun" : 0,
+            "maximumLabelOverrunUnit" : "Point",
+            "minimumFeatureSizeUnit" : "Map",
+            "multiPartOption" : "OneLabelPerFeature",
+            "offsetAlongLineProperties" : {
+              "type" : "CIMMaplexOffsetAlongLineProperties",
+              "placementMethod" : "AlongLineFromStart",
+              "labelAnchorPoint" : "CenterOfLabel",
+              "distance" : 50,
+              "tolerance" : 5,
+              "distanceUnit" : "Percentage",
+              "useLineDirection" : true
+            },
+            "pointExternalZonePriorities" : {
+              "type" : "CIMMaplexExternalZonePriorities",
+              "aboveLeft" : 4,
+              "aboveCenter" : 2,
+              "aboveRight" : 1,
+              "centerRight" : 3,
+              "belowRight" : 5,
+              "belowCenter" : 7,
+              "belowLeft" : 8,
+              "centerLeft" : 6
+            },
+            "pointPlacementMethod" : "AroundPoint",
+            "polygonAnchorPointType" : "GeometricCenter",
+            "polygonBoundaryWeight" : 0,
+            "polygonExternalZones" : {
+              "type" : "CIMMaplexExternalZonePriorities",
+              "aboveLeft" : 4,
+              "aboveCenter" : 2,
+              "aboveRight" : 1,
+              "centerRight" : 3,
+              "belowRight" : 5,
+              "belowCenter" : 7,
+              "belowLeft" : 8,
+              "centerLeft" : 6
+            },
+            "polygonFeatureType" : "General",
+            "polygonInternalZones" : {
+              "type" : "CIMMaplexInternalZonePriorities",
+              "center" : 1
+            },
+            "polygonPlacementMethod" : "CurvedInPolygon",
+            "primaryOffset" : 3,
+            "primaryOffsetUnit" : "Point",
+            "removeAmbiguousLabels" : "All",
+            "removeExtraWhiteSpace" : false,
+            "repetitionIntervalUnit" : "Map",
+            "rotationProperties" : {
+              "type" : "CIMMaplexRotationProperties",
+              "rotationType" : "Arithmetic",
+              "alignmentType" : "Straight"
+            },
+            "secondaryOffset" : 100,
+            "secondaryOffsetUnit" : "Percentage",
+            "strategyPriorities" : {
+              "type" : "CIMMaplexStrategyPriorities",
+              "stacking" : 1,
+              "overrun" : 2,
+              "fontCompression" : 3,
+              "fontReduction" : 4,
+              "abbreviation" : 5
+            },
+            "thinningDistanceUnit" : "Point",
+            "truncationMarkerCharacter" : ".",
+            "truncationMinimumLength" : 1,
+            "truncationPreferredCharacters" : "aeiou",
+            "polygonAnchorPointPerimeterInsetUnit" : "Point"
+          },
+          "minimumScale" : 2000,
+          "name" : "COGO Left",
+          "priority" : -1,
+          "standardLabelPlacementProperties" : {
+            "type" : "CIMStandardLabelPlacementProperties",
+            "featureType" : "Line",
+            "featureWeight" : "None",
+            "labelWeight" : "High",
+            "numLabelsOption" : "OneLabelPerName",
+            "lineLabelPosition" : {
+              "type" : "CIMStandardLineLabelPosition",
+              "above" : true,
+              "inLine" : true,
+              "parallel" : true
+            },
+            "lineLabelPriorities" : {
+              "type" : "CIMStandardLineLabelPriorities",
+              "aboveStart" : 3,
+              "aboveAlong" : 3,
+              "aboveEnd" : 3,
+              "centerStart" : 3,
+              "centerAlong" : 3,
+              "centerEnd" : 3,
+              "belowStart" : 3,
+              "belowAlong" : 3,
+              "belowEnd" : 3
+            },
+            "pointPlacementMethod" : "AroundPoint",
+            "pointPlacementPriorities" : {
+              "type" : "CIMStandardPointPlacementPriorities",
+              "aboveLeft" : 2,
+              "aboveCenter" : 2,
+              "aboveRight" : 1,
+              "centerLeft" : 3,
+              "centerRight" : 2,
+              "belowLeft" : 3,
+              "belowCenter" : 3,
+              "belowRight" : 2
+            },
+            "rotationType" : "Arithmetic",
+            "polygonPlacementMethod" : "AlwaysHorizontal"
+          },
+          "textSymbol" : {
+            "type" : "CIMSymbolReference",
+            "symbol" : {
+              "type" : "CIMTextSymbol",
+              "blockProgression" : "TTB",
+              "depth3D" : 1,
+              "extrapolateBaselines" : true,
+              "fontEffects" : "Normal",
+              "fontEncoding" : "Unicode",
+              "fontFamilyName" : "Tahoma",
+              "fontStyleName" : "Regular",
+              "fontType" : "Unspecified",
+              "haloSize" : 2,
+              "haloSymbol" : {
+                "type" : "CIMPolygonSymbol",
+                "symbolLayers" : [
+                  {
+                    "type" : "CIMSolidFill",
+                    "enable" : true,
+                    "color" : {
+                      "type" : "CIMRGBColor",
+                      "values" : [
+                        255,
+                        255,
+                        255,
+                        100
+                      ]
+                    }
+                  }
+                ],
+                "angleAlignment" : "Map"
+              },
+              "height" : 10,
+              "hinting" : "Default",
+              "horizontalAlignment" : "Left",
+              "kerning" : true,
+              "letterWidth" : 100,
+              "ligatures" : true,
+              "lineGapType" : "ExtraLeading",
+              "symbol" : {
+                "type" : "CIMPolygonSymbol",
+                "symbolLayers" : [
+                  {
+                    "type" : "CIMSolidFill",
+                    "enable" : true,
+                    "color" : {
+                      "type" : "CIMRGBColor",
+                      "values" : [
+                        0,
+                        0,
+                        0,
+                        100
+                      ]
+                    }
+                  }
+                ],
+                "angleAlignment" : "Map"
+              },
+              "symbol3DProperties" : {
+                "type" : "CIM3DSymbolProperties",
+                "dominantSizeAxis3D" : "Z",
+                "rotationOrder3D" : "XYZ",
+                "scaleZ" : 1,
+                "scaleY" : 1
+              },
+              "textCase" : "Normal",
+              "textDirection" : "LTR",
+              "verticalAlignment" : "Bottom",
+              "verticalGlyphOrientation" : "Right",
+              "wordSpacing" : 100,
+              "billboardMode3D" : "FaceNearPlane"
+            }
+          },
+          "useCodedValue" : false,
+          "whereClause" : "LabelPosition = 2",
+          "visibility" : true,
+          "iD" : -1
+        },
+        {
+          "type" : "CIMLabelClass",
+          "expressionTitle" : "COGOShared",
+          "expression" : "// Change the settings portion to configure direction format, color, rounding and abbreviations\n// This is an Arcade expression\n\n// SETTINGS\nvar ShowDistance = true;   //set as 'true' to show distance\nvar ShowDirection = true;  //set as 'true' to show direction\nvar DirectionType = 1; // 1 = Quadrant Bearing; 2 = North Azimuth; 3 = South Azimuth\nvar ShowRadius = true;     //set as 'true' to show radius\nvar ShowCurveParameter = true;    //set as 'true' to show a curve parameter\nvar ShowCOGOType = true;  //set as 'true' to show prefixes and postfixes defined below for each cogo line label\nvar COGOType_Entered = ['', ''] //Change prefix and postfix for Entered courses\nvar COGOType_Computed = ['±', '']  //Change prefix and postfix for Computed courses\nvar COGOType_FromGeom = ['&lt;', '>'] //Change for prefix and postfix From Geometry courses. The &lt; is a special character to represent the left angle bracket\nvar CurveParameter = \"ArcLength\"; //set as 'ArcLength' or 'Chord' or 'Angle' for central angle. Case sensitive!\nvar ErrorString = \"COGO ERROR\";   //set to display invalid COGO combinations\nvar RadiusAbbr = 'R=';     //radius abbreviation\nvar Radius2Abbr = 'R2=';     //radius2 abbreviation for spiral curves\nvar ArclengthAbrr = 'L=';  //arclength abbreviation\nvar ChordAbbr = 'C=';      //chord abbreviation\nvar AngleAbbr = 'A=';      //central Angle abbreviation\nvar DistUnitRounding = 2;  //number of decimal places for distance units: distance, radius, arclength & chord\nvar NumberFormat = \"#,###.00\" //number format. In this example: thousands separator with padding of 2 zeros \nvar directionColor = \"blue='255'\"; //direction color: red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar distanceColor = \"black='255'\"; //distance color: red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar radiusColor = \"blue='255'\";    //radius color:  red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar curveParamColor = \"black='255'\"; //curve parameter color:  red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar partialCOGOColor = \"magenta='255'\"; //partial COGO color: red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar invalidCOGOColor = \"red='255'\"; //invalid COGO color: red, green, blue, cyan, magenta, yellow, black. You can also use RGB or CYMK combinations.\nvar fontNameSize = \"<FNT name = 'Arial' size = '10'>\"; //font type and size\n\n// VARIABLES\nvar cogo_direction = $feature.Direction;\nvar cogo_distance = $feature.Distance;\nvar cogo_radius = $feature.Radius;\nvar cogo_arclength = $feature.Arclength;\nvar cogo_radius2 = $feature.Radius2\nvar cogotype = $feature.COGOType\nif (HasKey($feature, \"labelPosition\")){\n   var labelPosition = $feature.labelPosition\n}\nelse {\n   var labelPosition = 1\n}\nvar binaryDictionary; //binary dictionary to check COGO combinations\nvar checksum = 0; //initialize checksum\nvar validValuesArray; //array of valid values for COGO combinations\nvar partialValuesArray; //array of partial values for COGO\nvar directionStr = \"\"; //direction string using for label\nvar distanceStr = \"\";  //distance string using for label\nvar radiusStr = \"\";    //radius string using for label\nvar radius2Str = \"\";    //radius2 string using for labeling spiral curves\nvar curveStr = \"\";     //curve parameter string using for label\nvar prefixPostfix = ['', '']  //Used for prefix and postfix of COGO Type\nvar angleRad; //curve angle in radians\nvar COGOValidity; //COGO combinations validity. can be valid, partial or invalid.\n\nif (IsEmpty(cogo_direction) && IsEmpty(cogo_distance) && IsEmpty(cogo_radius) && IsEmpty(cogo_radius2) && IsEmpty(cogo_arclength)){\n    return \"\"\n}\n\nfunction NorthAzimuth2Quadbearing(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'Quadrant', angleType: 'DMS', outputType: 'text', format: 'pd[°]mm[\\']ss[\"]b'})\n}\n\nfunction DMS_North(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'North', angleType: 'DMS', outputType: 'text', format: 'd[°]mm[\\']ss[\"]'})\n}\n\nfunction DMS_South(azimuth){\n    return ConvertDirection(azimuth, {directionType:'North', angleType: 'Degrees'}, {directionType:'South', angleType: 'DMS', outputType: 'text', format: 'd[°]mm[\\']ss[\"]'})\n}\n\nfunction IsValidCOGO(cogo_direction, cogo_distance, cogo_radius, cogo_arclength, cogo_radius2) {\n    binaryDictionary= Dictionary('dir', 1, 'dist',2, 'rad',4, 'arc',8, 'rad2',16)\n    if (!IsEmpty(cogo_direction)) {checksum+=binaryDictionary.dir}\n    if (!IsEmpty(cogo_distance)) {checksum+=binaryDictionary.dist}\n    if (!IsEmpty(cogo_radius)) {checksum+=binaryDictionary.rad}\n    if (!IsEmpty(cogo_arclength)) {checksum+=binaryDictionary.arc}\n    if (!IsEmpty(cogo_radius2)) {checksum+=binaryDictionary.rad2}\n    \n    validValuesArray=[0,3,13,29]; //array of valid combinations: '0' for nothing, ... '13' for direction & radius & arclength ...\n    partialValuesArray=[1,2,4,5,8,9,12,16,17,20,21,24,25,27,28]; //array of partial combinations: '1' for only direction, '2' for only distance, '4' for only radius...\n    //Invalid Values = [6,7,10,11,14,15,18,19,22,23,26,30,31]\n\n    if (IndexOf(validValuesArray,checksum)>-1) { // a negative value is returned if checksum value is not in the a valid combination array\n        return \"valid\";\n    }\n    if (IndexOf(partialValuesArray,checksum)>-1){\n        return \"partial\";        \n    }\n    return \"invalid\";\n}\n\nfunction COGOTypePrefixPostfix(cogotypeValue){\n    if (ShowCOGOType){\n        if (cogotypeValue == 1) { //Entered\n           return COGOType_Entered\n        }\n        else if(cogotypeValue == 2) { //From Geometry\n           return COGOType_FromGeom\n        }\n        else if(cogotypeValue == 3) { //Computed\n           return COGOType_Computed\n        }\n        else { //If not set or invalid value\n           return ['', '']\n        }\n    }\n    else{\n       return(['', ''])\n    }\n}\n\nCOGOValidity = IsValidCOGO(cogo_direction, cogo_distance, cogo_radius, cogo_arclength, cogo_radius2);\nif ( COGOValidity == \"invalid\") { //if invalid COGO return error string\n    return \"<BOL><CLR \" + invalidCOGOColor + \">\" + fontNameSize + ErrorString + \"</FNT></CLR></BOL>\";    \n}\n\nelse if (COGOValidity == \"partial\") { //if a partial COGO change colors\n    distanceColor = partialCOGOColor;\n    directionColor = partialCOGOColor;\n    radiusColor = partialCOGOColor;\n    curveParamColor = partialCOGOColor;\n}\n\n// Direction string\nif (ShowDirection) {\n    if (IsEmpty(cogo_direction)==false) {\n        if (DirectionType == 1) {  //using quadrant bearing format\n            directionStr = NorthAzimuth2Quadbearing(cogo_direction);\n        }\n        else if (DirectionType == 2) {  //using north azimuth format\n            directionStr = DMS_North(cogo_direction);\n        }\n        else if (DirectionType == 3) { //using south azimuth format\n            directionStr = DMS_South(cogo_direction);\n        }\n    }\n}\n\n// Distance string\nif (ShowDistance) {\n    if (IsEmpty(cogo_distance)==false) {\n    distanceStr = text(round(cogo_distance,DistUnitRounding), NumberFormat);\n    }\n}\n\n//Radius String\nif (ShowRadius) {\n    if (!IsEmpty(cogo_radius)) { //it can be a curve or a spiral\n        if (IsEmpty(cogo_radius2)) { //if radius2 is empty this is a curve\n            radiusStr = RadiusAbbr + \" \" + text(round(cogo_radius, DistUnitRounding), NumberFormat);\n        }\n        else { // it is a spiral\n            radiusStr = RadiusAbbr + \" \" + text(round(cogo_radius, DistUnitRounding),NumberFormat);\n            radius2Str = Radius2Abbr + \" \" + text(round(cogo_radius2, DistUnitRounding),NumberFormat);\n            if (cogo_radius == 0) { //substitute to infinity sign\n                radiusStr = RadiusAbbr + \" \u221E \";\n            }\n            if (cogo_radius2 == 0) { //substitute to infinity sign\n                radius2Str = Radius2Abbr + \" \u221E \";\n            }\n        }    \n        \n    }\n}\n\n// Curve Parameter\nif (ShowCurveParameter) {\n        if (!IsEmpty(cogo_arclength)) {\n            if (CurveParameter == 'ArcLength') {\n                curveStr = text(round(cogo_arclength, DistUnitRounding), NumberFormat); //return Arc length\n            }\n            angleRad = cogo_arclength/(abs(cogo_radius)) //calculate angle in radians\n            if (CurveParameter == 'Angle') {\n                curveStr = DMS_North(angleRad * 180 / pi); // convert radian to degrees and show as DMS\n            }\n            if (CurveParameter == 'Chord') {\n                curveStr = text(round((2 * abs(cogo_radius) * Sin(angleRad/2)),DistUnitRounding), NumberFormat); //calculate chord length\n            }            \n        }\n}\n\n//Determine type of curve displayed\nvar CurveTypePrefix = \"\"\nif (!IsEmpty(curveStr)){\n    if (CurveParameter == 'ArcLength'){\n        CurveTypePrefix = ArclengthAbrr\n    }\n    else if (CurveParameter == 'Angle'){\n        CurveTypePrefix = AngleAbbr\n    }\n    else if (CurveParameter == 'Chord'){\n        CurveTypePrefix = ChordAbbr\n    }\n}\n\nvar isStraightLine = IsEmpty(radiusStr) && IsEmpty(radius2Str) && IsEmpty(curveStr)\n\n// Assemble label string\n\n//Get prefix and postfix if either distance or curve is not empty. NOTE If both aren't empty it's invalid COGO\nif (!IsEmpty(distanceStr) || !IsEmpty(curveStr)){\n    prefixPostfix = COGOTypePrefixPostfix(cogotype)\n}\n\nvar sharedLabelBuffer = \"\"\nif (labelPosition == 3) {\n    sharedLabelBuffer = \" \\n\"\n}\n\n//Straight lines\nif (isStraightLine){\n    if (!IsEmpty(directionStr) && !IsEmpty(distanceStr)){ //If Direction and Distance are both NOT Empty\n        return fontNameSize + \"<CLR \" + directionColor + \">\" + directionStr  + \"</CLR>\" + \"\\n\" +\n                              \"<CLR \" + distanceColor + \">\" + prefixPostfix[0] + distanceStr + prefixPostfix[1] + \"</CLR></FNT>\";\n    }\n    else if (IsEmpty(directionStr)){  //If Direction is empty\n        return fontNameSize + sharedLabelBuffer + \"<CLR \" + distanceColor + \">\" +\n                               prefixPostfix[0] + distanceStr + prefixPostfix[1] + \"</CLR></FNT>\";\n    }\n    else{  //If Distance is empty\n        return fontNameSize + sharedLabelBuffer + \"<CLR \" + directionColor + \">\" + directionStr +  \"</CLR></FNT>\";\n    }\n}\n\n//Curves\n//If one or both radii and the curve string are NOT empty show the full curve\nif ((!IsEmpty(radiusStr) || !IsEmpty(radius2Str)) && !IsEmpty(curveStr)){\n    return fontNameSize + \"<CLR \" + radiusColor + \">\" + radiusStr + \"</CLR>\" + \" \" +\n                          \"<CLR \" + radiusColor + \">\" + radius2Str + \"</CLR>\" + \"\\n\" +\n                          \"<CLR \" + curveParamColor + \">\" + CurveTypePrefix + ' ' +\n                          prefixPostfix[0] + curveStr + prefixPostfix[1] + \"</CLR></FNT>\";\n}\n//If the curve is empty\nelse if (IsEmpty(curveStr)){\n    return fontNameSize + sharedLabelBuffer + \"<CLR \" + radiusColor + \">\" + radiusStr + \"</CLR>\" + \"  \" +\n                          \"<CLR \" + radiusColor + \">\" + radius2Str + \"</CLR></FNT>\"\n}\n//If both radius are empty\nelse{\n    return fontNameSize + sharedLabelBuffer + \"<CLR \" + curveParamColor + \">\" + CurveTypePrefix + ' ' +\n                          prefixPostfix[0] + curveStr + prefixPostfix[1] + \"</CLR></FNT>\";\n}\n",
+          "expressionEngine" : "Arcade",
+          "featuresToLabel" : "AllVisibleFeatures",
+          "maplexLabelPlacementProperties" : {
+            "type" : "CIMMaplexLabelPlacementProperties",
+            "featureType" : "Line",
+            "avoidPolygonHoles" : true,
+            "canOverrunFeature" : false,
+            "canPlaceLabelOutsidePolygon" : true,
+            "canRemoveOverlappingLabel" : true,
+            "canStackLabel" : false,
+            "centerLabelAnchorType" : "Symbol",
+            "connectionType" : "MinimizeLabels",
+            "constrainOffset" : "AboveLine",
+            "contourAlignmentType" : "Page",
+            "contourLadderType" : "Straight",
+            "contourMaximumAngle" : 90,
+            "enableConnection" : false,
+            "featureWeight" : 0,
+            "fontHeightReductionLimit" : 4,
+            "fontHeightReductionStep" : 0.5,
+            "fontWidthReductionLimit" : 90,
+            "fontWidthReductionStep" : 5,
+            "graticuleAlignmentType" : "Straight",
+            "keyNumberGroupName" : "Default",
+            "labelBuffer" : 15,
+            "labelLargestPolygon" : true,
+            "labelPriority" : -1,
+            "labelStackingProperties" : {
+              "type" : "CIMMaplexLabelStackingProperties",
+              "stackAlignment" : "ChooseBest",
+              "maximumNumberOfLines" : 3,
+              "minimumNumberOfCharsPerLine" : 3,
+              "maximumNumberOfCharsPerLine" : 24,
+              "separators" : [
+                {
+                  "type" : "CIMMaplexStackingSeparator",
+                  "separator" : " ",
+                  "splitAfter" : true
+                },
+                {
+                  "type" : "CIMMaplexStackingSeparator",
+                  "separator" : ",",
+                  "visible" : true,
+                  "splitAfter" : true
+                }
+              ],
+              "trimStackingSeparators" : true
+            },
+            "lineFeatureType" : "General",
+            "linePlacementMethod" : "CenteredCurvedOnLine",
+            "maximumLabelOverrun" : 0,
+            "maximumLabelOverrunUnit" : "Point",
+            "minimumFeatureSizeUnit" : "Map",
+            "multiPartOption" : "OneLabelPerFeature",
+            "offsetAlongLineProperties" : {
+              "type" : "CIMMaplexOffsetAlongLineProperties",
+              "placementMethod" : "AlongLineFromStart",
+              "labelAnchorPoint" : "CenterOfLabel",
+              "distance" : 50,
+              "tolerance" : 5,
+              "distanceUnit" : "Percentage",
+              "useLineDirection" : true
+            },
+            "pointExternalZonePriorities" : {
+              "type" : "CIMMaplexExternalZonePriorities",
+              "aboveLeft" : 4,
+              "aboveCenter" : 2,
+              "aboveRight" : 1,
+              "centerRight" : 3,
+              "belowRight" : 5,
+              "belowCenter" : 7,
+              "belowLeft" : 8,
+              "centerLeft" : 6
+            },
+            "pointPlacementMethod" : "AroundPoint",
+            "polygonAnchorPointType" : "GeometricCenter",
+            "polygonBoundaryWeight" : 0,
+            "polygonExternalZones" : {
+              "type" : "CIMMaplexExternalZonePriorities",
+              "aboveLeft" : 4,
+              "aboveCenter" : 2,
+              "aboveRight" : 1,
+              "centerRight" : 3,
+              "belowRight" : 5,
+              "belowCenter" : 7,
+              "belowLeft" : 8,
+              "centerLeft" : 6
+            },
+            "polygonFeatureType" : "General",
+            "polygonInternalZones" : {
+              "type" : "CIMMaplexInternalZonePriorities",
+              "center" : 1
+            },
+            "polygonPlacementMethod" : "CurvedInPolygon",
+            "primaryOffset" : 3,
+            "primaryOffsetUnit" : "Point",
+            "removeAmbiguousLabels" : "All",
+            "removeExtraWhiteSpace" : false,
+            "repetitionIntervalUnit" : "Map",
+            "rotationProperties" : {
+              "type" : "CIMMaplexRotationProperties",
+              "rotationType" : "Arithmetic",
+              "alignmentType" : "Straight"
+            },
+            "secondaryOffset" : 100,
+            "secondaryOffsetUnit" : "Percentage",
+            "strategyPriorities" : {
+              "type" : "CIMMaplexStrategyPriorities",
+              "stacking" : 1,
+              "overrun" : 2,
+              "fontCompression" : 3,
+              "fontReduction" : 4,
+              "abbreviation" : 5
+            },
+            "thinningDistanceUnit" : "Point",
+            "truncationMarkerCharacter" : ".",
+            "truncationMinimumLength" : 1,
+            "truncationPreferredCharacters" : "aeiou",
+            "polygonAnchorPointPerimeterInsetUnit" : "Point"
+          },
+          "minimumScale" : 2000,
+          "name" : "COGO Shared",
+          "priority" : -1,
+          "standardLabelPlacementProperties" : {
+            "type" : "CIMStandardLabelPlacementProperties",
+            "featureType" : "Line",
+            "featureWeight" : "None",
+            "labelWeight" : "High",
+            "numLabelsOption" : "OneLabelPerName",
+            "lineLabelPosition" : {
+              "type" : "CIMStandardLineLabelPosition",
+              "above" : true,
+              "inLine" : true,
+              "parallel" : true
+            },
+            "lineLabelPriorities" : {
+              "type" : "CIMStandardLineLabelPriorities",
+              "aboveStart" : 3,
+              "aboveAlong" : 3,
+              "aboveEnd" : 3,
+              "centerStart" : 3,
+              "centerAlong" : 3,
+              "centerEnd" : 3,
+              "belowStart" : 3,
+              "belowAlong" : 3,
+              "belowEnd" : 3
+            },
+            "pointPlacementMethod" : "AroundPoint",
+            "pointPlacementPriorities" : {
+              "type" : "CIMStandardPointPlacementPriorities",
+              "aboveLeft" : 2,
+              "aboveCenter" : 2,
+              "aboveRight" : 1,
+              "centerLeft" : 3,
+              "centerRight" : 2,
+              "belowLeft" : 3,
+              "belowCenter" : 3,
+              "belowRight" : 2
+            },
+            "rotationType" : "Arithmetic",
+            "polygonPlacementMethod" : "AlwaysHorizontal"
+          },
+          "textSymbol" : {
+            "type" : "CIMSymbolReference",
+            "symbol" : {
+              "type" : "CIMTextSymbol",
+              "blockProgression" : "TTB",
+              "depth3D" : 1,
+              "extrapolateBaselines" : true,
+              "fontEffects" : "Normal",
+              "fontEncoding" : "Unicode",
+              "fontFamilyName" : "Tahoma",
+              "fontStyleName" : "Regular",
+              "fontType" : "Unspecified",
+              "haloSize" : 2,
+              "haloSymbol" : {
+                "type" : "CIMPolygonSymbol",
+                "symbolLayers" : [
+                  {
+                    "type" : "CIMSolidFill",
+                    "enable" : true,
+                    "color" : {
+                      "type" : "CIMRGBColor",
+                      "values" : [
+                        255,
+                        255,
+                        255,
+                        100
+                      ]
+                    }
+                  }
+                ],
+                "angleAlignment" : "Map"
+              },
+              "height" : 10,
+              "hinting" : "Default",
+              "horizontalAlignment" : "Left",
+              "kerning" : true,
+              "letterWidth" : 100,
+              "ligatures" : true,
+              "lineGap" : 4,
+              "lineGapType" : "ExtraLeading",
+              "symbol" : {
+                "type" : "CIMPolygonSymbol",
+                "symbolLayers" : [
+                  {
+                    "type" : "CIMSolidFill",
+                    "enable" : true,
+                    "color" : {
+                      "type" : "CIMRGBColor",
+                      "values" : [
+                        0,
+                        0,
+                        0,
+                        100
+                      ]
+                    }
+                  }
+                ],
+                "angleAlignment" : "Map"
+              },
+              "symbol3DProperties" : {
+                "type" : "CIM3DSymbolProperties",
+                "dominantSizeAxis3D" : "Z",
+                "rotationOrder3D" : "XYZ",
+                "scaleZ" : 1,
+                "scaleY" : 1
+              },
+              "textCase" : "Normal",
+              "textDirection" : "LTR",
+              "verticalAlignment" : "Bottom",
+              "verticalGlyphOrientation" : "Right",
+              "wordSpacing" : 100,
+              "billboardMode3D" : "FaceNearPlane"
+            }
+          },
+          "useCodedValue" : false,
+          "whereClause" : "LabelPosition = 3",
+          "visibility" : true,
+          "iD" : -1
+        }
+      ],
+      "labelVisibility" : true,
+      "renderer" : {
+        "type" : "CIMUniqueValueRenderer",
+        "sampleSize" : 10000,
+        "colorRamp" : {
+          "type" : "CIMRandomHSVColorRamp",
+          "colorSpace" : {
+            "type" : "CIMICCColorSpace",
+            "url" : "Default RGB"
+          },
+          "maxH" : 360,
+          "minS" : 15,
+          "maxS" : 30,
+          "minV" : 99,
+          "maxV" : 100,
+          "minAlpha" : 100,
+          "maxAlpha" : 100
+        },
+        "defaultLabel" : "<all other values>",
+        "defaultSymbol" : {
+          "type" : "CIMSymbolReference",
+          "symbol" : {
+            "type" : "CIMLineSymbol",
+            "symbolLayers" : [
+              {
+                "type" : "CIMSolidStroke",
+                "enable" : true,
+                "capStyle" : "Round",
+                "joinStyle" : "Round",
+                "lineStyle3D" : "Strip",
+                "miterLimit" : 10,
+                "width" : 1,
+                "color" : {
+                  "type" : "CIMRGBColor",
+                  "values" : [
+                    130,
+                    130,
+                    130,
+                    100
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "defaultSymbolPatch" : "Default",
+        "groups" : [
+          {
+            "type" : "CIMUniqueValueGroup",
+            "classes" : [
+              {
+                "type" : "CIMUniqueValueClass",
+                "editable" : true,
+                "label" : "COGO",
+                "patch" : "Default",
+                "symbol" : {
+                  "type" : "CIMSymbolReference",
+                  "symbol" : {
+                    "type" : "CIMLineSymbol",
+                    "symbolLayers" : [
+                      {
+                        "type" : "CIMCharacterMarker",
+                        "enable" : true,
+                        "anchorPointUnits" : "Relative",
+                        "dominantSizeAxis3D" : "Y",
+                        "rotateClockwise" : true,
+                        "rotation" : 180,
+                        "size" : 9,
+                        "billboardMode3D" : "FaceNearPlane",
+                        "markerPlacement" : {
+                          "type" : "CIMMarkerPlacementOnLine",
+                          "angleToLine" : true,
+                          "relativeTo" : "LineMiddle",
+                          "startPointOffset" : -4
+                        },
+                        "characterIndex" : 179,
+                        "fontFamilyName" : "ESRI Arrowhead",
+                        "fontStyleName" : "Regular",
+                        "fontType" : "TrueType",
+                        "scaleX" : 1,
+                        "symbol" : {
+                          "type" : "CIMPolygonSymbol",
+                          "symbolLayers" : [
+                            {
+                              "type" : "CIMSolidStroke",
+                              "enable" : true,
+                              "capStyle" : "Round",
+                              "joinStyle" : "Round",
+                              "lineStyle3D" : "Strip",
+                              "miterLimit" : 10,
+                              "width" : 0.5,
+                              "color" : {
+                                "type" : "CIMRGBColor",
+                                "values" : [
+                                  255,
+                                  0,
+                                  0,
+                                  100
+                                ]
+                              }
+                            },
+                            {
+                              "type" : "CIMSolidFill",
+                              "enable" : true,
+                              "color" : {
+                                "type" : "CIMRGBColor",
+                                "values" : [
+                                  255,
+                                  0,
+                                  0,
+                                  100
+                                ]
+                              }
+                            }
+                          ],
+                          "angleAlignment" : "Map"
+                        },
+                        "scaleSymbolsProportionally" : true,
+                        "respectFrame" : true
+                      },
+                      {
+                        "type" : "CIMCharacterMarker",
+                        "enable" : true,
+                        "anchorPointUnits" : "Relative",
+                        "dominantSizeAxis3D" : "Y",
+                        "size" : 6,
+                        "billboardMode3D" : "FaceNearPlane",
+                        "markerPlacement" : {
+                          "type" : "CIMMarkerPlacementAtExtremities",
+                          "angleToLine" : false,
+                          "extremityPlacement" : "Both"
+                        },
+                        "characterIndex" : 40,
+                        "fontFamilyName" : "ESRI Default Marker",
+                        "fontStyleName" : "Regular",
+                        "fontType" : "Unspecified",
+                        "scaleX" : 1,
+                        "symbol" : {
+                          "type" : "CIMPolygonSymbol",
+                          "symbolLayers" : [
+                            {
+                              "type" : "CIMSolidStroke",
+                              "enable" : true,
+                              "capStyle" : "Round",
+                              "joinStyle" : "Round",
+                              "lineStyle3D" : "Strip",
+                              "miterLimit" : 10,
+                              "width" : 0.5,
+                              "color" : {
+                                "type" : "CIMRGBColor",
+                                "values" : [
+                                  255,
+                                  0,
+                                  0,
+                                  100
+                                ]
+                              }
+                            },
+                            {
+                              "type" : "CIMSolidFill",
+                              "enable" : true,
+                              "color" : {
+                                "type" : "CIMRGBColor",
+                                "values" : [
+                                  255,
+                                  0,
+                                  0,
+                                  100
+                                ]
+                              }
+                            }
+                          ],
+                          "angleAlignment" : "Map"
+                        },
+                        "scaleSymbolsProportionally" : true,
+                        "respectFrame" : true
+                      },
+                      {
+                        "type" : "CIMSolidStroke",
+                        "enable" : true,
+                        "capStyle" : "Round",
+                        "joinStyle" : "Round",
+                        "lineStyle3D" : "Strip",
+                        "miterLimit" : 10,
+                        "width" : 0.75,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            255,
+                            0,
+                            0,
+                            100
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "minScale" : 2000
+                },
+                "values" : [
+                  {
+                    "type" : "CIMUniqueValue",
+                    "fieldValues" : [
+                      "COGO"
+                    ]
+                  }
+                ],
+                "visible" : true,
+                "alternateSymbols" : [
+                  {
+                    "type" : "CIMSymbolReference",
+                    "symbol" : {
+                      "type" : "CIMLineSymbol",
+                      "symbolLayers" : [
+                        {
+                          "type" : "CIMSolidStroke",
+                          "enable" : true,
+                          "capStyle" : "Round",
+                          "joinStyle" : "Round",
+                          "lineStyle3D" : "Strip",
+                          "miterLimit" : 10,
+                          "width" : 0.5,
+                          "color" : {
+                            "type" : "CIMRGBColor",
+                            "values" : [
+                              255,
+                              127,
+                              127,
+                              100
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "maxScale" : 2000
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "valueExpressionInfo" : {
+          "type" : "CIMExpressionInfo",
+          "title" : "Custom",
+          "expression" : "return \"COGO\"",
+          "returnType" : "Default"
+        },
+        "polygonSymbolColorTarget" : "Fill"
+      },
+      "scaleSymbols" : true,
+      "snappable" : true,
+      "symbolLayerDrawing" : {
+        "type" : "CIMSymbolLayerDrawing"
+      }
+    }
+  ],
+  "binaryReferences" : [
+    {
+      "type" : "CIMBinaryReference",
+      "uRI" : "CIMPATH=Metadata/9a1c1e4cf2e8ab75d22f40b7c9a927c4.xml",
+      "data" : "<?xml version=\"1.0\"?>\r\n<metadata xml:lang=\"he\"><Esri><CreaDate>20231206</CreaDate><CreaTime>11384600</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>TRUE</SyncOnce></Esri><dataIdInfo><idCitation><resTitle>Historic Blocks_Lines</resTitle></idCitation><idAbs>Lines</idAbs><idCredit></idCredit><idPurp></idPurp><resConst><Consts><useLimit></useLimit></Consts></resConst></dataIdInfo></metadata>\r\n"
+    }
+  ],
+  "rGBColorProfile" : "sRGB IEC61966-2.1",
+  "cMYKColorProfile" : "U.S. Web Coated (SWOP) v2"
+}
