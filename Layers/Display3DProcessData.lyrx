@@ -10,7 +10,6 @@
       "type" : "CIMFeatureLayer",
       "name" : "נקודות חדשות",
       "uRI" : "CIMPATH=_________/____________26.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : 978307200000
@@ -135,31 +134,15 @@
         "fieldDescriptions" : [
           {
             "type" : "CIMFieldDescription",
-            "alias" : "OBJECTID",
-            "fieldName" : "OBJECTID",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 0
-            },
-            "readOnly" : true,
+            "alias" : "שם נקודה",
+            "fieldName" : "Name",
             "visible" : true,
             "searchMode" : "Exact"
           },
           {
             "type" : "CIMFieldDescription",
-            "alias" : "מזהה נקודת גבול",
-            "fieldName" : "GlobalID",
-            "readOnly" : true,
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "סיווג",
-            "fieldName" : "Class",
+            "alias" : "מעמד",
+            "fieldName" : "Role",
             "numberFormat" : {
               "type" : "CIMNumericFormat",
               "alignmentOption" : "esriAlignRight",
@@ -172,8 +155,8 @@
           },
           {
             "type" : "CIMFieldDescription",
-            "alias" : "מקור הנקודה",
-            "fieldName" : "DataSource",
+            "alias" : "עודכן ברצף",
+            "fieldName" : "Recorded",
             "numberFormat" : {
               "type" : "CIMNumericFormat",
               "alignmentOption" : "esriAlignRight",
@@ -182,40 +165,12 @@
               "roundingValue" : 0
             },
             "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "נקודת גבול ובקרה",
-            "fieldName" : "IsControlBorder",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 0
-            },
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "מזהה תהליך קדסטרי",
-            "fieldName" : "CPBUniqueID",
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "קואורדינטה",
-            "fieldName" : "Shape",
-            "visible" : false,
             "searchMode" : "Exact"
           }
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "3",
           "datasetType" : "esriDTFeatureClass"
@@ -647,7 +602,6 @@
       "type" : "CIMFeatureLayer",
       "name" : "נקודות לשימור",
       "uRI" : "CIMPATH=_________/____________25.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : 978307200000
@@ -773,31 +727,15 @@
         "fieldDescriptions" : [
           {
             "type" : "CIMFieldDescription",
-            "alias" : "OBJECTID",
-            "fieldName" : "OBJECTID",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 0
-            },
-            "readOnly" : true,
+            "alias" : "שם נקודה",
+            "fieldName" : "Name",
             "visible" : true,
             "searchMode" : "Exact"
           },
           {
             "type" : "CIMFieldDescription",
-            "alias" : "מזהה נקודת גבול",
-            "fieldName" : "GlobalID",
-            "readOnly" : true,
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "סיווג",
-            "fieldName" : "Class",
+            "alias" : "מעמד",
+            "fieldName" : "Role",
             "numberFormat" : {
               "type" : "CIMNumericFormat",
               "alignmentOption" : "esriAlignRight",
@@ -810,8 +748,8 @@
           },
           {
             "type" : "CIMFieldDescription",
-            "alias" : "מקור הנקודה",
-            "fieldName" : "DataSource",
+            "alias" : "עודכן ברצף",
+            "fieldName" : "Recorded",
             "numberFormat" : {
               "type" : "CIMNumericFormat",
               "alignmentOption" : "esriAlignRight",
@@ -820,40 +758,12 @@
               "roundingValue" : 0
             },
             "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "נקודת גבול ובקרה",
-            "fieldName" : "IsControlBorder",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 0
-            },
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "מזהה תהליך קדסטרי",
-            "fieldName" : "CPBUniqueID",
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "קואורדינטה",
-            "fieldName" : "Shape",
-            "visible" : false,
             "searchMode" : "Exact"
           }
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "3",
           "datasetType" : "esriDTFeatureClass"
@@ -1285,7 +1195,6 @@
       "type" : "CIMFeatureLayer",
       "name" : "נקודות ביניים",
       "uRI" : "CIMPATH=_________/____________23.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : 978307200000
@@ -1410,31 +1319,15 @@
         "fieldDescriptions" : [
           {
             "type" : "CIMFieldDescription",
-            "alias" : "OBJECTID",
-            "fieldName" : "OBJECTID",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 0
-            },
-            "readOnly" : true,
+            "alias" : "שם נקודה",
+            "fieldName" : "Name",
             "visible" : true,
             "searchMode" : "Exact"
           },
           {
             "type" : "CIMFieldDescription",
-            "alias" : "מזהה נקודת גבול",
-            "fieldName" : "GlobalID",
-            "readOnly" : true,
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "סיווג",
-            "fieldName" : "Class",
+            "alias" : "מעמד",
+            "fieldName" : "Role",
             "numberFormat" : {
               "type" : "CIMNumericFormat",
               "alignmentOption" : "esriAlignRight",
@@ -1447,8 +1340,8 @@
           },
           {
             "type" : "CIMFieldDescription",
-            "alias" : "מקור הנקודה",
-            "fieldName" : "DataSource",
+            "alias" : "עודכן ברצף",
+            "fieldName" : "Recorded",
             "numberFormat" : {
               "type" : "CIMNumericFormat",
               "alignmentOption" : "esriAlignRight",
@@ -1457,40 +1350,12 @@
               "roundingValue" : 0
             },
             "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "נקודת גבול ובקרה",
-            "fieldName" : "IsControlBorder",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 0
-            },
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "מזהה תהליך קדסטרי",
-            "fieldName" : "CPBUniqueID",
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "קואורדינטה",
-            "fieldName" : "Shape",
-            "visible" : false,
             "searchMode" : "Exact"
           }
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "3",
           "datasetType" : "esriDTFeatureClass"
@@ -1921,8 +1786,7 @@
     {
       "type" : "CIMFeatureLayer",
       "name" : "נקודות לביטול",
-      "uRI" : "CIMPATH=_________/____________20.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
+      "uRI" : "CIMPATH=_________/_____________25.json",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : 978307200000
@@ -2047,31 +1911,15 @@
         "fieldDescriptions" : [
           {
             "type" : "CIMFieldDescription",
-            "alias" : "OBJECTID",
-            "fieldName" : "OBJECTID",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 0
-            },
-            "readOnly" : true,
+            "alias" : "שם נקודה",
+            "fieldName" : "Name",
             "visible" : true,
             "searchMode" : "Exact"
           },
           {
             "type" : "CIMFieldDescription",
-            "alias" : "מזהה נקודת גבול",
-            "fieldName" : "GlobalID",
-            "readOnly" : true,
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "סיווג",
-            "fieldName" : "Class",
+            "alias" : "מעמד",
+            "fieldName" : "Role",
             "numberFormat" : {
               "type" : "CIMNumericFormat",
               "alignmentOption" : "esriAlignRight",
@@ -2084,8 +1932,8 @@
           },
           {
             "type" : "CIMFieldDescription",
-            "alias" : "מקור הנקודה",
-            "fieldName" : "DataSource",
+            "alias" : "עודכן ברצף",
+            "fieldName" : "Recorded",
             "numberFormat" : {
               "type" : "CIMNumericFormat",
               "alignmentOption" : "esriAlignRight",
@@ -2094,40 +1942,12 @@
               "roundingValue" : 0
             },
             "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "נקודת גבול ובקרה",
-            "fieldName" : "IsControlBorder",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 0
-            },
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "מזהה תהליך קדסטרי",
-            "fieldName" : "CPBUniqueID",
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "קואורדינטה",
-            "fieldName" : "Shape",
-            "visible" : false,
             "searchMode" : "Exact"
           }
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "3",
           "datasetType" : "esriDTFeatureClass"
@@ -2567,9 +2387,8 @@
       "description" : "New Group Layer",
       "layerElevation" : {
         "type" : "CIMLayerElevationSurface",
-        "elevationSurfaceLayerURI" : "CIMPATH=Scene/675da555fe324035a6a08df399a6d3af.json"
+        "elevationSurfaceLayerURI" : "CIMPATH=Map/9b5a82b0b9ab4fb9a36e25055b4c7d55.json"
       },
-      "expanded" : true,
       "layerType" : "Operational",
       "showLegends" : true,
       "visibility" : false,
@@ -2586,14 +2405,13 @@
         "CIMPATH=_________/____________26.json",
         "CIMPATH=_________/____________25.json",
         "CIMPATH=_________/____________23.json",
-        "CIMPATH=_________/____________20.json"
+        "CIMPATH=_________/_____________25.json"
       ]
     },
     {
       "type" : "CIMFeatureLayer",
       "name" : "היטלי גריעות חדשות",
       "uRI" : "CIMPATH=_________/___________________2.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -2602,7 +2420,7 @@
       "useSourceMetadata" : true,
       "layerElevation" : {
         "type" : "CIMLayerElevationSurface",
-        "elevationSurfaceLayerURI" : "CIMPATH=Scene/675da555fe324035a6a08df399a6d3af.json"
+        "elevationSurfaceLayerURI" : "CIMPATH=Map/9b5a82b0b9ab4fb9a36e25055b4c7d55.json"
       },
       "layer3DProperties" : {
         "type" : "CIM3DLayerProperties",
@@ -2825,7 +2643,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "7",
           "datasetType" : "esriDTFeatureClass"
@@ -3123,7 +2941,6 @@
       "type" : "CIMFeatureLayer",
       "name" : "גריעות חדשות",
       "uRI" : "CIMPATH=_________/___________9.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -3553,7 +3370,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "5",
           "datasetType" : "esriDTFeatureClass"
@@ -3850,8 +3667,7 @@
     {
       "type" : "CIMFeatureLayer",
       "name" : "גריעות לשימור",
-      "uRI" : "CIMPATH=_________/____________21.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
+      "uRI" : "CIMPATH=_________/_____________26.json",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -4012,31 +3828,8 @@
         "fieldDescriptions" : [
           {
             "type" : "CIMFieldDescription",
-            "alias" : "Object ID",
-            "fieldName" : "OBJECTID",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 0
-            },
-            "readOnly" : true,
-            "visible" : false,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "מזהה חלקה",
-            "fieldName" : "GlobalID",
-            "readOnly" : true,
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "מספר גוש",
-            "fieldName" : "BlockNumber",
+            "alias" : "מספר גריעה ארעי",
+            "fieldName" : "TemporarySubstractionNumber",
             "numberFormat" : {
               "type" : "CIMNumericFormat",
               "alignmentOption" : "esriAlignRight",
@@ -4049,8 +3842,8 @@
           },
           {
             "type" : "CIMFieldDescription",
-            "alias" : "מספר תת-גוש",
-            "fieldName" : "SubBlockNumber",
+            "alias" : "מספר גריעה סופי",
+            "fieldName" : "FinalSubstractionNumber",
             "numberFormat" : {
               "type" : "CIMNumericFormat",
               "alignmentOption" : "esriAlignRight",
@@ -4063,71 +3856,8 @@
           },
           {
             "type" : "CIMFieldDescription",
-            "alias" : "מזהה גוש",
-            "fieldName" : "BlockUniqueID",
-            "visible" : false,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "נפח רשום במטר מעוקב",
-            "fieldName" : "StatedVolume",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 6
-            },
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "שטח היטל",
-            "fieldName" : "ProjectedArea",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 6
-            },
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "רום עליון",
-            "fieldName" : "UpperLevel",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 6
-            },
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "רום תחתון",
-            "fieldName" : "LowerLevel",
-            "numberFormat" : {
-              "type" : "CIMNumericFormat",
-              "alignmentOption" : "esriAlignRight",
-              "alignmentWidth" : 0,
-              "roundingOption" : "esriRoundNumberOfDecimals",
-              "roundingValue" : 6
-            },
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "מעמד",
-            "fieldName" : "Role",
+            "alias" : "מספר חלקה תלת-ממדית",
+            "fieldName" : "Parcel3DNumber",
             "numberFormat" : {
               "type" : "CIMNumericFormat",
               "alignmentOption" : "esriAlignRight",
@@ -4140,15 +3870,8 @@
           },
           {
             "type" : "CIMFieldDescription",
-            "alias" : "מזהה תהליך קדסטרי",
-            "fieldName" : "CPBUniqueID",
-            "visible" : true,
-            "searchMode" : "Exact"
-          },
-          {
-            "type" : "CIMFieldDescription",
-            "alias" : "עודכן ברצף",
-            "fieldName" : "Recorded",
+            "alias" : "מספר חלקה קרקעית",
+            "fieldName" : "Parcel2DNumber",
             "numberFormat" : {
               "type" : "CIMNumericFormat",
               "alignmentOption" : "esriAlignRight",
@@ -4161,15 +3884,64 @@
           },
           {
             "type" : "CIMFieldDescription",
-            "alias" : "גיאומטריה",
-            "fieldName" : "Shape",
-            "visible" : false,
+            "alias" : "סוג חלקה קרקעית",
+            "fieldName" : "Parcel2DType",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מיקום גריעה ביחס לפני הקרקע",
+            "fieldName" : "RelativePosition",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "סוג גריעה",
+            "fieldName" : "SubstractionType",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מזהה חלקה תלת-ממדית",
+            "fieldName" : "Parcel3DUniqueID",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מזהה חלקה קרקעית",
+            "fieldName" : "Parcel2DUniqueID",
+            "visible" : true,
             "searchMode" : "Exact"
           }
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "5",
           "datasetType" : "esriDTFeatureClass"
@@ -4475,9 +4247,8 @@
       "description" : "New Group Layer",
       "layerElevation" : {
         "type" : "CIMLayerElevationSurface",
-        "elevationSurfaceLayerURI" : "CIMPATH=Scene/675da555fe324035a6a08df399a6d3af.json"
+        "elevationSurfaceLayerURI" : "CIMPATH=Map/9b5a82b0b9ab4fb9a36e25055b4c7d55.json"
       },
-      "expanded" : true,
       "layerType" : "Operational",
       "showLegends" : true,
       "visibility" : false,
@@ -4493,14 +4264,13 @@
       "layers" : [
         "CIMPATH=_________/___________________2.json",
         "CIMPATH=_________/___________9.json",
-        "CIMPATH=_________/____________21.json"
+        "CIMPATH=_________/_____________26.json"
       ]
     },
     {
       "type" : "CIMFeatureLayer",
       "name" : "היטלי חלקות חדשות",
       "uRI" : "CIMPATH=_________/__________________________.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -4509,7 +4279,7 @@
       "useSourceMetadata" : true,
       "layerElevation" : {
         "type" : "CIMLayerElevationSurface",
-        "elevationSurfaceLayerURI" : "CIMPATH=Scene/675da555fe324035a6a08df399a6d3af.json"
+        "elevationSurfaceLayerURI" : "CIMPATH=Map/9b5a82b0b9ab4fb9a36e25055b4c7d55.json"
       },
       "layer3DProperties" : {
         "type" : "CIM3DLayerProperties",
@@ -4732,7 +4502,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "6",
           "datasetType" : "esriDTFeatureClass"
@@ -5030,7 +4800,6 @@
       "type" : "CIMFeatureLayer",
       "name" : "חלקות חדשות",
       "uRI" : "CIMPATH=_________/_______________________2.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -5409,7 +5178,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "4",
           "datasetType" : "esriDTFeatureClass"
@@ -5706,8 +5475,7 @@
     {
       "type" : "CIMFeatureLayer",
       "name" : "חלקות לשימור",
-      "uRI" : "CIMPATH=_________/___________7.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
+      "uRI" : "CIMPATH=_________/____________22.json",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -6086,7 +5854,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "4",
           "datasetType" : "esriDTFeatureClass"
@@ -6383,8 +6151,7 @@
     {
       "type" : "CIMFeatureLayer",
       "name" : "חלקות ביניים",
-      "uRI" : "CIMPATH=_________/____________19.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
+      "uRI" : "CIMPATH=_________/____________27.json",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -6763,7 +6530,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "4",
           "datasetType" : "esriDTFeatureClass"
@@ -7060,8 +6827,7 @@
     {
       "type" : "CIMFeatureLayer",
       "name" : "חלקות לביטול",
-      "uRI" : "CIMPATH=_________/____________16.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
+      "uRI" : "CIMPATH=_________/____________28.json",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -7440,7 +7206,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "4",
           "datasetType" : "esriDTFeatureClass"
@@ -7746,9 +7512,8 @@
       "description" : "New Group Layer",
       "layerElevation" : {
         "type" : "CIMLayerElevationSurface",
-        "elevationSurfaceLayerURI" : "CIMPATH=Scene/675da555fe324035a6a08df399a6d3af.json"
+        "elevationSurfaceLayerURI" : "CIMPATH=Map/9b5a82b0b9ab4fb9a36e25055b4c7d55.json"
       },
-      "expanded" : true,
       "layerType" : "Operational",
       "showLegends" : true,
       "visibility" : false,
@@ -7764,16 +7529,15 @@
       "layers" : [
         "CIMPATH=_________/__________________________.json",
         "CIMPATH=_________/_______________________2.json",
-        "CIMPATH=_________/___________7.json",
-        "CIMPATH=_________/____________19.json",
-        "CIMPATH=_________/____________16.json"
+        "CIMPATH=_________/____________22.json",
+        "CIMPATH=_________/____________27.json",
+        "CIMPATH=_________/____________28.json"
       ]
     },
     {
       "type" : "CIMFeatureLayer",
       "name" : "גבול תכנית",
       "uRI" : "CIMPATH=_________/__________6.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -7782,7 +7546,7 @@
       "useSourceMetadata" : true,
       "layerElevation" : {
         "type" : "CIMLayerElevationSurface",
-        "elevationSurfaceLayerURI" : "CIMPATH=Scene/675da555fe324035a6a08df399a6d3af.json"
+        "elevationSurfaceLayerURI" : "CIMPATH=Map/9b5a82b0b9ab4fb9a36e25055b4c7d55.json"
       },
       "layer3DProperties" : {
         "type" : "CIM3DLayerProperties",
@@ -7903,7 +7667,7 @@
         "editable" : true,
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "8",
           "datasetType" : "esriDTFeatureClass"
@@ -8279,7 +8043,7 @@
       "description" : "New Group Layer",
       "layerElevation" : {
         "type" : "CIMLayerElevationSurface",
-        "elevationSurfaceLayerURI" : "CIMPATH=Scene/675da555fe324035a6a08df399a6d3af.json"
+        "elevationSurfaceLayerURI" : "CIMPATH=Map/9b5a82b0b9ab4fb9a36e25055b4c7d55.json"
       },
       "expanded" : true,
       "layer3DProperties" : {
@@ -8383,7 +8147,6 @@
       "type" : "CIMStandaloneTable",
       "name" : "פעולות בתכנית",
       "uRI" : "CIMPATH=_________/_____________30.json",
-      "sourceURI" : "17672fee8aea46998d7508a4a7703d65",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : 978307200000
@@ -8602,7 +8365,7 @@
       ],
       "dataConnection" : {
         "type" : "CIMStandardDataConnection",
-        "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/In_Process_Map_BankalModDev_MNCDB2/FeatureServer",
+        "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
         "workspaceFactory" : "FeatureService",
         "dataset" : "10",
         "datasetType" : "esriDTTable"
@@ -8628,13 +8391,28 @@
     {
       "type" : "CIMElevationSurfaceLayer",
       "name" : "Ground",
-      "uRI" : "CIMPATH=Scene/675da555fe324035a6a08df399a6d3af.json",
+      "uRI" : "CIMPATH=Map/9b5a82b0b9ab4fb9a36e25055b4c7d55.json",
       "sourceModifiedTime" : {
         "type" : "TimeInstant"
       },
       "useSourceMetadata" : true,
       "description" : "Ground",
       "expanded" : true,
+      "layer3DProperties" : {
+        "type" : "CIM3DLayerProperties",
+        "castShadows" : true,
+        "isLayerLit" : true,
+        "layerFaceCulling" : "None",
+        "preloadTextureCutoffHigh" : 0.29999999999999999,
+        "preloadTextureCutoffLow" : 0.59999999999999998,
+        "textureCutoffHigh" : 0.29999999999999999,
+        "textureCutoffLow" : 0.59999999999999998,
+        "useCompressedTextures" : true,
+        "verticalExaggeration" : 1,
+        "exaggerationMode" : "ScaleZ",
+        "lighting" : "OneSideDataNormal",
+        "optimizeMarkerTransparency" : true
+      },
       "layerType" : "Operational",
       "showLegends" : false,
       "visibility" : true,
@@ -8646,9 +8424,6 @@
       "refreshRateUnit" : "esriTimeUnitsSeconds",
       "blendingMode" : "Alpha",
       "allowDrapingOnIntegratedMesh" : true,
-      "elevationSourceLayers" : [
-        "CIMPATH=__________/10M_V2.json"
-      ],
       "elevationMode" : "BaseGlobeSurface",
       "verticalExaggeration" : 1,
       "color" : {
@@ -8657,143 +8432,10 @@
           255,
           255,
           255,
-          0
+          100
         ]
       },
       "surfaceTINShadingMode" : "Smooth"
-    },
-    {
-      "type" : "CIMRasterLayer",
-      "name" : "מודל גבהים",
-      "uRI" : "CIMPATH=__________/10M_V2.json",
-      "sourceModifiedTime" : {
-        "type" : "TimeInstant"
-      },
-      "useSourceMetadata" : true,
-      "description" : "10M_V2",
-      "layerElevation" : {
-        "type" : "CIMLayerElevationSurface",
-        "elevationSurfaceLayerURI" : "CIMPATH=Scene/675da555fe324035a6a08df399a6d3af.json"
-      },
-      "expanded" : true,
-      "layer3DProperties" : {
-        "type" : "CIM3DLayerProperties",
-        "castShadows" : true,
-        "isLayerLit" : true,
-        "layerFaceCulling" : "None",
-        "maxDistance" : -1,
-        "minDistance" : -1,
-        "preloadTextureCutoffHigh" : 0,
-        "preloadTextureCutoffLow" : 0.25,
-        "textureCutoffHigh" : 0.25,
-        "textureCutoffLow" : 1,
-        "useCompressedTextures" : true,
-        "verticalExaggeration" : 1,
-        "exaggerationMode" : "ScaleZ",
-        "verticalUnit" : {
-          "uwkid" : 9001
-        },
-        "lighting" : "OneSideDataNormal",
-        "optimizeMarkerTransparency" : true
-      },
-      "layerType" : "Operational",
-      "showLegends" : true,
-      "visibility" : true,
-      "displayCacheType" : "Permanent",
-      "maxDisplayCacheAge" : 5,
-      "showPopups" : true,
-      "serviceLayerID" : -1,
-      "refreshRate" : -1,
-      "refreshRateUnit" : "esriTimeUnitsSeconds",
-      "blendingMode" : "Alpha",
-      "allowDrapingOnIntegratedMesh" : true,
-      "dataConnection" : {
-        "type" : "CIMStandardDataConnection",
-        "workspaceConnectionString" : "DATABASE=..\\..\\External",
-        "workspaceFactory" : "Raster",
-        "dataset" : "DEM 10m Cahched",
-        "datasetType" : "esriDTAny"
-      },
-      "colorizer" : {
-        "type" : "CIMRasterStretchColorizer",
-        "resamplingType" : "NearestNeighbor",
-        "noDataColor" : {
-          "type" : "CIMRGBColor",
-          "values" : [
-            255,
-            255,
-            255,
-            0
-          ]
-        },
-        "backgroundColor" : {
-          "type" : "CIMRGBColor",
-          "values" : [
-            255,
-            255,
-            255,
-            0
-          ]
-        },
-        "colorRamp" : {
-          "type" : "CIMPolarContinuousColorRamp",
-          "colorSpace" : {
-            "type" : "CIMICCColorSpace",
-            "url" : "Default RGB"
-          },
-          "fromColor" : {
-            "type" : "CIMHSVColor",
-            "values" : [
-              -1,
-              0,
-              0,
-              100
-            ]
-          },
-          "toColor" : {
-            "type" : "CIMHSVColor",
-            "values" : [
-              -1,
-              0,
-              100,
-              100
-            ]
-          },
-          "interpolationSpace" : "HSV",
-          "polarDirection" : "Auto"
-        },
-        "colorScheme" : "Black to White",
-        "customStretchMax" : 1,
-        "gammaValue" : 1,
-        "maxPercent" : 2,
-        "minPercent" : 2,
-        "standardDeviationParam" : 2,
-        "statsType" : "Dataset",
-        "stretchClasses" : [
-          {
-            "type" : "CIMRasterStretchClass",
-            "label" : "0"
-          },
-          {
-            "type" : "CIMRasterStretchClass",
-            "value" : -0.5
-          },
-          {
-            "type" : "CIMRasterStretchClass",
-            "label" : "-1",
-            "value" : -1
-          }
-        ],
-        "stretchStats" : {
-          "type" : "StatsHistogram",
-          "min" : 0,
-          "max" : -1,
-          "mean" : 0,
-          "stddev" : -1,
-          "resolution" : -0.0039215686274509803
-        },
-        "stretchType" : "None"
-      }
     }
   ]
 }
