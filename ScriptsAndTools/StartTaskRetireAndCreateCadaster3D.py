@@ -11,7 +11,7 @@ from Utils.UpdateAttributes import retire_3D_parcels_and_substractions, retire_3
 from Utils.Validations import validation_set, features_exist, creating_record_is_duplicated
 from Utils.Helpers import create_shelf, get_ProcessGUID, get_RecordGUID, get_ActiveParcel2DGUID, timestamp, \
     zoom_to_aoi, filter_to_aoi, get_FinalParcel, reopen_map, cursor_length, \
-    set_priority, load_to_records, Type2CreateType, get_ProcessType, get_layer, get_aprx_name
+    set_priority, load_to_records, Type2CreateType, get_ProcessType, get_layer, get_aprx_name, activate_record
 
 ENV.preserveGlobalIds = False
 
@@ -435,7 +435,7 @@ def start_task_RetireAndCreateCadaster3D(ProcessName: str|None) -> None:
 
     if qualified:
 
-        shelf: str = create_shelf(ProcessName)
+        shelf: str = create_shelf(ProcessName)  # Will skip if executed from CMS
 
         open_version(ProcessName)
 
@@ -448,7 +448,7 @@ def start_task_RetireAndCreateCadaster3D(ProcessName: str|None) -> None:
 
         display_process_data(ProcessName)
 
-        # activate_record(ProcessName)  # Known issue: The records layer is not updated until the end of the execution of GP tool.
+        activate_record(ProcessName)  # Known issue: The records layer is not updated until the end of the execution of GP tool.
 
         zoom_to_aoi()
 
