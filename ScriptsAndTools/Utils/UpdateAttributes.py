@@ -215,7 +215,7 @@ def modify_PointsAttributes(ProcessName: str, task: TaskType) -> None:
                     current_point[2]: str = RecordGUID
 
                 current_points_data.updateRow(current_point)
-                AddMessage(f'{timestamp()} | {idx}|{total}    ✔️ Modifying point name from {current_name} to {new_name}')
+                AddMessage(f'{timestamp()} | {idx}|{total} | ✔️ Modifying point name from {current_name} to {new_name}')
 
         del current_points_data
 
