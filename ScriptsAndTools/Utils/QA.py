@@ -126,8 +126,6 @@ def track_deviated_parcel_areas() -> None:
 
         del cols, results
 
-        # results_table: Table = MakeTableView(results_path, 'חלקות עם שטחים חורגים').getOutput(0)
-        # ArcGISProject('current').activeMap.addTableToGroup(get_layer("בקרת איכות"), results_table)
 
         ArcGISProject('current').activeMap.addDataFromPath(results_path)
         ArcGISProject('current').activeMap.addTableToGroup(get_layer("בקרת איכות"), get_table('חלקות עם שטחים חורגים'))
@@ -155,7 +153,8 @@ def track_adjacent_points(tolerance: Optional[float|int] = 0.1) -> None:
     """
     AddMessage(f'\n{timestamp()} | Tracking for adjacent active points')
 
-    output: str = fr'{ArcGISProject("current").defaultGeodatabase}\AdjacentPoints'
+    home_gdb: str = ArcGISProject("current").defaultGeodatabase
+    output: str = fr'{home_gdb}\AdjacentPoints'
     drop_layer('נקודות סמוכות')
 
     results: Result = FindAdjacentParcelPoints(get_layer("נקודות גבול"), out_feature_class= output, tolerance= tolerance)
@@ -166,7 +165,7 @@ def track_adjacent_points(tolerance: Optional[float|int] = 0.1) -> None:
         current_map: Map = ArcGISProject('current').activeMap
         current_map.addDataFromPath(fr'{CNFG.LayerFiles}AdjacentPoints.lyrx')
         layer: Layer = get_layer('נקודות סמוכות')
-        new_connection: dict[str, Any] = {'dataset': 'AdjacentPoints', 'workspace_factory': 'File Geodatabase', 'connection_info': {'database': output}}
+        new_connection: dict[str, dict[str, str]] = {'dataset': 'AdjacentPoints', 'workspace_factory': 'File Geodatabase', 'connection_info': {'database': home_gdb}}
         layer.updateConnectionProperties(None, new_connection)
         current_map.moveLayer(get_layer("אימות נתונים"), get_layer("נקודות סמוכות"), "BEFORE")
     else:
@@ -189,7 +188,8 @@ def track_gaps_overlaps(max_width: Optional[float|int] = 2.0) -> None:
     """
     AddMessage(f'\n{timestamp()} | Tracking for gaps & overlaps between active parcels and blocks')
 
-    output: str = fr'{ArcGISProject("current").defaultGeodatabase}\GapsAndOverlaps'
+    home_gdb: str = ArcGISProject("current").defaultGeodatabase
+    output: str = fr'{home_gdb}\GapsAndOverlaps'
     drop_layer('חורים וחפיפות')
 
     # Select the features in the chosen extent
@@ -229,7 +229,7 @@ def track_gaps_overlaps(max_width: Optional[float|int] = 2.0) -> None:
         layer: Layer = get_layer("חורים וחפיפות")
         current_map.moveLayer(get_layer("אימות נתונים"), layer, "BEFORE")
 
-        new_connection: dict[str, Any] = {'dataset': 'GapsAndOverlaps', 'workspace_factory': 'File Geodatabase', 'connection_info': {'database': output}}
+        new_connection: dict[str, dict[str, str]] = {'dataset': 'GapsAndOverlaps', 'workspace_factory': 'File Geodatabase', 'connection_info': {'database': home_gdb}}
         layer.updateConnectionProperties(None, new_connection)
 
     else:
@@ -248,15 +248,9 @@ def track_disconnected_points() -> None:
     """
     AddMessage(f'\n{timestamp()} | Tracking for disconnected active points')
 
-    output: str = fr'{ArcGISProject("current").defaultGeodatabase}\DisconnectedPoints'
+    home_gdb: str = ArcGISProject("current").defaultGeodatabase
+    output: str = fr'{home_gdb}\DisconnectedPoints'
     drop_layer('נקודות מנותקות')
-
-    # extent: Extent = get_display_extent()
-    # extent_polygon: Polygon = Polygon(Array([Point(extent.XMin, extent.YMin), Point(extent.XMin, extent.YMax),
-    #                                          Point(extent.XMax, extent.YMax), Point(extent.XMax, extent.YMin)]),
-    #                                   SpatialReference(2039))
-
-    # points_layer: Layer = SelectByLocation(in_layer=get_layer("נקודות גבול"), select_features=extent_polygon).getOutput(0)
 
     results: Result = FindDisconnectedParcelPoints(get_layer("נקודות גבול"), output, consider_edge= 'CONSIDER_EDGE')
     results: int = int(results.getMessage(2)[-1].split(' ')[-1])
@@ -268,7 +262,7 @@ def track_disconnected_points() -> None:
         layer: Layer = get_layer("נקודות מנותקות")
         current_map.moveLayer(get_layer("אימות נתונים"), layer, "BEFORE")
 
-        new_connection: dict[str, Any] = {'dataset': 'DisconnectedPoints', 'workspace_factory': 'File Geodatabase', 'connection_info': {'database': output}}
+        new_connection: dict[str, dict[str, str]] = {'dataset': 'DisconnectedPoints', 'workspace_factory': 'File Geodatabase', 'connection_info': {'database': home_gdb}}
         layer.updateConnectionProperties(None, new_connection)
     else:
         AddMessage(f"{timestamp()} | ✅ No disconnected points were found")

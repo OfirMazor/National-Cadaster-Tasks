@@ -180,11 +180,12 @@ def load_new_fronts(ProcessName: str) -> None:
     del new_fronts_count, NewFronts_data, editor, record_guid
 
 
-def start_task_RetireAndCreateCadaster(ProcessName: str|None, Report: bool = True) -> None:
+def start_task_RetireAndCreateCadaster(Independent: bool, ProcessName: str|None, Report: bool = True) -> None:
     """
     Workflow for starting the Retire And Create Cadaster task.
 
     Parameters:
+        Independent (bool): An option to start the task environment for a different process than the one suggested by the APRX file. This option may be useful when the CMS is down. Default is False.
         ProcessName (str): The name of the cadaster process.
         Report (bool): Perform the matching points report. Default is True.
     """
@@ -192,7 +193,7 @@ def start_task_RetireAndCreateCadaster(ProcessName: str|None, Report: bool = Tru
     set_priority()
 
     # Whether the process is executed from CMS or independent task.
-    ProcessName: str = get_aprx_name() if not ProcessName else ProcessName
+    ProcessName: str = get_aprx_name() if not Independent else ProcessName
 
     qualified: bool = validation_set("RetireAndCreateCadaster", ProcessName)
 
@@ -256,4 +257,4 @@ def start_task_RetireAndCreateCadaster(ProcessName: str|None, Report: bool = Tru
 
 
 if __name__ == "__main__":
-    start_task_RetireAndCreateCadaster(ProcessName= GetParameterAsText(0), Report= GetParameter(1))
+    start_task_RetireAndCreateCadaster(Independent= GetParameter(0), ProcessName= GetParameterAsText(1), Report= GetParameter(2))
