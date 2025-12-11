@@ -1,7 +1,7 @@
 from Utils.Configs import CNFG
 from Utils.TypeHints import *
 from Utils.VersionManagement import get_VersionName, layer_is_at_version
-from Utils.Helpers import delete_file, timestamp, get_layer, get_RecordGUID, get_ActiveRecord, get_feature_layer_id, AddTabularMessage
+from Utils.Helpers import delete_file, timestamp, get_layer, get_ActiveRecord, get_feature_layer_id, AddTabularMessage
 from Utils.NewCadasterHelpers import get_RecordGUID_NewCadaster
 import pandas as pd
 from pandas.io.formats.style import Styler
@@ -243,8 +243,8 @@ def compare_and_document_version_changes(user_name: str, password: str) -> None:
                                     is_length: bool = True if 'Shape.STLength()' in after_columns else False
 
                                     # Extract pre changes data:
-                                    before_path: str = f"{CNFG.portal_url}/{CNFG.FeatureServers[0]}/FeatureServer;VERSION=sde.DEFAULT;VERSIONGUID='{CNFG.default_version_guid}'/{layer_ID}"
-
+                                    # before_path: str = f"{CNFG.portal_url}/{CNFG.FeatureServers[0]}/FeatureServer;VERSION=sde.DEFAULT;VERSIONGUID='{CNFG.default_version_guid}'/{layer_ID}"
+                                    before_path: str = f"{CNFG.ParcelFabricFeatureServer};VERSION=sde.DEFAULT;VERSIONGUID='{CNFG.default_version_guid}'/{layer_ID}"
                                     fields: list[str] = [f for f in after_columns if f not in ["Shape.STArea()", "Shape.STLength()", "modification"]]
                                     fields: list[str] = fields + ['Shape__Area'] if is_area else fields
                                     fields: list[str] = fields + ['Shape__Length'] if is_length else fields
