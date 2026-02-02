@@ -85,7 +85,7 @@
                 Download (ZIP)
             </a>
             <p class="mt-4 text-sm text-gray-500">
-                Current Version: v1.6.0
+                Current Version: v1.7.0
             </p>
         </section>
 
@@ -107,16 +107,33 @@
                 Changelog
             </h2>
             <ul class="list-none space-y-4 text-gray-400">
-                
-                <!-- Version 1.6.0 (Open by default) -->
+
+                <!-- Version 1.7.0 (Open by default) -->
                 <li class="border-b border-gray-700 pb-2">
                     <button onclick="toggleChangelog('v110')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
-                        <span class="font-semibold text-[#238636] text-lg mr-3">v1.6.0 (2025-12-09)</span>
+                        <span class="font-semibold text-[#238636] text-lg mr-3">v1.7.0 (2026-02-03)</span>
                         <!-- Down/Up Arrow (Initially pointing up for open state) -->
                         <svg id="arrow-v110" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
                     </button>
                     <!-- Content (Initially visible - no 'hidden' class) -->
                     <div id="v110-content" class="pt-1 collapse-content">
+                        <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
+                            <li>In the Update Attribute step, when a process front does not match to exactly 1 active front, an unmatched fronts layer will be added to the map- helping to visualize the unmatched front on the map..</li>
+                            <li>The Stated Areas eraly validtaion check will warn if an incoming temporary parcel does not yet have it's final number (an eralier record should be updated before the current one).</li>
+						</ul>
+                    </div>
+                </li>
+
+
+                <!-- Version 1.6.0 (Closed by default) -->
+                <li class="border-b border-gray-700 pb-2">
+                    <button onclick="toggleChangelog('v100')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
+                        <span class="font-semibold text-gray-500 text-lg mr-3">v1.6.0</span>
+                        <!-- Down/Up Arrow (Initially pointing down for closed state) -->
+                        <svg id="arrow-v100" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                    </button>
+                    <!-- Content (Initially hidden) -->
+                    <div id="v100-content" class="pt-1 collapse-content hidden">
                         <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
                             <li>The Import or Modify Points tool will output conflicts as red circles around the source point. The radius of the red circle is set by the input search distance.</li>
                             <li>The Evaluation step operations are now grouped by categories, allowing better experience.</li>
