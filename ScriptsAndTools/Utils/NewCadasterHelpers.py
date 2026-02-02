@@ -1,15 +1,311 @@
 from Utils.Configs import CNFG
-from Utils.Helpers import get_ProcessGUID, get_RecordGUID, get_BlockGUID, start_editing, stop_editing, get_layer, reopen_map, Type2CreateType, timestamp,get_ProcessType
-from arcpy.management import Append, GetCount, SelectLayerByAttribute as SelectByAttribute, SelectLayerByLocation as SelectByLocation, CalculateField, Delete, Dissolve
+from Utils.Helpers import get_ProcessGUID, get_RecordGUID, get_BlockGUID, start_editing, stop_editing, get_layer, reopen_map, Type2CreateType, timestamp,get_ProcessType,reopen_map
+from arcpy.management import Append, DeleteIdentical, GetCount, SelectLayerByAttribute as SelectByAttribute, SelectLayerByLocation as SelectByLocation, CalculateField, Delete, Dissolve,SplitLine, CopyFeatures
+
 from arcpy.da import SearchCursor, UpdateCursor, InsertCursor
 from arcpy import AddMessage, AddWarning, AddError,env as ENV, Describe, Extent,RefreshLayer
 from arcpy.mp import LayerFile, ArcGISProject
 from arcpy.mp import ArcGISProject
 from arcpy import Geometry
+from Utils.TypeHints import *
 from arcpy.conversion import ExportFeatures
 import os
 
+ENV.overwriteOutput = True
 
+
+def is_process_border_valid(ProcessName:str) -> bool:
+    '''
+    Checks if the process border for the specified `ProcessName` is fully matching to the contour of the in process parcels,
+    if not, creates a local copy with the correct geometry in the default gdb
+    Parameters:
+        ProcessName (str): The name of the process to search for.
+    Returns:
+        bool: True if the process border is valid, False otherwise.
+    '''
+    cadaster_process_borders = get_layer('גבולות תהליכי קדסטר')
+    parcels_layer = get_layer('חלקות בתהליך')
+    process_border = SelectByAttribute(cadaster_process_borders,where_clause=f""" ProcessName = '{ProcessName}' """,selection_type='NEW_SELECTION')
+    process_guid = get_ProcessGUID(ProcessName)
+    process_parcels = SelectByAttribute(parcels_layer,where_clause=f""" CPBUniqueID = '{process_guid}' """,selection_type='NEW_SELECTION')
+    count = int(GetCount(process_parcels).getOutput(0))
+    if count == 0:
+        clear_map_selections()
+        AddWarning(f'{timestamp()} | No parcels found for process {ProcessName}. No change to process border will be made.')
+        return False
+    
+    dissolved_parcels = Dissolve(in_features=process_parcels, out_feature_class=r"memory\dissolved_parcels")
+
+    with SearchCursor(dissolved_parcels, field_names="SHAPE@") as cursor:
+        dissolved_parcels_geometry = cursor.next()[0]
+
+    with SearchCursor(process_border, field_names="SHAPE@") as cursor:
+        process_border_geometry = cursor.next()[0]
+    
+    result = None
+    if not process_border_geometry.equals(dissolved_parcels_geometry):
+        ENV.preserveGlobalIds = True
+        default_gdb = get_default_gdb()
+        local_process_border = CopyFeatures(process_border, f"{default_gdb}\\ProcessBorder_{ProcessName.replace('/','_')}")
+        ENV.preserveGlobalIds = False
+        editor = start_editing(CNFG.ParcelFabricDatabase)
+
+        with UpdateCursor(local_process_border, ["SHAPE@"]) as cursor:
+                row = next(cursor, None)  # Safely get the first row or None
+                if row:
+                    row[0] = dissolved_parcels_geometry
+                    cursor.updateRow(row)
+        stop_editing(editor)
+
+        result = False
+    else:
+        AddMessage(f'{timestamp()} | The process border matches the process parcels contour for process {ProcessName}.')
+        
+        result = True
+
+    Delete(dissolved_parcels)
+    clear_map_selections()
+    return result
+
+def get_default_gdb() -> str:
+    ''' 
+    Retrieves the default geodatabase path from the current ArcGIS Pro project
+
+    Returns:
+        str: The path to the default geodatabase.
+    '''
+    aprx = ArcGISProject("CURRENT")
+    default_gdb = aprx.defaultGeodatabase
+    return default_gdb
+
+def match_process_border_to_process_parcels(ProcessName:str) -> None:
+    cadaster_process_borders = get_layer('גבולות תהליכי קדסטר')
+    parcels_layer = get_layer('חלקות בתהליך')
+    process_border = SelectByAttribute(cadaster_process_borders,where_clause=f""" ProcessName = '{ProcessName}' """,selection_type='NEW_SELECTION')
+    process_guid = get_ProcessGUID(ProcessName)
+    process_parcels = SelectByAttribute(parcels_layer,where_clause=f""" CPBUniqueID = '{process_guid}' """,selection_type='NEW_SELECTION')
+    count = int(GetCount(process_parcels).getOutput(0))
+    if count == 0:
+        clear_map_selections()
+        reopen_map()
+        AddMessage(f'{timestamp()} | No parcels found for process {ProcessName}. No change to process border will be made.')
+        return
+    
+    dissolved_parcels = Dissolve(in_features=process_parcels, out_feature_class=r"memory\dissolved_parcels")
+
+    with SearchCursor(dissolved_parcels, field_names="SHAPE@") as cursor:
+        dissolved_parcels_geometry = cursor.next()[0]
+
+    with SearchCursor(process_border, field_names="SHAPE@") as cursor:
+        process_border_geometry = cursor.next()[0]
+    
+    if not process_border_geometry.equals(dissolved_parcels_geometry):
+        AddMessage(f'{timestamp()} | Mismatch between the process border and the dissolved process parcels was found for process {ProcessName}.\
+         Updating the process border to match the process parcels contour.')
+        editor = start_editing(CNFG.ParcelFabricDatabase)
+
+        with UpdateCursor(process_border, ["SHAPE@"]) as cursor:
+                row = next(cursor, None)  # Safely get the first row or None
+                if row:
+                    AddMessage(f'{timestamp()} | Updating process border geometry...')
+                    row[0] = dissolved_parcels_geometry
+                    cursor.updateRow(row)
+        stop_editing(editor)
+
+    else:
+        AddMessage(f'{timestamp()} | The process border matches the process parcels contour for process {ProcessName}.')
+    clear_map_selections()
+    Delete(dissolved_parcels)
+    reopen_map()
+
+
+
+def match_active_tax_blocks_to_active_tax_parcels(ProcessName:str) -> None:
+    cadaster_process_borders = get_layer('גבולות תהליכי קדסטר')
+    parcels_layer = get_layer('חלקות')
+
+    process_border = SelectByAttribute(cadaster_process_borders,where_clause=f""" ProcessName = '{ProcessName}' """,selection_type='NEW_SELECTION')
+    tax_parcels = SelectByAttribute(parcels_layer,where_clause=f""" IsTax=1 AND RetiredByRecord IS NULL """,selection_type='NEW_SELECTION')
+    intersecting_tax_parcels = SelectByLocation(in_layer=tax_parcels,overlap_type="INTERSECT",select_features=process_border,search_distance="10 Meters",selection_type="SUBSET_SELECTION")
+
+    count = int(GetCount(intersecting_tax_parcels).getOutput(0))
+    if count == 0:
+        clear_map_selections()
+        reopen_map()
+        AddMessage(f'{timestamp()} | No tax parcels intersecting with process borders were found')
+        return
+    
+    retired_blocks_layer = get_layer('גושים מבוטלים')
+
+  
+    tax_block_GUIDs = set()
+    with SearchCursor(intersecting_tax_parcels, ['BlockUniqueID']) as cursor:
+        for row in cursor:
+            tax_block_GUIDs.add(row[0])
+    SelectByAttribute(parcels_layer, "CLEAR_SELECTION")
+    retired_block_guids = []
+    for block_guid in tax_block_GUIDs:
+        with SearchCursor(retired_blocks_layer, ['GlobalID'], where_clause=f"GlobalID = '{block_guid}'") as cursor:
+            for row in cursor:
+                retired_block_guids.append(block_guid)
+                break
+    if not retired_block_guids:
+        clear_map_selections()
+        reopen_map()
+        AddMessage(f'{timestamp()} | No missing tax blocks were found')
+        return
+
+    AddMessage(f'{timestamp()} | Found {len(retired_block_guids)} tax blocks that were wrongly retired. Restoring them to active blocks layer and updating their geometry to fit their active parcels')
+    editor = start_editing(CNFG.ParcelFabricDatabase)
+    for block_guid in retired_block_guids:
+        with UpdateCursor(retired_blocks_layer, ['RetiredByRecord'], where_clause=f"GlobalID = '{block_guid}'") as cursor:
+            for row in cursor:
+                row[0] = None
+                cursor.updateRow(row)
+    stop_editing(editor)
+
+    for block_guid in retired_block_guids:
+        update_blocks_geometry_by_active_parcels(block_guid, None)
+    
+    clear_map_selections()
+    reopen_map()
+    AddMessage(f'{timestamp()} | Restored {len(retired_block_guids)} tax blocks to active blocks layer and updated their geometry')
+
+def split_merged_tax_fronts(ProcessName:str) -> None:
+    ''' 
+    Splits merged fronts in tax parcels that intersects with the given process
+
+    '''
+    parcels_layer = get_layer('חלקות')
+    fronts_layer = get_layer('חזיתות')
+    cadaster_process_borders = get_layer('גבולות תהליכי קדסטר')
+    process_border = SelectByAttribute(cadaster_process_borders,where_clause=f""" ProcessName = '{ProcessName}' """,selection_type='NEW_SELECTION')
+    unsettled_tax_parcels = SelectByAttribute(parcels_layer,where_clause=f""" LandType = 2 AND IsTax=1 AND RetiredByRecord IS NULL """,selection_type='NEW_SELECTION')
+    intersecting_unsettled_tax_parcels = SelectByLocation(in_layer=unsettled_tax_parcels,overlap_type="INTERSECT",select_features=process_border,search_distance="10 Meters",selection_type="SUBSET_SELECTION")
+    count_parcels = int(GetCount(intersecting_unsettled_tax_parcels).getOutput(0))
+    if count_parcels == 0:
+        clear_map_selections()
+        reopen_map()
+        AddMessage(f'{timestamp()} | No unsettled tax parcels intersecting with fronts. No fronts to split.')
+        return
+
+
+    fronts_to_split = SelectByLocation(in_layer=fronts_layer,overlap_type="SHARE_A_LINE_SEGMENT_WITH",select_features=intersecting_unsettled_tax_parcels,search_distance=None,selection_type="NEW_SELECTION")[0]
+    #settled_parcels = SelectByAttribute(parcels_layer,where_clause=f""" LandType = 1 AND RetiredByRecord IS NULL """,selection_type='NEW_SELECTION')
+    #intersecting_settled_parcels = SelectByLocation(in_layer=settled_parcels,overlap_type="INTERSECT",select_features=process_border,search_distance="10 Meters",selection_type="SUBSET_SELECTION")
+    #fronts_to_split = SelectByLocation(in_layer=fronts_to_split,overlap_type="SHARE_A_LINE_SEGMENT_WITH",select_features=intersecting_settled_parcels,search_distance=None,selection_type="REMOVE_FROM_SELECTION")
+
+    oids = [row[0] for row in SearchCursor(fronts_to_split, ["OID@","SHAPE@"]) if row[1].pointCount > 2]
+    if not oids:
+    
+    #if count_fronts_before == 0:
+        clear_map_selections()
+        reopen_map()
+        AddMessage(f'{timestamp()} | No merged fronts to split were found.')
+        return
+    fronts_to_split.setSelectionSet(oids)
+    count_fronts_before = int(GetCount(fronts_to_split).getOutput(0))
+    splitted_fronts = SplitLine(fronts_to_split,r"memory\splitted_fronts")
+    DeleteIdentical(in_dataset=splitted_fronts,fields="Shape")
+
+    count_fronts_after = int(GetCount(splitted_fronts).getOutput(0))
+    if count_fronts_after > count_fronts_before:
+        AddMessage(f'{timestamp()} | The found merged {count_fronts_before} fronts will be splitted into {count_fronts_after} fronts.')
+        editor = start_editing(CNFG.ParcelFabricDatabase)
+        try:
+            # Append the split fronts back to the main layer
+            Append(
+                inputs=splitted_fronts,
+                target=fronts_layer,
+                expression="",
+                field_mapping="",
+                schema_type="NO_TEST",
+                subtype="",
+                match_fields=None,
+                update_geometry="NOT_UPDATE_GEOMETRY",
+                feature_service_mode="USE_FEATURE_SERVICE_MODE"
+            )
+
+            # Delete the original selected (merged) fronts
+            with UpdateCursor(fronts_to_split, ["OID@"]) as cursor:
+                for row in cursor:
+                    cursor.deleteRow()
+        finally:
+            stop_editing(editor)
+
+        clear_map_selections()
+        reopen_map()
+        AddMessage(f'{timestamp()} | Splitted {count_fronts_before} merged fronts into {count_fronts_after} fronts.')
+        
+    else:       
+        clear_map_selections()
+        reopen_map()
+        AddMessage(f'{timestamp()} | No merged fronts to split were found.')
+    Delete(splitted_fronts)
+
+
+
+
+
+
+def get_inprocess_parcels_contour(ProcessName:str) -> Polygon|None:
+    return
+
+
+def clear_map_selections() -> None:
+    '''
+    Clears all selections in the current map
+
+    Returns:
+        None
+    '''
+    aprx = ArcGISProject("CURRENT")
+    active_map = aprx.activeMap
+    if active_map:
+            active_map.clearSelection()
+    
+
+def get_parcel_parameters_by_guid(parcel_guid: str) -> tuple[int, int, int, bool]:
+    '''
+    Retrieves the BlockNumber, SubBlockNumber and IsTax parameters of a block given its GlobalID.
+
+    Parameters:
+        block_guid (str): The GlobalID of the block.
+
+    Returns:
+        tuple[int, int, bool]: A tuple containing the BlockNumber, SubBlockNumber, and IsTax parameters.
+    '''
+    parcels_layer = get_layer('חלקות')
+    with SearchCursor(parcels_layer, ['ParcelNumber', 'BlockUniqueID'], where_clause=f"GlobalID = '{parcel_guid}'") as cursor:
+        row = next(cursor, None)  # Safely get the first row or None
+        if row:
+            parcel_number = row[0]
+            block_parameters = get_block_parameters_by_guid(row[1])
+
+            return (parcel_number, *block_parameters)
+    return None
+
+
+def get_block_parameters_by_guid(block_guid: str) -> tuple[int, int, bool]:
+    '''
+    Retrieves the BlockNumber, SubBlockNumber and IsTax parameters of a block given its GlobalID.
+
+    Parameters:
+        block_guid (str): The GlobalID of the block.
+
+    Returns:
+        tuple[int, int, bool]: A tuple containing the BlockNumber, SubBlockNumber, and IsTax parameters.
+    '''
+    blocks_layer = get_layer('גושים')
+    with SearchCursor(blocks_layer, ['BlockNumber', 'SubBlockNumber', 'IsTax'], where_clause=f"GlobalID = '{block_guid}'") as cursor:
+        row = next(cursor, None)  # Safely get the first row or None
+        if row:
+            block_number = row[0]
+            sub_block_number = row[1]
+            is_tax = bool(row[2])
+            return block_number, sub_block_number, is_tax
+    return None
+        
 def get_RecordGUID_NewCadaster(process_name: str) -> str:
     
     if is_guid_txt_file_exists(process_name):
@@ -50,7 +346,7 @@ def is_tax_process(process_name:str) -> bool:
             if row[0] == 1:
                 is_tax = True
             break  
-
+    #TODO return error if block not found
     return is_tax
 
 def is_settled_block_by_process(process_name:str) -> bool:
@@ -155,35 +451,64 @@ def insert_first_registration_parcels(process_name:str) -> None:
     pass
 
 
-def update_blocks_geometry_by_active_parcels(block_guid:str) -> None:
+def update_blocks_geometry_by_active_parcels(block_guid:str, record_guid:str) -> int:
     ''' 
     Updating the geometry of the block by the active parcels
-
+    Returns:
+        update_status (int):
+        1 if geometry was updated 
+        2 if no active parcels found while the block was still active, hence the block was retired
+        0 if block was already retired or block was not found, so no actions were taken
     '''
 
+    update_status = 0
     parcels_layer = get_layer('חלקות')
     blocks_layer = get_layer('גושים')
 
     SelectByAttribute(parcels_layer,where_clause=f"BlockUniqueID = '{block_guid}' AND RetiredByRecord IS NULL",selection_type='NEW_SELECTION')
     num_of_parcels = int(GetCount(parcels_layer).getOutput(0))
     if num_of_parcels > 0: 
-        dissolved_parcels = Dissolve(parcels_layer, r"memory\dissolved_parcels")
+        dissolved_parcels = Dissolve(in_features=parcels_layer, out_feature_class=r"memory\dissolved_parcels")
+        #dissolved_parcels = Dissolve(in_features=parcels_layer, out_feature_class=r"memory\dissolved_parcels",multi_part="MULTI_PART",unsplit_lines="UNSPLIT_LINES")
         SelectByAttribute(blocks_layer,where_clause=f"GlobalID = '{block_guid}'",selection_type='NEW_SELECTION')
 
         with SearchCursor(dissolved_parcels, field_names="SHAPE@") as cursor:
             new_geometry = cursor.next()[0]
 
+        editor = start_editing(CNFG.ParcelFabricDatabase)
         with UpdateCursor(blocks_layer, ["SHAPE@"]) as cursor:
                 row = next(cursor, None)  # Safely get the first row or None
                 if row:
                     row[0] = new_geometry
                     cursor.updateRow(row)
+        stop_editing(editor)
 
-        AddMessage(f'{timestamp()} | Updated geometry for block {block_guid} from the active parcels')
+        update_status = 1  # Geometry was updated
+
+        #AddMessage(f'{timestamp()} | Updated geometry for block {block_guid} from the active parcels')
         Delete(dissolved_parcels)
+    else:
+        # Check if the block is already retired
+        with SearchCursor(blocks_layer, ['RetiredByRecord'], where_clause=f"GlobalID = '{block_guid}'") as cursor:
+            for row in cursor:
+                row = next(cursor, None)  # Safely get the first row or None
+                if row:
+                    if not row[0]:
+                        update_status = 2  # No active parcels found, block is still active and will be retired
+                        editor = start_editing(CNFG.ParcelFabricDatabase)
+                        with UpdateCursor(blocks_layer, ['RetiredByRecord'], where_clause=f"GlobalID = '{block_guid}'") as cursor:
+                            for row in cursor:
+                                if record_guid:
+                                    row[0] = record_guid
+                                    cursor.updateRow(row)
+                        stop_editing(editor)
+
+                
 
     SelectByAttribute(parcels_layer,selection_type='CLEAR_SELECTION')
     SelectByAttribute(blocks_layer,selection_type='CLEAR_SELECTION')
+    reopen_map()
+    return update_status
 
 
 def update_settled_block_geometry(processName:str) -> None:
@@ -460,6 +785,20 @@ def filter_process_layers_group(ProcessName:str, TaskType:str = 'CreateNewCadast
     neighboring_unsettled_parcels_layer = get_layer('חלקות לא מוסדרות')
     neighboring_unsettled_blocks_layer = get_layer('גושים לא מוסדרים')
 
+    if TaskType == 'CreateNewCadaster' and not is_process_border_valid(ProcessName):
+        # This part is added to deal with cases where the process border geometry is incorrect
+        AddMessage(f'{timestamp()} | ⚠️ The process border for process {ProcessName} is not matching to the process\' parcels geometry.')
+        AddMessage(f'      The process border layer will be redirected to a local feature class with the correct geometry.')
+        local_fc_name = f"ProcessBorder_{ProcessName.replace('/','_')}"
+        default_gdb = get_default_gdb()
+        old_properties = current_process_border_layer.connectionProperties
+        new_properties = {
+            "workspace_factory": "File Geodatabase",
+            "connection_info": {"database": default_gdb},
+            "dataset": local_fc_name
+        }
+        current_process_border_layer.updateConnectionProperties(old_properties, new_properties)
+        
     current_process_border_layer.updateDefinitionQueries([{'name':'Query 1', 'sql':f""" GlobalID = '{ProcessGUID}' """, 'isActive':True}])   
     
     # may be needed later

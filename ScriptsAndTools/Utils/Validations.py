@@ -10,7 +10,7 @@ from arcpy.management import GetCount
 
 
 def user_is_signed_in() -> Validation:
-    """Validates user is signed in to the organization portal """
+    """Validates user is signed in to the organization portal"""
 
     user_name: str|None = get_active_user()
     if user_name:
@@ -127,7 +127,7 @@ def validate_status(ProcessName: str, desire_status: int | list[int]) -> Validat
     elif isinstance(desire_status, int):
         status_text.append(get_DomainValue('ProcessStatus', desire_status))
 
-    current_status: int = SearchCursor(get_layer('גבולות תהליכי קדסטר'), 'Status', f""" ProcessName = '{ProcessName}'""").next()[0]
+    current_status: int = SearchCursor(get_layer('גבולות תהליכי קדסטר'), 'Status', f"ProcessName = '{ProcessName}'").next()[0]
 
     if current_status in desire_status:
         AddMessage(f'{timestamp()} | ✅ Process status is valid')
@@ -139,7 +139,26 @@ def validate_status(ProcessName: str, desire_status: int | list[int]) -> Validat
 
 def validate_stated_areas(ProcessName: str) -> Validation:
     """
+    Validates that the 'Legal Area' of parcels in the current process matches the 'Stated Area' recorded in the active parcel.
+    This function iterates through parcels involved in the specified process (specifically Parcel Roles 1 and 3).
+    It compares the incoming legal area against the existing stated area to ensure data integrity before finalization.
 
+    The validation logic includes:
+    1.  Exemption: Skips validation if the Process Type is 6 (Amendment 97b).
+    2.  ID Resolution: -   For Parcel Type 2: Uses the parcel number directly.
+                       -   For Parcel Type 1 (Temporary): Queries the 'SequenceActions' table to find the corresponding final parcel number.
+    3.  Comparison:
+        -   Retrieves `LegalArea` from `InProcessParcels2D`.
+        -   Retrieves `StatedArea` from the live `Parcels2D` layer.
+        -   Rounds both values to 3 decimal places before comparing.
+
+    Parameters:
+        ProcessName (str): The name of the process with the parcels to validate.
+
+    Returns:
+        Validation: A string status indicating the result:
+            - 'Valid': All areas match, or the process type is exempt.
+            - 'Invalid': Mismatches or Null values were found in the area checks.
     """
     Unmatched: int = 0
 
@@ -171,7 +190,7 @@ def validate_stated_areas(ProcessName: str) -> Validation:
                     parcel_name: str = f"{final_parcel_number}/{block_name}"
                 else:
                     parcel_name: None = None
-                    AddMessage(f"{timestamp()} | ⚠️ Areas check: Skipping temporary parcel {parcel_number}: the parcel doesn't have final number yet")
+                    AddMessage(f"{timestamp()} | ⚠️ Areas check: Skipping temporary parcel {parcel_number} - the parcel doesn't have final number yet")
             else:
                 parcel_name: None = None
                 AddError(f'{timestamp()} | Parcel type {parcel_type} is not allowed')
@@ -179,8 +198,12 @@ def validate_stated_areas(ProcessName: str) -> Validation:
             if parcel_name:
                 legal_area: float = round(incoming_parcel[4], 3)
 
-                stated_area: float = SearchCursor(Parcels2D_path, 'StatedArea', f"Name = '{parcel_name}'").next()[0]
-                stated_area = round(stated_area, 3)
+                active_parcel: Scur = SearchCursor(Parcels2D_path, 'StatedArea', f"Name = '{parcel_name}' AND RetiredByRecord IS NULL")
+                if cursor_length(active_parcel) == 0:
+                    AddError(f'{timestamp()} | ❌ Areas check: parcel {parcel_name.split("/")[0]} at block {block_name} does not exist or not active')
+                    stated_area = None
+                else:
+                    stated_area = round(active_parcel.next()[0], 3)
 
                 if stated_area is None:
                     Unmatched += 1
@@ -201,72 +224,6 @@ def validate_stated_areas(ProcessName: str) -> Validation:
 
     if Unmatched > 0:
         return 'Invalid'
-    else:
-        AddMessage(f'{timestamp()} | ✅ Parcels stated areas are matched')
-        return 'Valid'
-
-
-def validate_stated_areas__(ProcessName: str) -> Validation:
-    """
-    Validate whether current stated area of parcels is equal to suggested parcel legal area from the process.
-    The validation distinguish between the same parcel numbers when one of them is temporary parcel while the other is a final parcel.
-    Two temporary incoming parcels numbers should not happen.
-
-    Parameters:
-        ProcessName (str): The name of the process that suggest parcels edits.
-
-    Returns:
-        str: 'Valid' if all stated areas match legal areas, 'Invalid' otherwise.
-    """
-    
-    Unmatched: int = 0
-    if get_ProcessType(ProcessName) != 6:  # 6 is Amendment 97b
-
-        # Process parcels and their legal area
-        InProcessParcels2D: str = fr"{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}InProcessParcels2D"
-        fields: list[str] = ['ParcelNumber', 'BlockNumber', 'SubBlockNumber', 'ParcelType', 'LegalArea']
-        query: str = f" ParcelRole IN (1,3) AND CPBUniqueID = '{get_ProcessGUID(ProcessName, 'SDE')}' "
-        in_process_areas: Scur = SearchCursor(InProcessParcels2D, fields, query)
-        parcel_names: set = {f'{row[0]}/{row[1]}/{row[2]}' for row in in_process_areas}
-        #                                    {ParcelNumber/BlockNumber/SubBlockNumber}
-        in_process_areas.reset()
-        in_process_areas: dict[str, float] = {f'{row[0]}/{row[1]}/{row[2]}/{row[3]}': round(row[4], 3) for row in in_process_areas}
-        #                                    {ParcelNumber/BlockNumber/SubBlockNumber/ParcelType: LegalArea}
-
-        # Current parcels and their stated area
-        Parcels2D: str = fr'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Parcels2D'.replace("/", "\\")
-        fields: list[str] = ['ParcelNumber', 'BlockNumber', 'SubBlockNumber', 'StatedArea']
-        query: str = f""" Name IN ({"'" + "', '".join(parcel_names) + "'"}) And RetiredByRecord IS NULL """
-        current_areas: Scur = SearchCursor(Parcels2D, fields, query)
-        current_areas: dict[str, float] = {f'{row[0]}/{row[1]}/{row[2]}/2': round(row[3], 3) if row[3] is not None else None for row in current_areas}
-        #                                 {{ParcelNumber/BlockNumber/SubBlockNumber/FinalDomain: LegalArea}: area}
-        del InProcessParcels2D, Parcels2D, fields, query
-
-        for parcel in current_areas:
-            stated_area: float|None = current_areas[parcel]
-            legal_area: float|None = in_process_areas[parcel]
-            parcel_number: str = f"{parcel.split('/')[0]}"
-            block_name: str = f"{parcel.split('/')[1]}/{parcel.split('/')[2]}"
-
-            if stated_area is None:
-                Unmatched += 1
-                AddError(f'{timestamp()} | ❌ Stated area of parcel {parcel_number} at block {block_name}: is Null')
-
-            if legal_area is None:
-                Unmatched += 1
-                AddError(f'{timestamp()} | ❌ Legal area of parcel {parcel_number} at block {block_name}: is Null')
-
-            if stated_area != legal_area:
-                Unmatched += 1
-                AddError(f'{timestamp()} | ❌ Unmatched areas for parcel {parcel_number} at block {block_name}: \n\
-                                Current area is {stated_area} square meters \n\
-                                Process area is {legal_area} square meters \n ')
-
-        del in_process_areas, current_areas
-
-    if Unmatched > 0:
-        return 'Invalid'
-
     else:
         AddMessage(f'{timestamp()} | ✅ Parcels stated areas are matched')
         return 'Valid'
@@ -524,11 +481,16 @@ def validate_substantiated_Parcels3D(ProcessName: str) -> Validation:
 
 def validation_set(task: TaskType, ProcessName: str) -> bool:
     """
-
+    Validates the prerequisites and data integrity for a specific cadaster task before beginning edits operations.
+    This function performs a series of checks tailored to the provided task type.
+    It generates a summary report and logs errors if validation fails.
 
     Parameters:
-        task (TaskType):
-        ProcessName (str):
+        task (TaskType): the type of the task to map the validations.
+        ProcessName (str): The name of the process that contains the features to validate,
+    Returns:
+        True if all validation checks pass (all 'Results' are 'Valid'),
+        False if any check fails or if an invalid task type is provided.
     """
 
     AddMessage(f'\n ⭕ Validating:')

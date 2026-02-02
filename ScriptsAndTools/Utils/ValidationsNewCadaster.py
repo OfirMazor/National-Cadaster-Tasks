@@ -1,16 +1,68 @@
 from Utils.Configs import CNFG
-from Utils.Helpers import get_ProcessGUID, get_ProcessType, get_RecordGUID, start_editing, stop_editing, timestamp, get_DomainValue, get_layer,rewrite_record_data,reopen_map
+from Utils.Helpers import get_ProcessGUID, get_ProcessType, get_RecordGUID, start_editing, stop_editing, timestamp, get_DomainValue, get_layer,rewrite_record_data,reopen_map,get_process_shape
+from Utils.NewCadasterHelpers import get_RecordGUID_NewCadaster,clear_map_selections,get_default_gdb
 from Utils.Validations import user_is_signed_in, process_exist
 from arcpy.da import SearchCursor, UpdateCursor
-from arcpy import AddMessage, AddError,GetPortalInfo, GetActivePortalURL,RefreshLayer
+from arcpy import AddMessage, AddError, AddWarning,GetPortalInfo, GetActivePortalURL,RefreshLayer, env as ENV
 from arcpy.da import SearchCursor
 from arcpy.mp import ArcGISProject
-from arcpy.management import GetCount
+from arcpy.management import CopyFeatures, GetCount,Dissolve, Delete
+from arcpy.management import SelectLayerByLocation as SelectByLocation, SelectLayerByAttribute as SelectByAttribute
 
+ENV.preserveGlobalIds = False
 
+def is_process_border_valid(ProcessName:str) -> bool:
+    '''
+    Checks if the process border for the specified `ProcessName` is fully matching to the contour of the in process parcels,
+    if not, creates a local copy with the correct geometry in the default gdb
+    Parameters:
+        ProcessName (str): The name of the process to search for.
+    Returns:
+        bool: True if the process border is valid, False otherwise.
+    '''
+    cadaster_process_borders = get_layer('גבולות תהליכי קדסטר')
+    parcels_layer = get_layer('חלקות בתהליך')
+    process_border = SelectByAttribute(cadaster_process_borders,where_clause=f""" ProcessName = '{ProcessName}' """,selection_type='NEW_SELECTION')
+    process_guid = get_ProcessGUID(ProcessName)
+    process_parcels = SelectByAttribute(parcels_layer,where_clause=f""" CPBUniqueID = '{process_guid}' """,selection_type='NEW_SELECTION')
+    count = int(GetCount(process_parcels).getOutput(0))
+    if count == 0:
+        clear_map_selections()
+        AddWarning(f'{timestamp()} | No parcels found for process {ProcessName}. No change to process border will be made.')
+        return False
+    
+    dissolved_parcels = Dissolve(in_features=process_parcels, out_feature_class=r"memory\dissolved_parcels")
 
+    with SearchCursor(dissolved_parcels, field_names="SHAPE@") as cursor:
+        dissolved_parcels_geometry = cursor.next()[0]
 
+    with SearchCursor(process_border, field_names="SHAPE@") as cursor:
+        process_border_geometry = cursor.next()[0]
+    
+    result = None
+    if not process_border_geometry.equals(dissolved_parcels_geometry):
+        ENV.preserveGlobalIds = True
+        default_gdb = get_default_gdb()
+        local_process_border = CopyFeatures(process_border, f"{default_gdb}\\ProcessBorder_{ProcessName.replace('/','_')}")
+        ENV.preserveGlobalIds = False
+        editor = start_editing(CNFG.ParcelFabricDatabase)
 
+        with UpdateCursor(local_process_border, ["SHAPE@"]) as cursor:
+                row = next(cursor, None)  # Safely get the first row or None
+                if row:
+                    row[0] = dissolved_parcels_geometry
+                    cursor.updateRow(row)
+        stop_editing(editor)
+
+        result = False
+    else:
+        AddMessage(f'{timestamp()} | The process border matches the process parcels contour for process {ProcessName}.')
+        
+        result = True
+
+    Delete(dissolved_parcels)
+    clear_map_selections()
+    return result
 
 def check_for_existing_records_data(ProcessName:str, TaskType:str = 'CreateNewCadaster' or 'ImproveNewCadaster') -> bool:
     '''Checks if the specified process name already exists in the CadasterRecordsBorder table. 
@@ -232,7 +284,7 @@ def features_created_by_record_exist(ProcessName:str,feature_class_name:str) -> 
         str: Invalid if features created by the given `ProcessName` exist, 'Valid' otherwise.
     '''  
 
-    record_GUID = get_RecordGUID(ProcessName)
+    record_GUID = get_RecordGUID_NewCadaster(ProcessName)
 
     query = [row[0] for row in SearchCursor(f'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}{feature_class_name}', 'GlobalID', f""" CreatedByRecord = '{record_GUID}' """)]
     count = len(query)
@@ -260,7 +312,7 @@ def features_retired_by_record_exist(ProcessName:str, feature_class_name:str) ->
         str: Invalid if features retired by the given `ProcessName` exist, 'Valid' otherwise.
     '''  
 
-    record_GUID = get_RecordGUID(ProcessName)
+    record_GUID = get_RecordGUID_NewCadaster(ProcessName)
 
     query = [row[0] for row in SearchCursor(f'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}{feature_class_name}', 'GlobalID', f""" RetiredByRecord = '{record_GUID}' """)]
     count = len(query)
@@ -291,7 +343,7 @@ def delete_records_related_data(ProcessName:str, TaskType:str = 'CreateNewCadast
     
 
     Records_layer = get_layer('גבולות רישומים') 
-    RecordGuid = get_RecordGUID(ProcessName)
+    RecordGuid = get_RecordGUID_NewCadaster(ProcessName)
     
 
     if TaskType == 'CreateNewCadaster':

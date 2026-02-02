@@ -10,7 +10,7 @@ from Utils.Configs import CNFG
 from arcpy import AddMessage, AddError, PointGeometry, Point, SpatialReference, RefreshLayer, Extent, env as ENV
 from arcpy.mp import ArcGISProject
 from arcpy.da import SearchCursor, UpdateCursor, InsertCursor, Editor, ListDomains
-from arcpy.management import SelectLayerByLocation as SelectByLocation, Append, Dissolve
+from arcpy.management import SelectLayerByLocation as SelectByLocation, Append, Dissolve, MakeFeatureLayer
 
 
 def timestamp() -> str:
@@ -54,7 +54,7 @@ def cursor_length(cursor: Scur|Ucur) -> int:
 
 
 def drop_layer(layer_name: str) -> None:
-    """ Remove a layer from a map in a project. """
+    """ Remove a layer from a map in a project (if exists). """
     current_map: Map = ArcGISProject('current').activeMap
     layer_list: list[Layer|None] = current_map.listLayers(layer_name)
     if layer_list:
@@ -74,7 +74,7 @@ def create_shelf(ProcessName: str) -> str:
     Create a shelf (directory) based on the provided process name.
 
     Parameters:
-    - ProcessName (str): The name of the process used to create the shelf.
+      ProcessName (str): The name of the process used to create the shelf.
       This name will be sanitized by replacing '/' with '_' to ensure valid directory naming.
     """
 
@@ -144,14 +144,15 @@ def get_active_user(mode: Literal['short', 'long'] = 'short') -> str|None:
 
 
 def get_layer(layer_name: str, map_name: MapType = 'Active map') -> Layer | None:
-    """ Returns a layer object from the active map in a project.
+    """
+    Returns a layer object from the active map in a project.
 
-        Parameters:
-            layer_name (str): The name of the layer in the content pane.
-            map_name (MapType): The name of the map containing the layer. Default to the current active map.
+    Parameters:
+        layer_name (str): The name of the layer in the content pane.
+        map_name (MapType): The name of the map containing the layer. Default to the current active map.
 
-        Return:
-            The Layer object unless the layer name was not found in the map.
+    Return:
+        The Layer object unless the layer name was not found in the map.
     """
     if map_name == 'Active map':
         layer: Layer|None = ArcGISProject("current").activeMap.listLayers(layer_name)[0]
@@ -382,12 +383,19 @@ def get_RecordGUID(ProcessName: str, source: Literal['MAP', 'SDE', 'SHELF'] = 'S
 
     else:
         AddError(f"{timestamp()} | source parameter must be on of ['SDE', 'MAP', 'SHELF]")
+        return None
 
 
 
 def get_process_shape(ProcessName: str) -> Polygon|None:
     """
+    Return the shape object of a process border. If the process name was not found-return None.
 
+    Parameters:
+        ProcessName (str): The name of the process used to create the shelf.
+
+    Return:
+        Polygon (Shape)  of a process border or None.
     """
     cpb_path: str = f"{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}CadasterProcessBorders"
     search: Scur = SearchCursor(cpb_path, "Shape@", f"ProcessName = '{ProcessName}'")
@@ -706,30 +714,6 @@ def process_will_retire_its_block(ProcessName: str) -> bool|None:
         return False
 
 
-
-
-
-    #     # Validate against text file of retired 2D parcels
-    #     active_2D_Parcels: set[str] = set(sorted([i[0] for i in active_2D_Parcels]))  # --> {'1/123/0', '2/123/0', ...}
-    #     AddMessage(f"{active_2D_Parcels=}")
-    #     txt_file: str = fr"{CNFG.Library}{ProcessName.replace('/', '_')}/RetiredParcels2D.txt"
-    #     if exists(txt_file):
-    #         retired_2D_parcels: str = open(txt_file, "r").read().strip('"')
-    #         AddMessage(f"{retired_2D_parcels=}")
-    #         retired_2D_parcels: set[str] = {i for i in retired_2D_parcels.replace("'", "").split(', ')}  # --> {'1/123/0', '2/123/0', ...}
-    #         AddMessage(f"{retired_2D_parcels=}")
-    #         if retired_2D_parcels == active_2D_Parcels:
-    #             return False
-    #         else:
-    #             return True
-    #     else:
-    #         AddError(f'{timestamp()} | RetiredParcels2D.txt file in library was not found')
-    #
-    # else:
-    #     return False
-
-
-
 def process_is_transferring(ProcessName: str, source: Literal['MAP', 'SDE'] = 'MAP') -> bool:
     """
     Check if a process includes transfer action.
@@ -961,7 +945,7 @@ def activate_record(ProcessName: str, map_name: MapType = 'Active map') -> None:
                                       Defaults to "Active map".
     """
 
-    RecordGUID: str|None = get_RecordGUID(ProcessName, source="MAP")
+    RecordGUID: str | None = get_RecordGUID(ProcessName, source="MAP")
 
     if not RecordGUID:
         RecordGUID: str = get_RecordGUID(ProcessName, source="SHELF")
@@ -974,9 +958,12 @@ def activate_record(ProcessName: str, map_name: MapType = 'Active map') -> None:
     CIM.parcelFabricActiveRecord.enabled = True
     pf_layer.setDefinition(CIM)
 
-    current_project.save(); current_project.closeViews('MAPS'); map_object.openView();
+    current_project.save();
+    current_project.closeViews('MAPS');
+    map_object.openView();
 
     AddMessage(f'{timestamp()} | ✔️ Record {ProcessName} activated')
+    del RecordGUID, current_project, map_object, pf_layer, CIM
 
 
 def deactivate_record(map_name: MapType = 'Active map') -> None:
@@ -1042,7 +1029,7 @@ def Type2CreateType(Type: int) -> int | None:
                                16: 16}  # FreeEdit
 
     if Type not in mapping.keys():
-        AddError(f'ProcessType {Type} must be on of {list(mapping.keys())}')
+        AddError(f'The ProcessType is {Type} but must be on of {list(mapping.keys())}')
         return None
     else:
         create_type: int = mapping[Type]
@@ -1056,11 +1043,12 @@ def Type2CancelType(Type: int) -> int | None:
                                2: 4,    # Tamar
                                3: 2,    # Judgement
                                9: 5,    # BlockRegulation
+                               10: 3,   # UnregisteredTazar
                                11: 3,   # UnregisteredTazar
                                16: 16}  # FreeEdit
 
     if Type not in mapping.keys():
-        AddError(f'ProcessType {Type} must be on of {list(mapping.keys())}')
+        AddError(f'The ProcessType is {Type} but must be on of {list(mapping.keys())}')
         return None
     else:
         cancel_type: int = mapping[Type]
@@ -1120,9 +1108,7 @@ def get_LayerExtent(layer_name: str) -> Extent|None:
 
 
 def get_AOIExtent() -> Extent:
-    """
-    Returns the area of interest Extent object
-    """
+    """Returns the area of interest Extent object"""
     zoom_to_aoi()
     aoi_extent: Extent = ArcGISProject("current").activeView.camera.getExtent()
 
@@ -1135,8 +1121,8 @@ def get_display_extent() -> Extent:
     return current_extent
 
 
-def AddDefinitionQuery(layer, query: dict) -> None:
-    """ Adds a single definition query """
+def AddDefinitionQuery(layer: Layer, query: dict[str, Any]) -> None:
+    """ Adds a single definition query to a layer"""
     queries: list[dict[str, Any]] = layer.listDefinitionQueries()
 
     if query['isActive']:
