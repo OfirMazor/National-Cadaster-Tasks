@@ -1,0 +1,738 @@
+{
+  "type" : "CIMLayerDocument",
+  "version" : "3.5.0",
+  "build" : 57366,
+  "layers" : [
+    "CIMPATH=_________/_________________2.json"
+  ],
+  "layerDefinitions" : [
+    {
+      "type" : "CIMFeatureLayer",
+      "name" : "חזיתות לא מתואמות",
+      "uRI" : "CIMPATH=_________/_________________2.json",
+      "sourceModifiedTime" : {
+        "type" : "TimeInstant",
+        "start" : 978307200000
+      },
+      "metadataURI" : "CIMPATH=Metadata/6e7a27bb0b54c7b3da1b441be4215510.xml",
+      "useSourceMetadata" : false,
+      "layerElevation" : {
+        "type" : "CIMLayerElevationSurface",
+        "elevationSurfaceLayerURI" : "CIMPATH=Map/9b5a82b0b9ab4fb9a36e25055b4c7d55.json"
+      },
+      "expanded" : true,
+      "layerType" : "Operational",
+      "minScale" : 3000,
+      "showLegends" : true,
+      "visibility" : true,
+      "displayCacheType" : "Permanent",
+      "maxDisplayCacheAge" : 5,
+      "popupInfo" : {
+        "type" : "CIMPopupInfo",
+        "title" : "חזית ({LineStatus}) {LegalLength}",
+        "mediaInfos" : [
+          {
+            "type" : "CIMTextMediaInfo",
+            "refreshRateUnit" : "esriTimeUnitsSeconds",
+            "rowSpan" : 1,
+            "columnSpan" : 2,
+            "text" : "<div><p style=\"text-align:Center;\"><span style=\"font-family:'tahoma';font-weight:bold;font-size:11pt;color:#E64C00;\">מאפייני חזית בתהליך</span></p></div>"
+          },
+          {
+            "type" : "CIMTableMediaInfo",
+            "row" : 1,
+            "refreshRateUnit" : "esriTimeUnitsSeconds",
+            "rowSpan" : 1,
+            "columnSpan" : 2,
+            "fields" : [
+              "OBJECTID",
+              "GlobalID",
+              "LineType",
+              "Radius",
+              "LineStatus",
+              "LegalLength",
+              "Shape__Length",
+              "Recorded"
+            ],
+            "caption" : "<div><p><span></span></p></div>",
+            "title" : "<div><p><span></span></p></div>"
+          },
+          {
+            "type" : "CIMTextMediaInfo",
+            "row" : 2,
+            "refreshRateUnit" : "esriTimeUnitsSeconds",
+            "rowSpan" : 1,
+            "columnSpan" : 2,
+            "text" : "<div><p style=\"text-align:Center;\"><span style=\"font-family:'tahoma';font-weight:bold;font-size:11pt;color:#E64C00;\">מאפייני נקודות מקושרות</span></p></div>"
+          },
+          {
+            "type" : "CIMTextMediaInfo",
+            "row" : 3,
+            "refreshRateUnit" : "esriTimeUnitsSeconds",
+            "rowSpan" : 1,
+            "columnSpan" : 1,
+            "text" : "<div><p style=\"text-align:Center;\"><span style=\"font-family:'tahoma';color:#E60000;\">נקודת </span><span style=\"font-family:'tahoma';color:#E60000;\">סוף</span></p></div>"
+          },
+          {
+            "type" : "CIMTextMediaInfo",
+            "row" : 3,
+            "column" : 1,
+            "refreshRateUnit" : "esriTimeUnitsSeconds",
+            "rowSpan" : 1,
+            "columnSpan" : 1,
+            "text" : "<div><p style=\"text-align:Center;\"><span style=\"font-family:'Tahoma';color:#E60000;\">נקודת התחלה</span></p></div>"
+          },
+          {
+            "type" : "CIMExpressionMediaInfo",
+            "row" : 4,
+            "refreshRateUnit" : "esriTimeUnitsSeconds",
+            "rowSpan" : 1,
+            "columnSpan" : 1,
+            "expression" : {
+              "type" : "CIMExpressionInfo",
+              "title" : "Custom",
+              "expression" : "var ip_points2D = FeatureSetByName($map, \"נקודות בתהליך\", [\"PointName\"], true);\n\n// End Point Attributes:\nvar point_guid = $feature.EndPointUniqueID;\nvar match = null;\nvar point_name = null;\nvar point_coord = null;\n\nif (point_guid != null) {\n    match = First(Filter(ip_points2D, \"GlobalID = @point_guid\"));\n    if (match != null) {\n\n        point_guid = Replace(point_guid, \"{\", \"\");\n        point_guid = Replace(point_guid, \"}\", \"\");\n\n        point_name = match.PointName;\n\n        var geom = Geometry(match);\n        if (geom != null) {\n            point_coord = \"X: \" + Text(geom.x, \"#.###\") + \", Y: \" + Text(geom.y, \"#.###\");}}}\n\n// Fields Dictionary\nvar dict = {type: 'fields', title: '',\n            \n            fieldInfos: [{fieldName: \"שם נקודה\", label: \"שם נקודה\", visible: true},\n                         {fieldName: \"מזהה נקודה\", label: \"מזהה נקודה\", visible: true},\n                         {fieldName: \"קואורדינטה\", label: \"קואורדינטה\", visible: true}],\n            \n             attributes: {\"שם נקודה\": point_name,\n                          \"מזהה נקודה\": point_guid,\n                          \"קואורדינטה\": point_coord}};\n\nreturn dict;\n",
+              "returnType" : "Default"
+            }
+          },
+          {
+            "type" : "CIMExpressionMediaInfo",
+            "row" : 4,
+            "column" : 1,
+            "refreshRateUnit" : "esriTimeUnitsSeconds",
+            "rowSpan" : 1,
+            "columnSpan" : 1,
+            "expression" : {
+              "type" : "CIMExpressionInfo",
+              "title" : "Custom",
+              "expression" : "var ip_points2D = FeatureSetByName($map, \"נקודות בתהליך\", [\"PointName\"], true);\n\n// Start Point Attributes:\nvar point_guid = $feature.StartPointUniqueID;\nvar match = null;\nvar point_name = null;\nvar point_coord = null;\n\nif (point_guid != null) {\n    match = First(Filter(ip_points2D, \"GlobalID = @point_guid\"));\n    if (match != null) {\n\n        point_guid = Replace(point_guid, \"{\", \"\");\n        point_guid = Replace(point_guid, \"}\", \"\");\n\n        point_name = match.PointName;\n\n        var geom = Geometry(match);\n        if (geom != null) {\n            point_coord = \"X: \" + Text(geom.x, \"#.###\") + \", Y: \" + Text(geom.y, \"#.###\");}}}\n\n// Fields Dictionary\nvar dict = {type: 'fields', title: '',\n            \n            fieldInfos: [{fieldName: \"שם נקודה\", label: \"שם נקודה\", visible: true},\n                         {fieldName: \"מזהה נקודה\", label: \"מזהה נקודה\", visible: true},\n                         {fieldName: \"קואורדינטה\", label: \"קואורדינטה\", visible: true}],\n            \n             attributes: {\"שם נקודה\": point_name,\n                          \"מזהה נקודה\": point_guid,\n                          \"קואורדינטה\": point_coord}};\n\nreturn dict;\n",
+              "returnType" : "Default"
+            }
+          },
+          {
+            "type" : "CIMTextMediaInfo",
+            "row" : 5,
+            "refreshRateUnit" : "esriTimeUnitsSeconds",
+            "rowSpan" : 1,
+            "columnSpan" : 2,
+            "text" : "<div><p style=\"text-align:Center;\"><span style=\"font-family:'tahoma';font-weight:bold;font-size:11pt;color:#38A800;\">מאפייני תכנית</span></p></div>"
+          },
+          {
+            "type" : "CIMExpressionMediaInfo",
+            "row" : 6,
+            "refreshRateUnit" : "esriTimeUnitsSeconds",
+            "rowSpan" : 1,
+            "columnSpan" : 2,
+            "expression" : {
+              "type" : "CIMExpressionInfo",
+              "title" : "Custom",
+              "expression" : "var cpb_guid = $feature.CPBUniqueID;\nvar cpb_layer = FeatureSetByName($map, \"גבולות תהליכי קדסטר\", [\"ProcessName\", \"Status\", \"ProcessType\"], false);\nvar data = First(Filter(cpb_layer, \"GlobalID = @cpb_guid\"));\n\nvar dict = {type: 'fields', title: '', description: '',\n            fieldInfos: [{fieldName: \"שם המפה\", label: \"שם המפה\", visible: true},\n                         {fieldName: \"סוג תהליך\", label: \"סוג תהליך\", visible: true},\n                         {fieldName: \"סטטוס\", label: \"סטטוס\", visible: true},\n                         {fieldName: \"מזהה תהליך\", label: \"מזהה תהליך\", visible: true}],\n\n             attributes: {\"שם המפה\": data.ProcessName,\n                          \"סוג תהליך\": DomainName(cpb_layer, 'ProcessType', data.ProcessType),\n                          \"סטטוס\": DomainName(cpb_layer, 'Status', data.Status),\n                          \"מזהה תהליך\": StandardizeGuid(cpb_guid,'digits-hyphen')}};\n \nreturn dict;",
+              "returnType" : "Default"
+            }
+          }
+        ],
+        "gridLayout" : {
+          "type" : "CIMPopupLayout",
+          "columnWidths" : [
+            50,
+            50
+          ],
+          "borderWidth" : 2,
+          "borderColor" : {
+            "type" : "CIMRGBColor",
+            "values" : [
+              230,
+              76,
+              0,
+              100
+            ]
+          }
+        }
+      },
+      "showPopups" : true,
+      "serviceLayerID" : -1,
+      "refreshRate" : -1,
+      "refreshRateUnit" : "esriTimeUnitsSeconds",
+      "blendingMode" : "Alpha",
+      "allowDrapingOnIntegratedMesh" : true,
+      "featureElevationExpression" : "0",
+      "featureTable" : {
+        "type" : "CIMFeatureTable",
+        "displayField" : "LineStatus",
+        "editable" : true,
+        "fieldDescriptions" : [
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "Object ID",
+            "fieldName" : "OBJECTID",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "readOnly" : true,
+            "visible" : false,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מזהה חזית",
+            "fieldName" : "GlobalID",
+            "readOnly" : true,
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "סטטוס חזית",
+            "fieldName" : "LineStatus",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "readOnly" : true,
+            "visible" : false,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "סוג הקו",
+            "fieldName" : "LineType",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "readOnly" : true,
+            "visible" : false,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מזהה נקודת התחלה",
+            "fieldName" : "StartPointUniqueID",
+            "readOnly" : true,
+            "visible" : false,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מזהה נקודת סיום",
+            "fieldName" : "EndPointUniqueID",
+            "readOnly" : true,
+            "visible" : false,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "אורך רשום",
+            "fieldName" : "LegalLength",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "readOnly" : true,
+            "visible" : false,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "רדיוס",
+            "fieldName" : "Radius",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "readOnly" : true,
+            "visible" : false,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "מזהה תהליך קדסטרי",
+            "fieldName" : "CPBUniqueID",
+            "readOnly" : true,
+            "visible" : false,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "היקף גיאומטריה",
+            "fieldName" : "Shape__Length",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "readOnly" : true,
+            "visible" : false,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "גיאומטריה",
+            "fieldName" : "Shape",
+            "readOnly" : true,
+            "visible" : false,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "עודכן ברצף",
+            "fieldName" : "Recorded",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "readOnly" : true,
+            "visible" : false,
+            "searchMode" : "Exact"
+          }
+        ],
+        "timeFields" : {
+          "type" : "CIMTimeTableDefinition"
+        },
+        "timeDefinition" : {
+          "type" : "CIMTimeDataDefinition",
+          "timeReference" : {
+            "type" : "TimeReference",
+            "timeZone" : "UTC",
+            "respectsDaylightSaving" : false,
+            "respectsDynamicAdjustmentRules" : false,
+            "timeZoneIANA" : "Etc/UTC"
+          },
+          "customTimeExtent" : {
+            "type" : "TimeExtent",
+            "start" : null,
+            "end" : null,
+            "empty" : false
+          },
+          "applyTimeReferenceToAllFields" : false
+        },
+        "timeDisplayDefinition" : {
+          "type" : "CIMTimeDisplayDefinition",
+          "timeInterval" : 10,
+          "timeIntervalUnits" : "esriTimeUnitsUnknown",
+          "timeOffsetUnits" : "esriTimeUnitsDays"
+        },
+        "timeDimensionFields" : {
+          "type" : "CIMTimeDimensionDefinition"
+        },
+        "dataConnection" : {
+          "type" : "CIMStandardDataConnection",
+          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceFactory" : "FeatureService",
+          "dataset" : "1",
+          "datasetType" : "esriDTFeatureClass"
+        },
+        "studyAreaSpatialRel" : "esriSpatialRelUndefined",
+        "searchOrder" : "esriSearchOrderSpatial"
+      },
+      "featureTemplates" : [
+        {
+          "type" : "CIMRowTemplate",
+          "name" : "InProcessFronts",
+          "defaultToolGUID" : "{AF2DBF8F-280E-44db-8860-E399D0B30CF1}",
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+            ]
+          }
+        }
+      ],
+      "htmlPopupEnabled" : true,
+      "selectable" : true,
+      "featureCacheType" : "Session",
+      "displayFiltersType" : "ByScale",
+      "featureBlendingMode" : "Alpha",
+      "layerEffectsMode" : "Layer",
+      "labelClasses" : [
+        {
+          "type" : "CIMLabelClass",
+          "expressionTitle" : "Custom",
+          "expression" : "def FindLabel ( [GlobalID] ):\n    return [GlobalID]",
+          "expressionEngine" : "Python",
+          "featuresToLabel" : "AllVisibleFeatures",
+          "maplexLabelPlacementProperties" : {
+            "type" : "CIMMaplexLabelPlacementProperties",
+            "featureType" : "Line",
+            "avoidPolygonHoles" : true,
+            "canOverrunFeature" : true,
+            "canPlaceLabelOutsidePolygon" : true,
+            "canRemoveOverlappingLabel" : true,
+            "canStackLabel" : true,
+            "centerLabelAnchorType" : "Symbol",
+            "connectionType" : "Unambiguous",
+            "constrainOffset" : "NoConstraint",
+            "contourAlignmentType" : "Page",
+            "contourLadderType" : "Straight",
+            "contourMaximumAngle" : 90,
+            "enableConnection" : true,
+            "featureWeight" : 100,
+            "fontHeightReductionLimit" : 4,
+            "fontHeightReductionStep" : 0.5,
+            "fontWidthReductionLimit" : 90,
+            "fontWidthReductionStep" : 5,
+            "graticuleAlignmentType" : "Straight",
+            "labelBuffer" : 15,
+            "labelLargestPolygon" : true,
+            "labelPriority" : -1,
+            "labelStackingProperties" : {
+              "type" : "CIMMaplexLabelStackingProperties",
+              "stackAlignment" : "ChooseBest",
+              "maximumNumberOfLines" : 3,
+              "minimumNumberOfCharsPerLine" : 3,
+              "maximumNumberOfCharsPerLine" : 24,
+              "trimStackingSeparators" : true,
+              "preferToStackLongLabels" : true
+            },
+            "lineFeatureType" : "General",
+            "linePlacementMethod" : "OffsetCurvedFromLine",
+            "maximumLabelOverrun" : 36,
+            "maximumLabelOverrunUnit" : "Point",
+            "minimumFeatureSizeUnit" : "Map",
+            "multiPartOption" : "OneLabelPerPart",
+            "offsetAlongLineProperties" : {
+              "type" : "CIMMaplexOffsetAlongLineProperties",
+              "placementMethod" : "BestPositionAlongLine",
+              "labelAnchorPoint" : "CenterOfLabel",
+              "distanceUnit" : "Percentage",
+              "useLineDirection" : true
+            },
+            "pointExternalZonePriorities" : {
+              "type" : "CIMMaplexExternalZonePriorities",
+              "aboveLeft" : 4,
+              "aboveCenter" : 2,
+              "aboveRight" : 1,
+              "centerRight" : 3,
+              "belowRight" : 5,
+              "belowCenter" : 7,
+              "belowLeft" : 8,
+              "centerLeft" : 6
+            },
+            "pointPlacementMethod" : "AroundPoint",
+            "polygonAnchorPointType" : "GeometricCenter",
+            "polygonBoundaryWeight" : 200,
+            "polygonExternalZones" : {
+              "type" : "CIMMaplexExternalZonePriorities",
+              "aboveLeft" : 4,
+              "aboveCenter" : 2,
+              "aboveRight" : 1,
+              "centerRight" : 3,
+              "belowRight" : 5,
+              "belowCenter" : 7,
+              "belowLeft" : 8,
+              "centerLeft" : 6
+            },
+            "polygonFeatureType" : "General",
+            "polygonInternalZones" : {
+              "type" : "CIMMaplexInternalZonePriorities",
+              "center" : 1
+            },
+            "polygonPlacementMethod" : "CurvedInPolygon",
+            "primaryOffset" : 1,
+            "primaryOffsetUnit" : "Point",
+            "removeAmbiguousLabels" : "All",
+            "removeExtraWhiteSpace" : true,
+            "repetitionIntervalUnit" : "Map",
+            "rotationProperties" : {
+              "type" : "CIMMaplexRotationProperties",
+              "rotationType" : "Arithmetic",
+              "alignmentType" : "Straight"
+            },
+            "secondaryOffset" : 100,
+            "secondaryOffsetUnit" : "Percentage",
+            "strategyPriorities" : {
+              "type" : "CIMMaplexStrategyPriorities",
+              "stacking" : 1,
+              "overrun" : 2,
+              "fontCompression" : 3,
+              "fontReduction" : 4,
+              "abbreviation" : 5
+            },
+            "thinningDistanceUnit" : "Map",
+            "truncationMarkerCharacter" : ".",
+            "truncationMinimumLength" : 1,
+            "truncationPreferredCharacters" : "aeiou",
+            "polygonAnchorPointPerimeterInsetUnit" : "Point"
+          },
+          "maximumScale" : "NaN",
+          "minimumScale" : 650,
+          "name" : "Process Fronts Label",
+          "priority" : -1,
+          "standardLabelPlacementProperties" : {
+            "type" : "CIMStandardLabelPlacementProperties",
+            "featureType" : "Line",
+            "featureWeight" : "None",
+            "labelWeight" : "High",
+            "numLabelsOption" : "OneLabelPerShape",
+            "lineLabelPosition" : {
+              "type" : "CIMStandardLineLabelPosition",
+              "produceCurvedLabels" : true,
+              "above" : true,
+              "inLine" : true,
+              "parallel" : false
+            },
+            "lineLabelPriorities" : {
+              "type" : "CIMStandardLineLabelPriorities",
+              "aboveStart" : 0,
+              "aboveAlong" : 0,
+              "aboveEnd" : 0,
+              "centerStart" : 0,
+              "centerAlong" : 0,
+              "centerEnd" : 0,
+              "belowStart" : 0,
+              "belowAlong" : 0,
+              "belowEnd" : 0
+            },
+            "pointPlacementMethod" : "AroundPoint",
+            "pointPlacementPriorities" : {
+              "type" : "CIMStandardPointPlacementPriorities",
+              "aboveLeft" : 2,
+              "aboveCenter" : 2,
+              "aboveRight" : 1,
+              "centerLeft" : 3,
+              "centerRight" : 2,
+              "belowLeft" : 3,
+              "belowCenter" : 3,
+              "belowRight" : 2
+            },
+            "rotationType" : "Arithmetic",
+            "polygonPlacementMethod" : "AlwaysHorizontal"
+          },
+          "textSymbol" : {
+            "type" : "CIMSymbolReference",
+            "symbol" : {
+              "type" : "CIMTextSymbol",
+              "blockProgression" : "TTB",
+              "depth3D" : 1,
+              "extrapolateBaselines" : true,
+              "fontEffects" : "Normal",
+              "fontEncoding" : "Unicode",
+              "fontFamilyName" : "Calibri",
+              "fontStyleName" : "Bold",
+              "fontType" : "TTOpenType",
+              "haloSize" : 1.5,
+              "haloSymbol" : {
+                "type" : "CIMPolygonSymbol",
+                "symbolLayers" : [
+                  {
+                    "type" : "CIMSolidFill",
+                    "enable" : true,
+                    "name" : "New_c26362fa-c392-4ddb-bf33-0ec6f74ec9ec",
+                    "color" : {
+                      "type" : "CIMRGBColor",
+                      "values" : [
+                        255,
+                        255,
+                        255,
+                        100
+                      ]
+                    }
+                  }
+                ],
+                "angleAlignment" : "Map"
+              },
+              "height" : 11,
+              "hinting" : "Default",
+              "horizontalAlignment" : "Left",
+              "kerning" : true,
+              "letterWidth" : 100,
+              "ligatures" : true,
+              "lineGapType" : "ExtraLeading",
+              "symbol" : {
+                "type" : "CIMPolygonSymbol",
+                "symbolLayers" : [
+                  {
+                    "type" : "CIMSolidStroke",
+                    "enable" : true,
+                    "capStyle" : "Round",
+                    "joinStyle" : "Round",
+                    "lineStyle3D" : "Strip",
+                    "miterLimit" : 4,
+                    "width" : 0,
+                    "height3D" : 1,
+                    "anchor3D" : "Center",
+                    "color" : {
+                      "type" : "CIMRGBColor",
+                      "values" : [
+                        0,
+                        0,
+                        0,
+                        0
+                      ]
+                    }
+                  },
+                  {
+                    "type" : "CIMSolidFill",
+                    "enable" : true,
+                    "color" : {
+                      "type" : "CIMRGBColor",
+                      "values" : [
+                        255,
+                        0,
+                        0,
+                        100
+                      ]
+                    }
+                  }
+                ],
+                "angleAlignment" : "Map"
+              },
+              "symbol3DProperties" : {
+                "type" : "CIM3DSymbolProperties",
+                "dominantSizeAxis3D" : "Z",
+                "rotationOrder3D" : "YXZ",
+                "scaleZ" : 1,
+                "scaleY" : 1
+              },
+              "textCase" : "Normal",
+              "textDirection" : "LTR",
+              "verticalAlignment" : "Bottom",
+              "verticalGlyphOrientation" : "Right",
+              "wordSpacing" : 100,
+              "billboardMode3D" : "FaceNearPlane"
+            }
+          },
+          "useCodedValue" : true,
+          "visibility" : true,
+          "iD" : -1
+        }
+      ],
+      "renderer" : {
+        "type" : "CIMSimpleRenderer",
+        "sampleSize" : 10000,
+        "patch" : "Default",
+        "symbol" : {
+          "type" : "CIMSymbolReference",
+          "symbol" : {
+            "type" : "CIMLineSymbol",
+            "symbolLayers" : [
+              {
+                "type" : "CIMSolidStroke",
+                "enable" : true,
+                "capStyle" : "Round",
+                "joinStyle" : "Round",
+                "lineStyle3D" : "Strip",
+                "miterLimit" : 10,
+                "width" : 3,
+                "height3D" : 1,
+                "anchor3D" : "Center",
+                "color" : {
+                  "type" : "CIMRGBColor",
+                  "values" : [
+                    255,
+                    0,
+                    0,
+                    100
+                  ]
+                }
+              },
+              {
+                "type" : "CIMSolidStroke",
+                "enable" : true,
+                "colorLocked" : true,
+                "capStyle" : "Round",
+                "joinStyle" : "Round",
+                "lineStyle3D" : "Strip",
+                "miterLimit" : 10,
+                "width" : 5,
+                "height3D" : 1,
+                "anchor3D" : "Center",
+                "color" : {
+                  "type" : "CIMRGBColor",
+                  "values" : [
+                    255,
+                    255,
+                    255,
+                    100
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      "scaleSymbols" : true,
+      "snappable" : true
+    }
+  ],
+  "binaryReferences" : [
+    {
+      "type" : "CIMBinaryReference",
+      "uRI" : "CIMPATH=Metadata/6e7a27bb0b54c7b3da1b441be4215510.xml",
+      "data" : "<?xml version=\"1.0\"?>\r\n<metadata xml:lang=\"he\"><Esri><CreaDate>20240225</CreaDate><CreaTime>13525500</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>TRUE</SyncOnce></Esri><dataIdInfo><idCitation><resTitle>חזיתות לא מתואמות</resTitle></idCitation><searchKeys/><idPurp></idPurp><idAbs>&lt;DIV STYLE=\"text-align:Left;font-size:12pt\"&gt;&lt;P&gt;&lt;SPAN&gt;השכבה מכילה חזיתות בתהליך אשר לא נמצאה להן התאמה גיאומטרית מול שכבת חזיתות פעילות ברצף הקדסטרי.&lt;/SPAN&gt;&lt;SPAN&gt;השכבה משמשת כעזר בצעד עדכון מאפיינים באשפי בנק\"ל.&lt;/SPAN&gt;&lt;SPAN&gt;יש לתאם גיאומטריית חזיתות הרצף בהתאם לחזיתות מהתהליך הקדסטרי.&lt;/SPAN&gt;&lt;/P&gt;&lt;/DIV&gt;</idAbs><idCredit></idCredit><resConst><Consts><useLimit></useLimit></Consts></resConst></dataIdInfo></metadata>\r\n"
+    }
+  ],
+  "rGBColorProfile" : "sRGB IEC61966-2.1",
+  "cMYKColorProfile" : "U.S. Web Coated (SWOP) v2",
+  "elevationSurfaceLayerDefinitions" : [
+    {
+      "type" : "CIMElevationSurfaceLayer",
+      "name" : "Ground",
+      "uRI" : "CIMPATH=Map/9b5a82b0b9ab4fb9a36e25055b4c7d55.json",
+      "sourceModifiedTime" : {
+        "type" : "TimeInstant"
+      },
+      "useSourceMetadata" : true,
+      "description" : "Ground",
+      "expanded" : true,
+      "layer3DProperties" : {
+        "type" : "CIM3DLayerProperties",
+        "castShadows" : true,
+        "isLayerLit" : true,
+        "layerFaceCulling" : "None",
+        "preloadTextureCutoffHigh" : 0.29999999999999999,
+        "preloadTextureCutoffLow" : 0.59999999999999998,
+        "textureCutoffHigh" : 0.29999999999999999,
+        "textureCutoffLow" : 0.59999999999999998,
+        "useCompressedTextures" : true,
+        "verticalExaggeration" : 1,
+        "exaggerationMode" : "ScaleZ",
+        "lighting" : "OneSideDataNormal",
+        "optimizeMarkerTransparency" : true
+      },
+      "layerType" : "Operational",
+      "showLegends" : false,
+      "visibility" : true,
+      "displayCacheType" : "Permanent",
+      "maxDisplayCacheAge" : 5,
+      "showPopups" : true,
+      "serviceLayerID" : -1,
+      "refreshRate" : -1,
+      "refreshRateUnit" : "esriTimeUnitsSeconds",
+      "blendingMode" : "Alpha",
+      "allowDrapingOnIntegratedMesh" : true,
+      "elevationMode" : "BaseGlobeSurface",
+      "verticalExaggeration" : 1,
+      "color" : {
+        "type" : "CIMRGBColor",
+        "values" : [
+          255,
+          255,
+          255,
+          100
+        ]
+      },
+      "surfaceTINShadingMode" : "Smooth"
+    }
+  ]
+}
