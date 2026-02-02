@@ -5,25 +5,18 @@
   <modules>
     <insertModule id="Custom">
       <tabs>
-        <tab id="esriTab52ecd5dae4b10ace" caption="NCDB" placeWith="esri_workflow_mapPaneTab" insert="after">
-          <group refID="esriGroup76e44ae6c1dde553" />
-          <group refID="esriGroupd651186da045cabb" />
+        <tab id="esriTabff266c8d19a09c5b" caption="Cadaster Editor" placeWith="esri_sharing_shareTab" insert="after">
+          <group refID="esriGroup592ae6c23cbeed16" />
         </tab>
       </tabs>
       <groups>
-        <group id="esriGroup76e44ae6c1dde553" caption="Assitants">
-          <button refID="esri_geoprocessing_NCDBCustomTools_ReinitializeProject" size="large" />
-          <button refID="esri_geoprocessing_NCDBCustomTools_GetProcessIDs" size="large" />
+        <group id="esriGroup592ae6c23cbeed16" caption="Assistants">
           <button refID="esri_geoprocessing_NCDBCustomTools_DisplayProcessData" size="large" />
-          <button refID="esri_geoprocessing_NCDBCustomTools_GetLastParcelNumber" size="large" />
+          <button refID="esri_geoprocessing_NCDBCustomTools_GetProcessIDs" size="large" />
+          <button refID="esri_geoprocessing_NCDBCustomTools_ImportOrModifyPoints" size="large" />
+          <button refID="esri_geoprocessing_NCDBCustomTools_LastParcelNumber" size="large" />
           <button refID="esri_geoprocessing_NCDBCustomTools_RetirePointsOrFronts" size="large" />
-        </group>
-        <group id="esriGroupd651186da045cabb" caption="Tasks tools">
-          <button refID="esri_geoprocessing_NCDBCustomTools_StartTaskImprove" size="large" />
-          <button refID="esri_geoprocessing_NCDBCustomTools_UpdateAttributesImproveCurrentCadaster" size="large" />
-          <button refID="esri_geoprocessing_NCDBCustomTools_StartTaskCreateAndRetire" size="large" />
-          <button refID="esri_geoprocessing_NCDBCustomTools_UpdateAttributesCreateAndRetire" size="large" />
-          <button refID="esri_geoprocessing_NCDBCustomTools_EndTask" size="large" />
+          <button refID="esri_geoprocessing_NCDBCustomTools_ReinitializeProject" size="large" />
         </group>
       </groups>
       <controls>
@@ -87,9 +80,39 @@
           </args>
           <tooltip heading="Retire Points Or Fronts">Retire selected points or fronts. </tooltip>
         </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_ImportOrModifyPoints" caption="Import or Modify Points" smallImage="GeoprocessingScript16" largeImage="GeoprocessingScript32" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx\ImportOrModifyPoints" name="Import or Modify Points" xmlns="" />
+          </args>
+          <tooltip heading="Import or Modify Points">Import and update parcel fabric active points in an active ArcGIS Parcel Fabric.
+This function uses `ImportParcelFabricPoints` to import points from a source layer into the active parcel fabric, updating matched points and/or creating unmatched points based on the specified mode.
+The results are processed and displayed in a tabular format in ArcGIS messages.</tooltip>
+        </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_LastParcelNumber" caption="Last Parcel Number" smallImage="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx|LastParcelNumber.tool\tool.icon.png" largeImage="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx|LastParcelNumber.tool\tool.icon.png" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx\LastParcelNumber" name="Last Parcel Number" xmlns="" />
+          </args>
+          <tooltip heading="Last Parcel Number">Prints the last active parcel number in the specified block.
+
+This tool queries the Parcels2D and Parcels3D feature classes within the configured parcel fabric dataset,
+filtering only active parcels (i.e., those not retired).
+It then determines the highest parcel number in each class for the given block and sub-block, and prints the maximum of the two.
+</tooltip>
+        </button>
       </controls>
     </insertModule>
     <updateModule refID="Custom">
+      <controls />
+    </updateModule>
+    <updateModule refID="esri_mapping">
+      <tabs>
+        <updateTab refID="esri_mapping_homeContingentValuesViewTab">
+          <insertGroup refID="esriGroup4e26f0ff00876650" />
+        </updateTab>
+      </tabs>
+      <groups>
+        <insertGroup id="esriGroup4e26f0ff00876650" caption="New Group" />
+      </groups>
       <controls />
     </updateModule>
   </modules>
