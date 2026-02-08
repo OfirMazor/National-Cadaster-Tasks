@@ -22,8 +22,7 @@ def display_process_data(ProcessName: str) -> None:
         refresh_map_view()
 
         if process_type != 2:
-
-            current_map.addDataFromPath(fr'{CNFG.LayerFiles}Display2DProcessData.lyrx')
+            current_map.addDataFromPath(fr'{CNFG.LayerFiles}Display2DProcessData_{CNFG.Environment}.lyrx')
             group_layer: Layer = current_map.listLayers('תכנית')[0]
             current_map.moveLayer(current_map.listLayers('בקרת איכות')[0], group_layer, "BEFORE")
             group_layer.name = f'{ProcessName} תכנית'

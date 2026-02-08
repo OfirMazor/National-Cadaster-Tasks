@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from Utils.Configs import CNFG
 from Utils.Helpers import delete_file, get_ProcessType, get_ProcessGUID, get_RecordGUID, remove_intermediate_vertices, start_editing, stop_editing, get_BlockGUID,get_layer, reopen_map, get_ActiveRecord
-from Utils.NewCadasterHelpers import insert_new_fronts, insert_new_border_points, get_ProcessName
+from Utils.NewCadasterHelpers import insert_new_fronts, insert_new_border_points, get_ProcessName, get_RecordGUID_NewCadaster
 from Utils.ValidationsNewCadaster import layer_exists
 from arcpy import AddMessage, AddError, AddWarning, GetParameterAsText, PointGeometry, env, CopyFeatures_management as CopyFeatures, Delete_management as Delete, Describe
 from arcpy.mp import ArcGISProject
@@ -15,7 +15,7 @@ from Utils.TypeHints import *
 
 env.overwriteOutput = True
 #Change workspace if gdb
-env.workspace = CNFG.ParcelFabricDatabase if CNFG.ParcelFabricDatabase.endswith('.gdb/') else env.workspace 
+#env.workspace = CNFG.ParcelFabricDatabase if CNFG.ParcelFabricDatabase.endswith('.gdb/') else env.workspace 
 
 
 
@@ -234,7 +234,7 @@ def break_fronts_at_border_points(ProcessName:str, TaskType:str = 'CreateNewCada
             AddMessage('\n ⭕ Breaking external fronts that pass through border points (only for points that are along the settled borders): \n')
 
         AddMessage(f"    {num_of_fronts_for_retirment} Fronts will be retired and replaced with shorter collinear fronts:")
-        RecordGUID = get_RecordGUID(ProcessName,'MAP')
+        RecordGUID = get_RecordGUID_NewCadaster(ProcessName)
         editor = start_editing(CNFG.ParcelFabricDatabase)
         sr = Describe(record_fronts_layer).spatialReference
         new_fronts = CreateFeatureclass("memory","new_fronts",template=record_fronts_layer,spatial_reference=sr)
@@ -319,7 +319,7 @@ def modify_external_fronts_attributes(ProcessName:str, TaskType:str = 'CreateNew
     process_fields = ["LegalLength", "Radius"]
     record_fields = ["Distance", "Radius"]
 
-    RecordGuid = get_RecordGUID(ProcessName,'MAP')
+    RecordGuid = get_RecordGUID_NewCadaster(ProcessName)
 
     if TaskType == 'CreateNewCadaster':
         AddMessage('\n ⭕ Modifying base fronts attributes: \n')
@@ -554,7 +554,7 @@ def modify_new_fronts_attributes(ProcessName:str, Filter:str = 'INTERNAL' or 'EX
     if Filter == 'INTERNAL' and not layer_exists('חזיתות חדשות'):
         return
     
-    RecordGuid = get_RecordGUID(ProcessName,'MAP')
+    RecordGuid = get_RecordGUID_NewCadaster(ProcessName)
 
 
     all_fronts_layer = get_layer('חזיתות')
