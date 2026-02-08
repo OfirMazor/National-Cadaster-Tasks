@@ -2,7 +2,7 @@ from os import startfile
 from Utils.Configs import CNFG
 from Utils.Helpers import create_shelf, get_ProcessType, get_RecordGUID, get_BlockGUID, start_editing, stop_editing, zoom_to_aoi,  \
     filter_to_aoi, get_FinalParcel, reopen_map, start_editing, stop_editing, cursor_length, \
-    timestamp, activate_record, get_DomainValue, get_layer, set_priority, rewrite_record_data, drop_layer,drop_dbtable, load_to_records
+    timestamp, activate_record, get_DomainValue, get_layer, set_priority, rewrite_record_data, drop_layer,drop_dbtable, load_to_records, get_aprx_name
 from Utils.UpdateAttributes import update_record_status
 from Utils.NewCadasterHelpers import append_process_to_records, append_settled_parcels, append_new_fronts, append_new_border_points,\
     count_features_in_group, filter_process_layers_group,update_blocks_geometry_by_active_parcels,append_first_registration_parcels, \
@@ -12,14 +12,14 @@ from Utils.ValidationsNewCadaster import new_cadaster_validation_set, layer_exis
 from Utils.VersionManagement import open_version
 from StartTaskRetireAndCreateCadaster import load_new_parcels
 from RetireSelectedUnsettledFeatures import RetireSelectedFeatures
-from arcpy import AddMessage, AddError, AddWarning,GetParameterAsText, env as ENV
+from arcpy import AddMessage, AddError, AddWarning,GetParameterAsText,GetParameter, env as ENV
 from arcpy.management import SelectLayerByLocation as SelectByLocation, SelectLayerByAttribute as SelectByAttribute, GetCount
 from arcpy.da import SearchCursor, UpdateCursor
 from arcpy.mp import ArcGISProject
 
 
 ENV.preserveGlobalIds = False
-
+ENV.overwriteOutput = True
 
 def add_or_update_record(processName:str, recordExists:bool) -> None:
     '''
@@ -53,13 +53,22 @@ def retire_within_tax_features(processName:str) -> None:
         AddMessage(f"{timestamp()} | The process {processName} contains tax parcels, so no retirement attempt will be made")
     else:
         if layer_exists('חלקות לא מוסדרות'):
-            RetireSelectedFeatures(processName)
+            unsettled_parcels_layer = get_layer('חלקות לא מוסדרות')
+            SelectByLocation(in_layer=unsettled_parcels_layer,overlap_type="WITHIN",select_features=Process_border_layer,selection_type="NEW_SELECTION")
+            if get_ProcessType(ProcessName) == 9:
+                SelectByAttribute(unsettled_parcels_layer,"SUBSET_SELECTION","LandType = 2")
+            elif get_ProcessType(ProcessName) == 10:
+                SelectByAttribute(unsettled_parcels_layer,"SUBSET_SELECTION","LandType = 2 And IsTax = 1")
+            else:
+                AddError(f"{timestamp()} | The process {processName} have wrong process type {get_ProcessType(processName)}")
+            num_of_selected_parcels = int(GetCount(unsettled_parcels_layer).getOutput(0))
+            if num_of_selected_parcels > 0:
+                #AddMessage(f"{timestamp()} | {num_of_selected_parcels} parcels were selected for retirement")
+                RetireSelectedFeatures(processName)
+            else:
+                AddMessage(f"{timestamp()} | No within parcels to retire were found")
         else:
             AddMessage(f"{timestamp()} | No unsettled parcels layer found, so no retirement attempt will be made")
-
-            
-
-
 
 
 
@@ -153,10 +162,10 @@ def load_data_to_sequence_layers(ProcessName:str, TaskType:str = 'CreateNewCadas
 
         if get_ProcessType(ProcessName) == 9:
             AddMessage(f'{timestamp()} | Loading settled parcels...')
-            num_of_appended_features = append_settled_parcels(ProcessName)
+            num_of_appended_features = insert_settled_parcels(ProcessName)
         else:
             AddMessage(f'{timestamp()} | Loading first registration parcels...')
-            num_of_appended_features = insert_first_registration_parcels(ProcessName)
+            num_of_appended_features = append_first_registration_parcels(ProcessName)
             #load_new_parcels(ProcessName)
 
         if not num_of_appended_features:
@@ -206,11 +215,8 @@ def display_process_data(ProcessName:str, TaskType:str = 'CreateNewCadaster' or 
 
     AddMessage('\n ⭕ Loading data: \n')
 
-    CurrentMap.addDataFromPath(fr'{CNFG.LayerFiles}NewCadasterLayers.lyrx')
-
-
+    CurrentMap.addDataFromPath(fr'{CNFG.LayerFiles}NewCadasterLayers_{CNFG.Environment}.lyrx')
     if TaskType == 'CreateNewCadaster':
-        
         if get_ProcessType(ProcessName) == 9: #(הסדר)
 
             drop_dbtable('פעולות בתכנית')
@@ -252,7 +258,7 @@ def display_process_data(ProcessName:str, TaskType:str = 'CreateNewCadaster' or 
 
     
 
-def start_task_CreateNewCadaster(ProcessName:str, ComputeReport:str, TaskType:str = 'CreateNewCadaster' or 'ImproveNewCadaster', auto_retire_tax_features:str = 'false') -> None:
+def start_task_CreateNewCadaster(Independent: bool, ProcessName: str|None, ComputeReport:bool, TaskType:str = 'CreateNewCadaster' or 'ImproveNewCadaster', auto_retire_tax_features:bool = 'False') -> None:
 
     '''
     Executing the main task function
@@ -265,6 +271,10 @@ def start_task_CreateNewCadaster(ProcessName:str, ComputeReport:str, TaskType:st
     None
     '''
     set_priority()
+
+    # Whether the process is executed from CMS or independent task.
+    ProcessName: str = get_aprx_name() if not Independent else ProcessName
+    
     if new_cadaster_validation_set(ProcessName, TaskType) == True:
 
         shelf = create_shelf(ProcessName)
@@ -279,16 +289,17 @@ def start_task_CreateNewCadaster(ProcessName:str, ComputeReport:str, TaskType:st
             if get_ProcessType(ProcessName) == 9: #(הסדר)
                 update_settled_block(ProcessName)
             else: # current_process_type_code==10 (רישום ראשון)
-                block_guid = get_BlockGUID(ProcessName)
-                update_blocks_geometry_by_active_parcels(block_guid)
-
-        filter_to_aoi(ProcessName)
+                block_guid = get_BlockGUID('ProcessName',ProcessName)
+                record_guid = get_RecordGUID_NewCadaster(ProcessName)
+                # the block's geometry update performed for every case to ensure that the block's field last_edited_date will be updating
+                update_blocks_geometry_by_active_parcels(block_guid,record_guid)
+        filter_to_aoi(ProcessName) 
         zoom_to_aoi()
 
-        if auto_retire_tax_features == 'true':
+        if auto_retire_tax_features:
             retire_within_tax_features(ProcessName)
         
-        if ComputeReport == 'true':
+        if ComputeReport:
             compute_matching_points_report(ProcessName, 'CreateNewCadaster')
             startfile(fr'{shelf}/PointsDistanceReport-{ProcessName.replace("/","_")}.xlsx')
 
@@ -296,14 +307,15 @@ def start_task_CreateNewCadaster(ProcessName:str, ComputeReport:str, TaskType:st
 
 if __name__ == "__main__":
 
-    ProcessName = GetParameterAsText(0)
-    TaskType = GetParameterAsText(1)
-    ComputeReport = GetParameterAsText(2)
+    Independent= GetParameter(0)
+    ProcessName = GetParameterAsText(1)
+    TaskType = GetParameterAsText(2)
+    ComputeReport = GetParameter(3)
 
     if TaskType == 'CreateNewCadaster':
-        auto_retire_tax_features = GetParameterAsText(3)
+        auto_retire_tax_features = GetParameter(4)
     else:
         auto_retire_tax_features = None
 
-    start_task_CreateNewCadaster(ProcessName, ComputeReport, TaskType, auto_retire_tax_features)
+    start_task_CreateNewCadaster(Independent,ProcessName, ComputeReport, TaskType, auto_retire_tax_features)
 

@@ -243,7 +243,6 @@ def compare_and_document_version_changes(user_name: str, password: str) -> None:
                                     is_length: bool = True if 'Shape.STLength()' in after_columns else False
 
                                     # Extract pre changes data:
-                                    # before_path: str = f"{CNFG.portal_url}/{CNFG.FeatureServers[0]}/FeatureServer;VERSION=sde.DEFAULT;VERSIONGUID='{CNFG.default_version_guid}'/{layer_ID}"
                                     before_path: str = f"{CNFG.ParcelFabricFeatureServer};VERSION=sde.DEFAULT;VERSIONGUID='{CNFG.default_version_guid}'/{layer_ID}"
                                     fields: list[str] = [f for f in after_columns if f not in ["Shape.STArea()", "Shape.STLength()", "modification"]]
                                     fields: list[str] = fields + ['Shape__Area'] if is_area else fields
@@ -251,7 +250,6 @@ def compare_and_document_version_changes(user_name: str, password: str) -> None:
 
                                     object_ids_string: str = ", ".join(str(oid) for oid in sorted(object_IDs))
                                     query: str = f"OBJECTID IN ({object_ids_string})" if name != 'גבולות רישומים' else f"Name = '{process_name}'"
-
                                     before: df = pd.DataFrame(SearchCursor(before_path, fields, query), columns=fields)\
                                                    .rename(columns= {"Shape__Area": "Shape.STArea()", "Shape__Length": "Shape.STLength()"})
 
@@ -302,3 +300,6 @@ def compare_and_document_version_changes(user_name: str, password: str) -> None:
             else:
                 AddMessage(f"{timestamp()} | {idx}/{total} | {name}: No features in the area of interest \n ")
                 AddMessage(f"{timestamp()} | No features in the area of interest \n ")
+
+
+print(f"{CNFG.ParcelFabricFeatureServer};VERSION=sde.DEFAULT;VERSIONGUID='{CNFG.default_version_guid}'/{7}")

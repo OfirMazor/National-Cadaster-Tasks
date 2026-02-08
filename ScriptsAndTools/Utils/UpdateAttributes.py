@@ -3,7 +3,7 @@ from arcpy.mp import ArcGISProject
 from arcpy.parcel import BuildParcelFabric
 from arcpy.da import SearchCursor, UpdateCursor
 from arcpy.management import SelectLayerByLocation as SelectByLocation, SelectLayerByAttribute as SelectByAttribute, \
-                              MakeFeatureLayer as MakeLayer, GetCount, Dissolve, CalculateField, Merge
+                             MakeFeatureLayer as MakeLayer, GetCount, Dissolve, CalculateField, Merge
 from Utils.Configs import CNFG
 from Utils.TypeHints import *
 from Utils.Validations import compare_counts
@@ -11,15 +11,21 @@ from Utils.Helpers import timestamp, get_ProcessGUID, get_RecordGUID, get_Active
                           get_layer, Type2CancelType, start_editing, stop_editing, get_BlockGUID, refresh_map_view, \
                           get_DomainValue, get_StartPointGUID, get_EndPointGUID, cursor_length, \
                           get_AbsorbingBlockGUIDs, get_BlockStatus, get_BlockName, reopen_map, activate_record, delete_file, get_ActiveRecord, \
-                          process_will_retire_its_block
+                          process_will_retire_its_block, AddDefinitionQuery, drop_layer
 
 ENV.overwriteOutput = True
 
 
 def modify_ParcelsAttributes(ProcessName: str) -> None:
     """
-    Replacing the current value of LandDesignationPlan field in the Parcels2D feature class
-    with a new value from the matching parcels in the InProcessParcels2D.
+    Updates the 'LandDesignationPlan' attribute of active 2D parcels based on matching parcels in the 'InProcessParcels2D' (basis) layer.
+
+    The function iterates through the 'In Process' parcels, identifies the corresponding
+    active parcels by Parcel/Block/SubBlock number, and updates their land designation
+    and 'UpdatedByRecord' GUID if changes are detected.
+
+    Parameters:
+        ProcessName (str): The name of the current process/record. Used to retrieve the Record GUID for tracking updates.
     """
 
     Parcels2D: Layer = get_layer('חלקות')
@@ -56,9 +62,21 @@ def modify_ParcelsAttributes(ProcessName: str) -> None:
 
 
 def modify_CurrentFrontsAttributes(ProcessName: str) -> None:
-    """Modifies attributes of current fronts based on newer fronts of an improvement process."""
+    """
+    Modifies the attributes of existing active fronts ('חזיתות') based on spatially matching fronts from the
+    'Improvement' process layer ('חזיתות ביסוס').
+
+    Updates fields such as 'LegalLength', 'Radius', 'LineType', and topology point IDs.
+    It performs a spatial selection to find exact geometric matches. If a process front does not match exactly one active
+    front, it is logged as a warning and added to an 'UnmatchedFronts' layer for review.
+
+    Parameters:
+        ProcessName (str): The name of the current process. Used to set the 'UpdatedByRecord' field.
+
+    """
 
     AddMessage('\n ⭕ Modifying fronts attributes:')
+    drop_layer('חזיתות לא מתואמות')
     current_map: Map = ArcGISProject("current").activeMap
     current_map.clearSelection()
     RecordGUID: str = get_RecordGUID(ProcessName, 'MAP')
@@ -71,17 +89,21 @@ def modify_CurrentFrontsAttributes(ProcessName: str) -> None:
     current_fronts_layer: Layer = current_map.listLayers('חזיתות')[0]
     fields_to_update: list[str] = ['Distance', 'Radius', 'LineType', 'UpdatedByRecord', 'StartPointUniqueID', 'EndPointUniqueID', 'Shape@', 'GlobalID']
 
+    unmatched_fronts: list[str | None] = []
+
     ENV.addOutputsToMap = False
     editor: Editor = start_editing(ENV.workspace)
     for idx, guid in enumerate(process_fronts_guids, start=1):
-        process_front: Layer = MakeLayer(process_fronts_layer, 'process_front', where_clause = f"GlobalID = '{guid}'")
-        current_front: Layer = SelectByLocation(in_layer= current_fronts_layer, select_features= process_front, overlap_type= 'ARE_IDENTICAL_TO')
+        process_front: Layer = MakeLayer(process_fronts_layer, 'process_front', where_clause = f"GlobalID = '{guid}'").getOutput(0)
+        current_front: Result = SelectByLocation(in_layer= current_fronts_layer, select_features= process_front, overlap_type= 'ARE_IDENTICAL_TO')
         count_matches: int = int(current_front.getOutput(2))
 
         if count_matches == 0:
-            AddMessage(f"{timestamp()} | {idx}/{total} | ⚠️ The process front {guid} does not match any current front and will not be modified. \n ")
+            AddMessage(f"{timestamp()} | {idx}/{total} | ⚠️ The process front {guid} does not match any active front and will not be modified. \n ")
+            unmatched_fronts.append(guid)
         if count_matches > 1:
-            AddMessage(f"{timestamp()} | {idx}/{total} | ⚠️ The process front {guid} matched with {count_matches} current fronts and will not be modified. \n ")
+            AddMessage(f"{timestamp()} | {idx}/{total} | ⚠️ The process front {guid} matched with {count_matches} active fronts and will not be modified. \n ")
+            unmatched_fronts.append(guid)
         if count_matches == 1:
             process_data: Scur = SearchCursor(process_front, field_that_update)
             process_data: dict[str, Any] = [{'LegalLength': i[0], 'Radius': i[1], 'LineType': i[2]} for i in process_data][0]
@@ -113,12 +135,29 @@ def modify_CurrentFrontsAttributes(ProcessName: str) -> None:
     ENV.addOutputsToMap = True
     current_map.clearSelection()
     stop_editing(editor)
-    del editor, current_map, fields_to_update, current_fronts_layer
+
+    # Add an unmatched fronts layer if unmatched fronts found
+    total_unmatched: int = len(unmatched_fronts)
+    if total_unmatched > 0:
+        unmatched_fronts: str = ', '.join(["'" + guid + "'" for guid in unmatched_fronts])
+        query_params: dict[str, Any] = {'name': 'UnmatchedFronts', 'sql': f"GlobalID IN ({unmatched_fronts})", 'isActive': True}
+        current_map.addDataFromPath(f"{CNFG.LayerFiles}UnmatchedFronts_{CNFG.Environment}.lyrx")
+        AddDefinitionQuery(get_layer('חזיתות לא מתואמות'), query_params)
+        AddMessage(f"{timestamp()} | 💡 {total_unmatched} unmatched fronts from the process are displayed on the map")
+
+    del editor, current_map, fields_to_update, current_fronts_layer, total_unmatched
 
 
 def modify_CurrentAndNewFrontsAttributes() -> None:
+    """
+    Modifies attributes of active fronts based on a preservation/new fronts layer ('חזיתות לשימור וחדשות').
 
+    Similar to `modify_CurrentFrontsAttributes`, this function updates geometry-related
+    attributes (Distance, Radius, LineType) and point IDs for active fronts that spatially
+    match the process fronts. Unmatched fronts are flagged and added to the map for user review.
+    """
     AddMessage('\n ⭕ Modifying fronts attributes:')
+    drop_layer('חזיתות לא מתואמות')
     current_map: Map = ArcGISProject("current").listMaps('מפת עריכה')[0]
     current_map.clearSelection()
 
@@ -128,17 +167,21 @@ def modify_CurrentAndNewFrontsAttributes() -> None:
 
     current_fronts_layer: Layer = current_map.listLayers('חזיתות')[0]
 
+    unmatched_fronts: list[str | None] = []
+
     ENV.addOutputsToMap = False
     editor: Editor = start_editing(ENV.workspace)
     for idx, guid in enumerate(process_fronts_guids, start=1):
-        process_front: Layer = MakeLayer(process_fronts_layer, 'process_front', where_clause = f"GlobalID = '{guid}'")
-        current_front: Layer = SelectByLocation(in_layer= current_fronts_layer, select_features= process_front, overlap_type= 'ARE_IDENTICAL_TO')
+        process_front: Layer = MakeLayer(process_fronts_layer, 'process_front', where_clause = f"GlobalID = '{guid}'").getOutput(0)
+        current_front: Result = SelectByLocation(in_layer= current_fronts_layer, select_features= process_front, overlap_type= 'ARE_IDENTICAL_TO')
         count_matches: int = int(current_front.getOutput(2))
 
         if count_matches == 0:
-            AddMessage(f"{timestamp()} | {idx}/{total} | ⚠️ The process front {guid} does not match any current front and will not be modified. \n ")
+            AddMessage(f"{timestamp()} | {idx}/{total} | ⚠️ The process front {guid} does not match any active front and will not be modified. \n ")
+            unmatched_fronts.append(guid)
         if count_matches > 1:
-            AddMessage(f"{timestamp()} | {idx}/{total} | ⚠️ The process front {guid} matched with {count_matches} current fronts and will not be modified. \n ")
+            AddMessage(f"{timestamp()} | {idx}/{total} | ⚠️ The process front {guid} matched with {count_matches} active fronts and will not be modified. \n ")
+            unmatched_fronts.append(guid)
         if count_matches == 1:
             process_data: Scur = SearchCursor(process_front, ['LegalLength', 'Radius', 'LineType'])
             process_data: dict[str, Any] = [{'LegalLength': i[0], 'Radius': i[1], 'LineType': i[2]} for i in process_data][0]
@@ -168,12 +211,30 @@ def modify_CurrentAndNewFrontsAttributes() -> None:
     ENV.addOutputsToMap = True
     current_map.clearSelection()
     stop_editing(editor)
+
+    # Add an unmatched fronts layer if unmatched fronts found
+    total_unmatched: int = len(unmatched_fronts)
+    if total_unmatched > 0:
+        unmatched_fronts: str = ', '.join(["'" + guid + "'" for guid in unmatched_fronts])
+        query_params: dict[str, Any] = {'name': 'UnmatchedFronts', 'sql': f"GlobalID IN ({unmatched_fronts})", 'isActive': True}
+        current_map.addDataFromPath(f"{CNFG.LayerFiles}UnmatchedFronts_{CNFG.Environment}.lyrx")
+        AddDefinitionQuery(get_layer('חזיתות לא מתואמות'), query_params)
+        AddMessage(f"{timestamp()} | 💡 {total_unmatched} unmatched fronts from the process are displayed on the map")
+
     del editor, current_map, current_fronts_layer, count_matches, process_fronts_layer, process_fronts_guids, total
 
 
 def modify_PointsAttributes(ProcessName: str, task: TaskType) -> None:
     """
-    Modifies the Name attribute of current points based on newer points of a process by coordinates match.
+    Updates the 'Name' and 'UpdatedByRecord' attributes of active border points based on spatially matching points from the process layers.
+    Depending on the `task` type, it selects either 'basis' points or 'preservation/new' points as the source.
+    It ensures that active points co-located with process points receive the new names and updates the 'UpdatedByRecord' field.
+
+    Parameters:
+        ProcessName (str): The name of the current process/record.
+        task (TaskType):  The type of task being performed. Must be one of:
+                            - 'ImproveCurrentCadaster': Uses 'נקודות ביסוס' as source.
+                            - 'RetireAndCreateCadaster': Uses 'נקודות לשימור וחדשות' as source.
     """
 
     RecordGUID: str = get_RecordGUID(ProcessName, 'MAP')
@@ -226,14 +287,12 @@ def modify_PointsAttributes(ProcessName: str, task: TaskType) -> None:
 
 def modify_3DPointsAttributes(ProcessName) -> None:
     """
-    Modifies active 3D points attributes that were used in a 3D process as points with preservation role (Role=3).
-    The attributes that will be updated:
-        - Name: The name of the 3D points.
-        - Class: The class of the point (1, 12, 13, or 24)
-        - UpdatedByRecord: The GUID of the current record that is modifying.
+    Updates attributes of active 3D points that are marked for preservation (Role=3) in the current 3D process.
+
+    Updates the 'Name' and 'Class' of the active 3D points to match the values in the process data and sets the 'UpdatedByRecord' field.
 
     Parameters:
-        ProcessName (str): The name of the process that currently modifying.
+        ProcessName (str): The name of the process containing the 3D points.
     """
     ENV.addOutputsToMap = False
 
@@ -288,7 +347,14 @@ def modify_3DPointsAttributes(ProcessName) -> None:
 
 
 def modify_BlockAttributes(ProcessName: str) -> None:
-    """Modifies the StatedArea attribute of current block based on modifications in the block parcels."""
+    """
+    Recalculates and updates the 'StatedArea' of the block associated with the process.
+    The function sums the 'StatedArea' of all active 2D parcels belonging to the block (identified by the process)
+    and updates the block's 'StatedArea' field in the 'blocks' ('גושים') layer.
+
+    Parameters:
+        ProcessName (str): The name of the process. Used to identify the target block via its GUID.
+    """
 
     AddMessage(f'\n ⭕ Modifying block attributes: \n')
 
@@ -329,12 +395,15 @@ def modify_BlockAttributes(ProcessName: str) -> None:
 
 def retire_parcels(ProcessName: str, method: Literal[1, 2] = 1) -> None:
     """
-    Retire substantiated parcels associated with a given record name.
+    Retires active 2D parcels that are marked as substantiated (Role=1) in the process.
+    The function identifies parcels to retire, updates their 'CancelProcessType' and 'RetiredByRecord' fields,
+    and saves a list of retired parcel names to a text file.
 
     Parameters:
-        ProcessName (str): The name of the record.
-        method (int): The method to update the fields in the active parcels layer.
-                      1 will use the CalculateField f
+        ProcessName (str): The name of the process. Used to identify the record and the parcels to retire.
+        method (int, optional): The method used to apply updates:
+                                - 1: Uses `CalculateField` (GP tool) on a selection. This is the default.
+                                - 2: Uses an `UpdateCursor` to iterate and update rows directly.
     """
 
     AddMessage('\n ⭕ Retiring substantiated parcels: \n')
@@ -389,10 +458,11 @@ def retire_parcels(ProcessName: str, method: Literal[1, 2] = 1) -> None:
 
 def retire_3D_parcels_and_substractions(ProcessName: str) -> None:
     """
-    Retires substantiated 3D parcels and their corresponding substractions associated with a given record name.
+    Retires active 3D parcels and their associated substractions ('גריעות') that are marked as substantiated (Role=1) in the process.
+    Updates the 'CancelProcessType' and 'RetiredByRecord' fields for both 3D parcels and substractions found in the active layers.
 
     Parameters:
-        ProcessName (str): The name of the record whose associated 3D parcels and substractions are to be retired.
+        ProcessName (str): The name of the record associated with the 3D parcels and substractions to be retired.
 
     """
     AddMessage('\n ⭕ Retiring substantiated 3D parcels and their substractions: \n')
@@ -452,10 +522,12 @@ def retire_3D_parcels_and_substractions(ProcessName: str) -> None:
 
 def retire_fronts(ProcessName: str) -> None:
     """
-    Retire substantiated fronts associated with a given record name.
+    Retires active fronts ('חזיתות') that correspond to substantiated fronts (LineStatus=1) in the current process.
+    Identifies active fronts that spatially match the process fronts and updates their 'RetiredByRecord' field.
+    Warns if substantiated fronts from the process do not match any active fronts.
 
     Parameters:
-        ProcessName (str): The name of the record.
+        ProcessName (str): The name of the record. Used to link the retirement to the specific process.
     """
     AddMessage('\n ⭕ Retiring substantiated fronts: \n')
     CurrentMap: Map = ArcGISProject("current").listMaps('מפת עריכה')[0]
@@ -466,7 +538,7 @@ def retire_fronts(ProcessName: str) -> None:
     RecordGUID: str = get_RecordGUID(ProcessName, 'SHELF')
 
     ENV.addOutputsToMap = False
-    substantiated_fronts: Layer = MakeLayer(InProcessFronts, 'InProcessFronts_layer', f"""CPBUniqueID = '{get_ProcessGUID(ProcessName, 'MAP')}' AND LineStatus = 1""").getOutput(0)
+    substantiated_fronts: Layer = MakeLayer(InProcessFronts, 'InProcessFronts_layer', f"CPBUniqueID = '{get_ProcessGUID(ProcessName, 'MAP')}' AND LineStatus = 1").getOutput(0)
     count_substantiated: int = int(GetCount(substantiated_fronts)[0])
 
     if count_substantiated > 0:
@@ -499,30 +571,28 @@ def retire_fronts(ProcessName: str) -> None:
 
 def retire_substractions_by_2D_process(ProcessName: str) -> None:
     """
-    Retires active substractions associated with a 2D Parcel that has retired in the 2D process.
-
-    This function identifies active substractions related to a specific process,
-    selects them based on certain criteria, and sets them as retired.
-    If no substractions are found in the Area of Interest, the function passes.
-    If the substractions found in the Area of Interest are not associated with the relevant 2D parcels, the function will pass.
+    Retires active substractions ('גריעות') associated with 2D parcels that are being retired by the current 2D process.
+    This ensures that when a 2D parcel is retired, any subtractions historically linked to it are also retired.
 
     Parameters:
-        ProcessName (str): The name of the process that retires the substractions.
+        ProcessName (str): The name of the (2D) process. Used to identify the retiring 2D parcels.
     """
 
+    # Using the MakeLayer instead the Helpers.get_layer directly since the get_layer sometimes return a layer from the aprx that it's not filtered as it suppose to.
+    active_substractions: Layer = MakeLayer(in_features= f"{CNFG.ParcelFabricDatabase}Substractions",
+                                            out_layer= 'temp_Substractions',
+                                            where_clause= get_layer('גריעות').definitionQuery)[0]
 
-    active_substractions: Layer = get_layer('גריעות', 'מפת עריכה')
-    RefreshLayer(active_substractions)
     count: int = int(GetCount(active_substractions)[0])
 
     # Continue if there are active substraction in the AOI
     if count > 0:
         parcels_query: str = f"CPBUniqueID = '{get_ProcessGUID(ProcessName, 'MAP')}' AND ParcelRole = 1"
-        parcels_to_retire: Scur = SearchCursor(get_layer('חלקות בתהליך'), ['ParcelNumber', 'BlockNumber', 'SubBlockNumber'], parcels_query)
+        parcels_to_retire: Scur = SearchCursor(f"{CNFG.ParcelFabricDatabase}InProcessParcels2D", ['ParcelNumber', 'BlockNumber', 'SubBlockNumber'], parcels_query)
         parcels_to_retire: dict[str, str|None] = {f'{r[0]}/{r[1]}/{r[2]}': get_ActiveParcel2DGUID(f'{r[0]}/{r[1]}/{r[2]}') for r in parcels_to_retire}
         expression: str = f', '.join(f'\'{p}\'' for p in parcels_to_retire.values())
 
-        substraction_to_retire: Result = SelectByAttribute(active_substractions, 'NEW_SELECTION', f""" Parcel2DUniqueID IN ({expression}) """)
+        substraction_to_retire: Result = SelectByAttribute(active_substractions, 'NEW_SELECTION', f"Parcel2DUniqueID IN ({expression})")
         total: int = int(substraction_to_retire[1])
 
         # Continue if there are active substraction associated with the retiring 2D parcels
@@ -541,16 +611,16 @@ def retire_substractions_by_2D_process(ProcessName: str) -> None:
             del substraction_numbers, block_name, CancelProcessType, RecordGUID
             AddMessage(f'{timestamp()} | ⚠️ After completion of the current task session, a subtraction-recalculation task should follow to yield newer subtractions')
 
-
     del active_substractions, count
 
 
 def retire_blocks(ProcessName: str) -> None:
     """
-    Retire substantiated block tht been modified in a process.
+    Retires a substantiated block if the given process retiring all the block parcels (no active parcels left in the block).
+    Updates the 'RetiredByRecord' field of the block in the 'blocks' layer and logs the retired block name to a text file.
 
     Parameters:
-        ProcessName (str): The name of the process that retiring it block.
+        ProcessName (str): The name of the process. Used to identify the block and the record GUID.
     """
 
     AddMessage('\n ⭕ Retiring substantiated block: \n')
@@ -575,16 +645,12 @@ def retire_blocks(ProcessName: str) -> None:
 def retire_3D_points(ProcessName: str, tolerance: float = 0.002) -> None:
     """
     Retires 3D border points based on a given process name and tolerance (in Meters).
-    This function identifies 3D border points that intersect with the given
-    process's boundary and are ready to be retired. It updates their status
-    by assigning a cancellation process type and marking them with the
-    corresponding record GUID.
+    This function identifies 3D border points that intersect with the given process's boundary and are ready to be retired.
+    It updates their status by assigning a cancellation process type and marking them with the corresponding record GUID.
 
     Parameters:
-        ProcessName (str): The name of the process that identifies which
-                            3D border points to retire.
-        tolerance (float, optional): The tolerance distance for 3D intersection.
-                                      Default is 0.002.
+        ProcessName (str): The name of the process that identifies which 3D border points to retire.
+        tolerance (float, optional): The tolerance distance for 3D intersection. Default is 0.002.
     """
     AddMessage('\n ⭕ Retiring 3D border points: \n')
     ENV.addOutputsToMap = False
@@ -628,6 +694,8 @@ def reshape_transferring_block(ProcessName: str) -> None:
          - Merges the remaining and new parcels to build the updated block geometry.
          - Dissolves the merged geometry to create a single polygon.
          - Updates the block’s geometry in the layer containing active blocks ('גושים').
+    Parameters:
+        ProcessName (str): The name of the process. Used to identify the sender block and relevant parcels.
     """
 
 
@@ -676,15 +744,23 @@ def reshape_transferring_block(ProcessName: str) -> None:
         del retired_parcel_of_process, remaining_active_parcels, dissolve, updated_shape, block_to_update
         AddMessage(f"{timestamp()} | ✔️ Block {sender_block_name} borders reshaped")
 
-    del home_gdb, sender_block_guid, sender_block_name
+        del home_gdb, sender_block_guid, sender_block_name
 
 
 def reshape_or_construct_absorbing_blocks(ProcessName: str) -> None:
     """
+    Updates the geometry of "absorbing" blocks (blocks receiving transferred parcels).
 
+    Handles two scenarios:
+    1. New Block: If the block is created by this process (when the block Status=13), it constructs the block geometry
+                  from scratch using the new parcels.
+    2. Existing Block: If the block already exists, it reshapes the border by merging existing active parcels with the
+                       incoming transferred parcels and dissolving.
+
+    Parameters:
+        ProcessName (str): The name of the process. Used to identify the absorbing blocks and relevant parcels.
     """
     AddMessage(f'\n ⭕  Reshaping or constructing absorbing blocks borders: \n')
-
     ENV.addOutputsToMap = False
     home_gdb: str = ArcGISProject("current").defaultGeodatabase
 
@@ -719,7 +795,7 @@ def reshape_or_construct_absorbing_blocks(ProcessName: str) -> None:
 
             # NOTE:
             #  When accessing the active blocks layer directly with a cursor, the cursor fails to locate the relevant block for unknown reasons.
-            #  To workaround this, I created an in-memory layer that points to the same data source as the active blocks layer (including the version information).
+            #  To work around this, I created an in-memory layer that points to the same data source as the active blocks layer (including the version information).
             #  When the cursor is executed on this in-memory layer, it successfully returns results instead of being empty cursor.
             #  This workaround was verified and worked for process 226/2019.
             block_to_create: Layer = MakeLayer(get_layer('גושים').dataSource, "block_to_create", f"GlobalID = '{guid}'")[0]
@@ -766,7 +842,8 @@ def reshape_or_construct_absorbing_blocks(ProcessName: str) -> None:
 
 def update_record_status(ProcessName: str, new_status: int) -> None:
     """
-    Updates the status of a record to the specified new status.
+    Updates the 'Status' field of a specific record in the 'Records' ('גבולות רישומים') layer.
+    Also writes the GlobalID of the updated record to a text file for external reference.
 
     Parameters:
         ProcessName (str): The name of the record to update.
@@ -796,10 +873,12 @@ def update_record_status(ProcessName: str, new_status: int) -> None:
 
 def set_as_recorded(ProcessName: str) -> None:
     """
-    Set the 'Recorded' field of the specified in-process layers to 1 (Yes).
+    Marks data in the 'In-Process' layers as 'Recorded'.
+    Iterates through relevant process layers (Parcels, Points, Fronts, or 3D equivalents depending on process type) and
+    sets the 'Recorded' field to 1 (Yes).
 
     Parameters:
-        ProcessName (str): The name of the process that it's data will set as Recorded.
+        ProcessName (str): The name of the process. Used to select the relevant rows in the in-process tables.
     """
 
     process_type: int = get_ProcessType(ProcessName)
@@ -819,7 +898,14 @@ def set_as_recorded(ProcessName: str) -> None:
 
 
 def build_record(ProcessName: str) -> None:
-    """ Build a fabric for the record """
+    """
+    Executes the 'Build Parcel Fabric' geoprocessing tool for the specified record.
+    This function validates the topology and builds the fabric features for the given Process Name.
+    It also temporarily activates the record to handle specific software behaviors.
+
+    Parameters:
+        ProcessName (str): The name of the record (Parcel Fabric Record) to build.
+    """
 
     AddMessage(f'\n ⭕ Building active record \n')
 
