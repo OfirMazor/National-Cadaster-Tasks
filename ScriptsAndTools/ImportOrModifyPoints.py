@@ -98,7 +98,7 @@ def IPFP(source_points: Layer,
             conflicts_oid: str = ', '.join([str(row[0]) for row in SearchCursor(conflicts_table, 'SOURCE_OID')])
 
             ENV.addOutputsToMap = False
-            conflicts_points: Layer = MakeLayer(source_points, 'conflicts', f"OBJECTID IN ({conflicts_oid})")
+            conflicts_points: Layer = MakeLayer(source_points, 'conflicts', f"OBJECTID IN ({conflicts_oid})").getOutput(0)
             Buffer(conflicts_points, conflicts_buffer, distance)
 
             ENV.addOutputsToMap = True
@@ -106,7 +106,7 @@ def IPFP(source_points: Layer,
             conflicts_layer: Layer = get_layer("קונפליקטים")
             new_connection: dict[str, str|dict[str, str]] = {'dataset': 'Conflicts',
                                                              'workspace_factory': 'File Geodatabase',
-                                                             'connection_info': {'database': conflicts_buffer}}
+                                                             'connection_info': {'database': home_gdb}}
             conflicts_layer.updateConnectionProperties(None, new_connection)
             AddMessage(f'{timestamp()} | ⚠️ Conflicts within {distance.lower()} are displayed on the active map')
 

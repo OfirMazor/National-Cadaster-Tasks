@@ -38,12 +38,9 @@ def retire_features(input_layer: Literal['נקודות גבול', 'נקודות 
     if record_guid and has_selection and is_versioned:
         CalculateField(in_table= layer, field= 'RetiredByRecord', expression= f"'{record_guid}'", expression_type='PYTHON3')
         AddMessage(f'{timestamp()} | {len(selection)} Selected features at {input_layer} retired by the record {record_name} \n           Record ID: {record_guid}')
+        RefreshLayer(layer)
         refresh_map_view()
-
-    RefreshLayer(layer)
 
 
 if __name__ == "__main__":
-
-    retire_features(input_layer= GetParameter(0),
-                    record_name= GetParameterAsText(1))
+    retire_features(input_layer= GetParameter(0), record_name= GetParameterAsText(1))
