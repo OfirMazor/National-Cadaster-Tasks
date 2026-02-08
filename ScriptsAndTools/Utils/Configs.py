@@ -5,7 +5,7 @@ from Utils.TypeHints import EnviType
 class CNFG:
     """This class holds configuration variables for various project paths and settings."""
 
-    Environment: EnviType = 'Development'
+    Environment: EnviType = 'Production'
     OwnerName: str = 'PF.'
 
     # Folders
