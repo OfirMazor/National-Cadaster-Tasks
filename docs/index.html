@@ -45,150 +45,315 @@
     </style>
 </head>
 
-<body class="min-h-screen p-4 sm:p-8">
+<body class="min-h-screen flex flex-col">
 
-    <div class="max-w-4xl mx-auto space-y-12">
-
-        <!-- Header -->
-        <header class="text-center pt-8 pb-4">
-            <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-orange-500 mb-2">
-                National Cadaster Tasks
-            </h1>
-            <!-- Subtitle -->
-            <p class="text-xl text-[#58a6ff] font-light">
-                Wizardy Workflows for Land Parcel Management
-            </p>
-        </header>
-
-        <!-- DOWNLOAD SECTION -->
-        <section class="bg-gray-800/50 p-6 sm:p-10 rounded-xl shadow-2xl border-2 border-[#58a6ff]/50 backdrop-blur-sm flex flex-col items-center">
-            <h2 class="text-3xl font-bold mb-4 text-white section-header border-none">
-                Get the latest version
-            </h2>
-            <p class="text-center text-lg mb-6 text-gray-300">
-                Download the complete, versioned repository contents as a single compressed ZIP file.
-            </p>
-
-            <!-- The URL format is: https://github.com/USER/REPO/archive/refs/heads/BRANCH.zip -->
-            <a id="downloadButton"
-               href= "https://github.com/OfirMazor/National-Cadaster-Tasks/archive/refs/heads/Production.zip"
-               target="_blank"
-               download
-               class="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold text-white bg-[#238636] rounded-lg shadow-lg hover:bg-[#2eaa47] transition duration-300 ease-in-out transform hover:scale-[1.03] active:scale-[0.98]
-                      ring-4 ring-[#238636]/50 hover:ring-[#238636] focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#58a6ff] focus:ring-offset-gray-900">
-                <!-- Inline SVG Icon for Download (Lucide: DownloadCloud) -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3">
-                    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 18v3M15 21H9"/>
-                    <path d="M12 11v10"/>
-                    <path d="m8 17 4 4 4-4"/>
-                </svg>
-                Download (ZIP)
-            </a>
-            <p class="mt-4 text-sm text-gray-500">
-                Current Version: v1.7.0
-            </p>
-        </section>
-
-        <!-- DESCRIPTION SECTION -->
-        <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
-            <h2 class="text-2xl section-header">
-                Project Description
-            </h2>
-            <div class="space-y-4 text-gray-400">
-                <p>
-                    This project focuses on designing and implementing standardized, wizard-based workflows within ArcGIS Tasks. These step-by-step processes will be used to manage and execute cadastral changes and modifications directly within the Israeli National Cadaster dataset, which is maintained using ESRI's Parcel Fabric technology. The goal is to ensure consistency and efficiency in data updates.
-                </p>
+    <!-- Navigation Bar -->
+    <nav class="sticky top-0 z-50 bg-[#0d1117]/90 backdrop-blur-md border-b border-gray-800 shadow-md">
+        <div class="max-w-4xl mx-auto px-4 sm:px-8">
+            <div class="flex space-x-8 py-4 justify-center sm:justify-start">
+                <button onclick="switchTab('home')" id="nav-home" class="text-white font-bold border-b-2 border-[#238636] pb-1 transition-colors hover:text-white">
+                    Home
+                </button>
+                <button onclick="switchTab('tutorials')" id="nav-tutorials" class="text-gray-400 font-medium border-b-2 border-transparent hover:border-gray-500 hover:text-white pb-1 transition-colors">
+                    Tutorials
+                </button>
             </div>
-        </section>
+        </div>
+    </nav>
 
-        <!-- CHANGELOG SECTION -->
-        <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
-            <h2 class="text-2xl section-header">
-                Changelog
-            </h2>
-            <ul class="list-none space-y-4 text-gray-400">
+    <!-- Main Content Wrapper -->
+    <main class="flex-grow p-4 sm:p-8 pt-8">
 
-                <!-- Version 1.7.0 (Open by default) -->
-                <li class="border-b border-gray-700 pb-2">
-                    <button onclick="toggleChangelog('v110')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
-                        <span class="font-semibold text-[#238636] text-lg mr-3">v1.7.0 (2026-02-03)</span>
-                        <!-- Down/Up Arrow (Initially pointing up for open state) -->
-                        <svg id="arrow-v110" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                    </button>
-                    <!-- Content (Initially visible - no 'hidden' class) -->
-                    <div id="v110-content" class="pt-1 collapse-content">
-                        <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
-                            <li>In the Update Attribute step, when a process front does not match to exactly 1 active front, an unmatched fronts layer will be added to the map- helping to visualize the unmatched front on the map..</li>
-                            <li>The Stated Areas eraly validtaion check will warn if an incoming temporary parcel does not yet have it's final number (an eralier record should be updated before the current one).</li>
-						</ul>
+        <!-- ==================== HOME VIEW ==================== -->
+        <div id="view-home" class="max-w-4xl mx-auto space-y-12">
+
+            <!-- Header -->
+            <header class="text-center pb-4">
+                <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-orange-500 mb-2">
+                    National Cadaster Tasks
+                </h1>
+                <!-- Subtitle -->
+                <p class="text-xl text-[#58a6ff] font-light">
+                    Wizardy Workflows for Land Parcel Management
+                </p>
+            </header>
+
+            <!-- DOWNLOAD SECTION -->
+            <section class="bg-gray-800/50 p-6 sm:p-10 rounded-xl shadow-2xl border-2 border-[#58a6ff]/50 backdrop-blur-sm flex flex-col items-center">
+                <h2 class="text-3xl font-bold mb-4 text-white section-header border-none">
+                    Get the latest version
+                </h2>
+                <p class="text-center text-lg mb-6 text-gray-300">
+                    Download the complete, versioned repository contents as a single compressed ZIP file.
+                </p>
+
+                <!-- The URL format is: https://github.com/USER/REPO/archive/refs/heads/BRANCH.zip -->
+                <a id="downloadButton"
+                   href= "https://github.com/OfirMazor/National-Cadaster-Tasks/archive/refs/heads/Production.zip"
+                   target="_blank"
+                   download
+                   class="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold text-white bg-[#238636] rounded-lg shadow-lg hover:bg-[#2eaa47] transition duration-300 ease-in-out transform hover:scale-[1.03] active:scale-[0.98]
+                          ring-4 ring-[#238636]/50 hover:ring-[#238636] focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#58a6ff] focus:ring-offset-gray-900">
+                    <!-- Inline SVG Icon for Download (Lucide: DownloadCloud) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3">
+                        <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 18v3M15 21H9"/>
+                        <path d="M12 11v10"/>
+                        <path d="m8 17 4 4 4-4"/>
+                    </svg>
+                    Download (ZIP)
+                </a>
+                <p class="mt-4 text-sm text-gray-500">
+                    Current Version: v1.7.0
+                </p>
+            </section>
+
+            <!-- DESCRIPTION SECTION -->
+            <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
+                <h2 class="text-2xl section-header">
+                    Project Description
+                </h2>
+                <div class="space-y-4 text-gray-400">
+                    <p>
+                        This project focuses on designing and implementing standardized, wizard-based workflows within ArcGIS Tasks. These step-by-step processes will be used to manage and execute cadastral changes and modifications directly within the Israeli National Cadaster dataset, which is maintained using ESRI's Parcel Fabric technology. The goal is to ensure consistency and efficiency in data updates.
+                    </p>
+                </div>
+            </section>
+
+            <!-- CHANGELOG SECTION -->
+            <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
+                <h2 class="text-2xl section-header">
+                    Changelog
+                </h2>
+                <ul class="list-none space-y-4 text-gray-400">
+
+                    <!-- Version 1.7.0 (Open by default) -->
+                    <li class="border-b border-gray-700 pb-2">
+                        <button onclick="toggleChangelog('v170')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
+                            <span class="font-semibold text-[#238636] text-lg mr-3">v1.7.0 (2026-02-03)</span>
+                            <!-- Down/Up Arrow (Initially pointing up for open state) -->
+                            <svg id="arrow-v170" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                        </button>
+                        <!-- Content (Initially visible - no 'hidden' class) -->
+                        <div id="v170-content" class="pt-1 collapse-content">
+                            <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
+                                <li>In the Update Attribute step, when a process front does not match to exactly 1 active front, an unmatched fronts layer will be added to the map- helping to visualize the unmatched front on the map..</li>
+                                <li>The Stated Areas eraly validtaion check will warn if an incoming temporary parcel does not yet have it's final number (an eralier record should be updated before the current one).</li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <!-- Version 1.6.0 (Closed by default) -->
+                    <li class="border-b border-gray-700 pb-2">
+                        <button onclick="toggleChangelog('v160')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
+                            <span class="font-semibold text-gray-500 text-lg mr-3">v1.6.0</span>
+                            <!-- Down/Up Arrow (Initially pointing down for closed state) -->
+                            <svg id="arrow-v160" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                        </button>
+                        <!-- Content (Initially hidden) -->
+                        <div id="v160-content" class="pt-1 collapse-content hidden">
+                            <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
+                                <li>The Import or Modify Points tool will output conflicts as red circles around the source point. The radius of the red circle is set by the input search distance.</li>
+                                <li>The Evaluation step operations are now grouped by categories, allowing better experience.</li>
+                                <li>The Stated Areas eraly validtaion check will handle cases when an incoming active parcel and incoming temporary parcel share the same number.</li>
+                                <li>The Start Task Environment step will use the process name by parsing the aprx file name- the user not reqiuerd to type the process name. At that time, users can type other process name for independant cases.</li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <!-- Version 1.5.0 (Closed by default) -->
+                    <li class="border-b border-gray-700 pb-2">
+                        <button onclick="toggleChangelog('v150')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
+                            <span class="font-semibold text-gray-500 text-lg mr-3">v1.5.0</span>
+                            <!-- Down/Up Arrow (Initially pointing down for closed state) -->
+                            <svg id="arrow-v150" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                        </button>
+                        <!-- Content (Initially hidden) -->
+                        <div id="v150-content" class="pt-1 collapse-content hidden">
+                            <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
+                                <li>Bug fixes regarding to the Evaluation step.</li>
+                                <li>Starting from the 2nd step in each task- it is reqiuerd to make sure that a record is activated in order to excecute the steps.</li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <!-- Version 0.9 Beta (Closed by default) -->
+                    <li>
+                        <button onclick="toggleChangelog('v090')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
+                            <span class="font-semibold text-gray-500 text-lg mr-3">v0.9</span>
+                            <!-- Down/Up Arrow (Initially pointing down for closed state) -->
+                            <svg id="arrow-v090" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                        </button>
+                        <!-- Content (Initially hidden) -->
+                        <div id="v090-content" class="pt-1 collapse-content hidden">
+                            <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
+                                <li>First release.</li>
+                            </ul>
+                        </div>
+                    </li>
+
+                </ul>
+            </section>
+        </div>
+
+        <!-- ==================== TUTORIALS VIEW ==================== -->
+        <div id="view-tutorials" class="max-w-4xl mx-auto space-y-12 hidden">
+            
+            <!-- Header -->
+            <header class="text-center pb-4">
+                <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-orange-500 mb-2">
+                    Tutorials
+                </h1>
+                <p class="text-xl text-[#58a6ff] font-light mb-4">
+                    Learn How to Master the Tasks
+                </p>
+                <!-- Whitepaper Link -->
+                <p class="text-md text-gray-400 mt-6 bg-gray-800/50 inline-block px-6 py-2 rounded-full border border-gray-700 shadow-sm">
+                    For the full tutorial whitepaper <a href="#" class="text-[#58a6ff] hover:text-white font-medium underline transition-colors">click here</a> (Hebrew-only)
+                </p>
+            </header>
+
+            <!-- Tutorial Section 0 -->
+            <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
+                <h2 class="text-2xl section-header">
+                    0. Overview
+                </h2>
+                <div class="space-y-4 text-gray-400">
+                    <p>This video gives an overview of the editing framework before starting a task session. <br/>
+                        It covers the project layers, the catalog structure, the connection to the organization portal, the difference between the task types and the steps required to begin a task session.</p>
+                    
+                    <!-- YouTube Video Placeholder (Aspect Ratio 16:9) -->
+                    <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
+                        <!-- YouTube Play Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                        </svg>
+                        <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                        
+                        <!-- When replacing with a real video, use an iframe like below:
+                        <iframe class="absolute top-0 left-0 w-full h-full" src="https://www.youtube.com/embed/YOUR_VIDEO_ID" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        -->
                     </div>
-                </li>
-
-
-                <!-- Version 1.6.0 (Closed by default) -->
-                <li class="border-b border-gray-700 pb-2">
-                    <button onclick="toggleChangelog('v100')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
-                        <span class="font-semibold text-gray-500 text-lg mr-3">v1.6.0</span>
-                        <!-- Down/Up Arrow (Initially pointing down for closed state) -->
-                        <svg id="arrow-v100" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                    </button>
-                    <!-- Content (Initially hidden) -->
-                    <div id="v100-content" class="pt-1 collapse-content hidden">
-                        <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
-                            <li>The Import or Modify Points tool will output conflicts as red circles around the source point. The radius of the red circle is set by the input search distance.</li>
-                            <li>The Evaluation step operations are now grouped by categories, allowing better experience.</li>
-                            <li>The Stated Areas eraly validtaion check will handle cases when an incoming active parcel and incoming temporary parcel share the same number.</li>
-							<li>The Start Task Environment step will use the process name by parsing the aprx file name- the user not reqiuerd to type the process name. At that time, users can type other process name for independant cases.</li>
-						</ul>
+                </div>
+            </section>
+            
+            <!-- Tutorial Section 1 -->
+            <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
+                <h2 class="text-2xl section-header">
+                    1. Start Record Editing
+                </h2>
+                <div class="space-y-4 text-gray-400">
+                    <p>First things firts. <br/>
+                       Learn how to excecute the first step and how it differ from each task type.</p>
+                    
+                    <!-- YouTube Video Placeholder (Aspect Ratio 16:9) -->
+                    <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
+                        <!-- YouTube Play Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                        </svg>
+                        <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                        
+                        <!-- When replacing with a real video, use an iframe like below:
+                        <iframe class="absolute top-0 left-0 w-full h-full" src="https://www.youtube.com/embed/YOUR_VIDEO_ID" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        -->
                     </div>
-                </li>
+                </div>
+            </section>
 
-                <!-- Version 1.0.0 (Closed by default) -->
-                <li class="border-b border-gray-700 pb-2">
-                    <button onclick="toggleChangelog('v100')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
-                        <span class="font-semibold text-gray-500 text-lg mr-3">v1.5.0</span>
-                        <!-- Down/Up Arrow (Initially pointing down for closed state) -->
-                        <svg id="arrow-v100" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                    </button>
-                    <!-- Content (Initially hidden) -->
-                    <div id="v100-content" class="pt-1 collapse-content hidden">
-                        <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
-                            <li>Bug fixes regarding to the Evaluation step.</li>
-							<li>Starting from the 2nd step in each task- it is reqiuerd to make sure that a record is activated in order to excecute the steps.</li>
-                        </ul>
+            <!-- Tutorial Section 2 -->
+            <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
+                <h2 class="text-2xl section-header">
+                    2. Import or Modify Points
+                </h2>
+                <div class="space-y-4 text-gray-400">
+                    <p>
+                        Discover how the "Import or Modify Points" tool works. We demonstrate how conflicts are highlighted using red circles on the map and how to use the input search distance correctly.
+                    </p>
+                    
+                    <!-- YouTube Video Placeholder -->
+                    <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                        </svg>
+                        <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
                     </div>
-                </li>
+                </div>
+            </section>
 
-                <!-- Version 0.9 Beta (Closed by default) -->
-                <li>
-                    <button onclick="toggleChangelog('v090')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
-                        <span class="font-semibold text-gray-500 text-lg mr-3">v0.9</span>
-                        <!-- Down/Up Arrow (Initially pointing down for closed state) -->
-                        <svg id="arrow-v090" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                    </button>
-                    <!-- Content (Initially hidden) -->
-                    <div id="v090-content" class="pt-1 collapse-content hidden">
-                        <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
-                            <li>First release.</li>
-                        </ul>
+            <!-- Tutorial Section 3 -->
+            <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
+                <h2 class="text-2xl section-header">
+                    3. Update Attributes
+                </h2>
+                <div class="space-y-4 text-gray-400">
+                    <p>
+                        This advanced tutorial goes over early validation checks, handling stated areas, and visualizing unmatched fronts on the map during the Update Attribute step.
+                    </p>
+                    
+                    <!-- YouTube Video Placeholder -->
+                    <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                        </svg>
+                        <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
                     </div>
-                </li>
+                </div>
+            </section>
 
-            </ul>
-        </section>
+            <!-- Tutorial Section 4 -->
+            <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
+                <h2 class="text-2xl section-header">
+                    4. Evaluations
+                </h2>
+                <div class="space-y-4 text-gray-400">
+                    <p>
+                        This advanced tutorial goes over early validation checks, handling stated areas, and visualizing unmatched fronts on the map during the Update Attribute step.
+                    </p>
+                    
+                    <!-- YouTube Video Placeholder -->
+                    <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                        </svg>
+                        <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                    </div>
+                </div>
+            </section>
 
-        <!-- Footer -->
-        <footer class="text-center py-6 text-sm text-gray-500 border-t border-gray-800 mt-12">
-            Hosted on GitHub Pages. | Project data last updated 2025.
-        </footer>
+            <!-- Tutorial Section 5 -->
+            <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
+                <h2 class="text-2xl section-header">
+                    4. Completion
+                </h2>
+                <div class="space-y-4 text-gray-400">
+                    <p>
+                        This advanced tutorial goes over early validation checks, handling stated areas, and visualizing unmatched fronts on the map during the Update Attribute step.
+                    </p>
+                    
+                    <!-- YouTube Video Placeholder -->
+                    <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                        </svg>
+                        <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                    </div>
+                </div>
+            </section>
 
-    </div>
+        </div>
 
-    <!-- JavaScript for Collapsible Changelog -->
+    </main>
+
+    <!-- Footer (Shared across views) -->
+    <footer class="text-center py-6 text-sm text-gray-500 border-t border-gray-800 mt-auto">
+        Built by Ofir Mazor (ofir@mapi.gov.il) | Last updated on March 2026.
+    </footer>
+
+    <!-- JavaScript for Interactions -->
     <script>
         /**
          * Toggles the visibility of a changelog content section.
-         * @param {string} versionId - The ID prefix for the content div and arrow svg (e.g., 'v110').
+         * @param {string} versionId - The ID prefix for the content div and arrow svg (e.g., 'v160').
          */
         function toggleChangelog(versionId) {
             const content = document.getElementById(versionId + '-content');
@@ -199,6 +364,44 @@
 
             // Toggle the arrow rotation for visual feedback
             arrow.classList.toggle('rotate-180');
+        }
+
+        /**
+         * Switches between Home and Tutorials views.
+         * @param {string} tabName - 'home' or 'tutorials'
+         */
+        function switchTab(tabName) {
+            // Hide all views
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-tutorials').classList.add('hidden');
+            
+            // Show target view
+            document.getElementById('view-' + tabName).classList.remove('hidden');
+
+            // Update Navbar styles
+            const navHome = document.getElementById('nav-home');
+            const navTutorials = document.getElementById('nav-tutorials');
+
+            if (tabName === 'home') {
+                // Active Home
+                navHome.classList.add('text-white', 'font-bold', 'border-[#238636]');
+                navHome.classList.remove('text-gray-400', 'font-medium', 'border-transparent');
+                
+                // Inactive Tutorials
+                navTutorials.classList.remove('text-white', 'font-bold', 'border-[#238636]');
+                navTutorials.classList.add('text-gray-400', 'font-medium', 'border-transparent');
+            } else {
+                // Active Tutorials
+                navTutorials.classList.add('text-white', 'font-bold', 'border-[#238636]');
+                navTutorials.classList.remove('text-gray-400', 'font-medium', 'border-transparent');
+                
+                // Inactive Home
+                navHome.classList.remove('text-white', 'font-bold', 'border-[#238636]');
+                navHome.classList.add('text-gray-400', 'font-medium', 'border-transparent');
+            }
+
+            // Scroll back to top whenever switching tabs
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>
