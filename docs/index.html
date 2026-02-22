@@ -34,7 +34,7 @@
         /* Custom class for smooth transition height */
         .collapse-content {
             transition: all 0.3s ease-in-out;
-            max-height: 500px; /* Max height to allow transition */
+            max-height: 1500px; /* Max height to allow transition */
             overflow: hidden;
         }
         .collapse-content.hidden {
@@ -50,11 +50,11 @@
     <!-- Navigation Bar -->
     <nav class="sticky top-0 z-50 bg-[#0d1117]/90 backdrop-blur-md border-b border-gray-800 shadow-md">
         <div class="max-w-4xl mx-auto px-4 sm:px-8">
-            <div class="flex space-x-8 py-4 justify-center sm:justify-start">
-                <button onclick="switchTab('home')" id="nav-home" class="text-white font-bold border-b-2 border-[#238636] pb-1 transition-colors hover:text-white">
+            <div class="flex space-x-12 py-4 justify-center w-full">
+                <button onclick="switchTab('home')" id="nav-home" class="text-2xl text-white font-bold border-b-4 border-[#238636] pb-1 transition-colors hover:text-white">
                     Home
                 </button>
-                <button onclick="switchTab('tutorials')" id="nav-tutorials" class="text-gray-400 font-medium border-b-2 border-transparent hover:border-gray-500 hover:text-white pb-1 transition-colors">
+                <button onclick="switchTab('tutorials')" id="nav-tutorials" class="text-2xl text-gray-400 font-bold border-b-4 border-transparent hover:border-gray-500 hover:text-white pb-1 transition-colors">
                     Tutorials
                 </button>
             </div>
@@ -214,128 +214,149 @@
 
             <!-- Tutorial Section 0 -->
             <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
-                <h2 class="text-2xl section-header">
-                    0. Overview
-                </h2>
-                <div class="space-y-4 text-gray-400">
-                    <p>This video gives an overview of the editing framework before starting a task session. <br/>
-                        It covers the project layers, the catalog structure, the connection to the organization portal, the difference between the task types and the steps required to begin a task session.</p>
-                    
-                    <!-- YouTube Video Placeholder (Aspect Ratio 16:9) -->
-                    <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
-                        <!-- YouTube Play Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
-                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                        </svg>
-                        <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                <button onclick="toggleSection('tut0')" class="w-full text-left flex justify-between items-center pb-2 border-b-2 border-[#238636] focus:outline-none group">
+                    <h2 class="text-2xl font-bold text-[#58a6ff] drop-shadow-[0_0_5px_rgba(88,166,255,0.5)] group-hover:text-white transition-colors">
+                        0. Overview
+                    </h2>
+                    <svg id="arrow-tut0" class="w-6 h-6 text-[#58a6ff] transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                </button>
+                <div id="tut0-content" class="collapse-content pt-4">
+                    <div class="space-y-4 text-gray-400">
+                        <p>This video gives an overview of the editing framework before starting a task session. <br/>
+                            It covers the project layers, the catalog structure, the connection to the organization portal, the difference between the task types and the steps required to begin a task session.</p>
                         
-                        <!-- When replacing with a real video, use an iframe like below:
-                        <iframe class="absolute top-0 left-0 w-full h-full" src="https://www.youtube.com/embed/YOUR_VIDEO_ID" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                        -->
+                        <!-- YouTube Video Placeholder (Aspect Ratio 16:9) -->
+                        <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
+                            <!-- YouTube Play Icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                            </svg>
+                            <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                        </div>
                     </div>
                 </div>
             </section>
             
             <!-- Tutorial Section 1 -->
             <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
-                <h2 class="text-2xl section-header">
-                    1. Start Record Editing
-                </h2>
-                <div class="space-y-4 text-gray-400">
-                    <p>First things firts. <br/>
-                       Learn how to excecute the first step and how it differ from each task type.</p>
-                    
-                    <!-- YouTube Video Placeholder (Aspect Ratio 16:9) -->
-                    <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
-                        <!-- YouTube Play Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
-                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                        </svg>
-                        <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                <button onclick="toggleSection('tut1')" class="w-full text-left flex justify-between items-center pb-2 border-b-2 border-[#238636] focus:outline-none group">
+                    <h2 class="text-2xl font-bold text-[#58a6ff] drop-shadow-[0_0_5px_rgba(88,166,255,0.5)] group-hover:text-white transition-colors">
+                        1. Start Record Editing
+                    </h2>
+                    <svg id="arrow-tut1" class="w-6 h-6 text-[#58a6ff] transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                </button>
+                <div id="tut1-content" class="collapse-content hidden pt-4">
+                    <div class="space-y-4 text-gray-400">
+                        <p>First things firts. <br/>
+                           Learn how to excecute the first step and how it differ from each task type.</p>
                         
-                        <!-- When replacing with a real video, use an iframe like below:
-                        <iframe class="absolute top-0 left-0 w-full h-full" src="https://www.youtube.com/embed/YOUR_VIDEO_ID" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                        -->
+                        <!-- YouTube Video Placeholder (Aspect Ratio 16:9) -->
+                        <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                            </svg>
+                            <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <!-- Tutorial Section 2 -->
             <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
-                <h2 class="text-2xl section-header">
-                    2. Import or Modify Points
-                </h2>
-                <div class="space-y-4 text-gray-400">
-                    <p>
-                        Discover how the "Import or Modify Points" tool works. We demonstrate how conflicts are highlighted using red circles on the map and how to use the input search distance correctly.
-                    </p>
-                    
-                    <!-- YouTube Video Placeholder -->
-                    <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
-                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                        </svg>
-                        <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                <button onclick="toggleSection('tut2')" class="w-full text-left flex justify-between items-center pb-2 border-b-2 border-[#238636] focus:outline-none group">
+                    <h2 class="text-2xl font-bold text-[#58a6ff] drop-shadow-[0_0_5px_rgba(88,166,255,0.5)] group-hover:text-white transition-colors">
+                        2. Import or Modify Points
+                    </h2>
+                    <svg id="arrow-tut2" class="w-6 h-6 text-[#58a6ff] transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                </button>
+                <div id="tut2-content" class="collapse-content hidden pt-4">
+                    <div class="space-y-4 text-gray-400">
+                        <p>
+                            Discover how the "Import or Modify Points" tool works. We demonstrate how conflicts are highlighted using red circles on the map and how to use the input search distance correctly.
+                        </p>
+                        
+                        <!-- YouTube Video Placeholder -->
+                        <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                            </svg>
+                            <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <!-- Tutorial Section 3 -->
             <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
-                <h2 class="text-2xl section-header">
-                    3. Update Attributes
-                </h2>
-                <div class="space-y-4 text-gray-400">
-                    <p>
-                        This advanced tutorial goes over early validation checks, handling stated areas, and visualizing unmatched fronts on the map during the Update Attribute step.
-                    </p>
-                    
-                    <!-- YouTube Video Placeholder -->
-                    <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
-                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                        </svg>
-                        <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                <button onclick="toggleSection('tut3')" class="w-full text-left flex justify-between items-center pb-2 border-b-2 border-[#238636] focus:outline-none group">
+                    <h2 class="text-2xl font-bold text-[#58a6ff] drop-shadow-[0_0_5px_rgba(88,166,255,0.5)] group-hover:text-white transition-colors">
+                        3. Update Attributes
+                    </h2>
+                    <svg id="arrow-tut3" class="w-6 h-6 text-[#58a6ff] transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                </button>
+                <div id="tut3-content" class="collapse-content hidden pt-4">
+                    <div class="space-y-4 text-gray-400">
+                        <p>
+                            This advanced tutorial goes over early validation checks, handling stated areas, and visualizing unmatched fronts on the map during the Update Attribute step.
+                        </p>
+                        
+                        <!-- YouTube Video Placeholder -->
+                        <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                            </svg>
+                            <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <!-- Tutorial Section 4 -->
             <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
-                <h2 class="text-2xl section-header">
-                    4. Evaluations
-                </h2>
-                <div class="space-y-4 text-gray-400">
-                    <p>
-                        This advanced tutorial goes over early validation checks, handling stated areas, and visualizing unmatched fronts on the map during the Update Attribute step.
-                    </p>
-                    
-                    <!-- YouTube Video Placeholder -->
-                    <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
-                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                        </svg>
-                        <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                <button onclick="toggleSection('tut4')" class="w-full text-left flex justify-between items-center pb-2 border-b-2 border-[#238636] focus:outline-none group">
+                    <h2 class="text-2xl font-bold text-[#58a6ff] drop-shadow-[0_0_5px_rgba(88,166,255,0.5)] group-hover:text-white transition-colors">
+                        4. Evaluations
+                    </h2>
+                    <svg id="arrow-tut4" class="w-6 h-6 text-[#58a6ff] transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                </button>
+                <div id="tut4-content" class="collapse-content hidden pt-4">
+                    <div class="space-y-4 text-gray-400">
+                        <p>
+                            This advanced tutorial goes over early validation checks, handling stated areas, and visualizing unmatched fronts on the map during the Update Attribute step.
+                        </p>
+                        
+                        <!-- YouTube Video Placeholder -->
+                        <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                            </svg>
+                            <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <!-- Tutorial Section 5 -->
             <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
-                <h2 class="text-2xl section-header">
-                    4. Completion
-                </h2>
-                <div class="space-y-4 text-gray-400">
-                    <p>
-                        This advanced tutorial goes over early validation checks, handling stated areas, and visualizing unmatched fronts on the map during the Update Attribute step.
-                    </p>
-                    
-                    <!-- YouTube Video Placeholder -->
-                    <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
-                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                        </svg>
-                        <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                <button onclick="toggleSection('tut5')" class="w-full text-left flex justify-between items-center pb-2 border-b-2 border-[#238636] focus:outline-none group">
+                    <h2 class="text-2xl font-bold text-[#58a6ff] drop-shadow-[0_0_5px_rgba(88,166,255,0.5)] group-hover:text-white transition-colors">
+                        5. Completion
+                    </h2>
+                    <svg id="arrow-tut5" class="w-6 h-6 text-[#58a6ff] transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                </button>
+                <div id="tut5-content" class="collapse-content hidden pt-4">
+                    <div class="space-y-4 text-gray-400">
+                        <p>
+                            This advanced tutorial goes over early validation checks, handling stated areas, and visualizing unmatched fronts on the map during the Update Attribute step.
+                        </p>
+                        
+                        <!-- YouTube Video Placeholder -->
+                        <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                            </svg>
+                            <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -351,6 +372,21 @@
 
     <!-- JavaScript for Interactions -->
     <script>
+        /**
+         * Toggles the visibility of a tutorial section.
+         * @param {string} sectionId - The ID prefix for the content div and arrow svg (e.g., 'tut1').
+         */
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId + '-content');
+            const arrow = document.getElementById('arrow-' + sectionId);
+
+            // Toggle the 'hidden' class on the content
+            content.classList.toggle('hidden');
+
+            // Toggle the arrow rotation for visual feedback
+            arrow.classList.toggle('rotate-180');
+        }
+
         /**
          * Toggles the visibility of a changelog content section.
          * @param {string} versionId - The ID prefix for the content div and arrow svg (e.g., 'v160').
@@ -384,20 +420,20 @@
 
             if (tabName === 'home') {
                 // Active Home
-                navHome.classList.add('text-white', 'font-bold', 'border-[#238636]');
-                navHome.classList.remove('text-gray-400', 'font-medium', 'border-transparent');
+                navHome.classList.add('text-white', 'border-[#238636]');
+                navHome.classList.remove('text-gray-400', 'border-transparent');
                 
                 // Inactive Tutorials
-                navTutorials.classList.remove('text-white', 'font-bold', 'border-[#238636]');
-                navTutorials.classList.add('text-gray-400', 'font-medium', 'border-transparent');
+                navTutorials.classList.remove('text-white', 'border-[#238636]');
+                navTutorials.classList.add('text-gray-400', 'border-transparent');
             } else {
                 // Active Tutorials
-                navTutorials.classList.add('text-white', 'font-bold', 'border-[#238636]');
-                navTutorials.classList.remove('text-gray-400', 'font-medium', 'border-transparent');
+                navTutorials.classList.add('text-white', 'border-[#238636]');
+                navTutorials.classList.remove('text-gray-400', 'border-transparent');
                 
                 // Inactive Home
-                navHome.classList.remove('text-white', 'font-bold', 'border-[#238636]');
-                navHome.classList.add('text-gray-400', 'font-medium', 'border-transparent');
+                navHome.classList.remove('text-white', 'border-[#238636]');
+                navHome.classList.add('text-gray-400', 'border-transparent');
             }
 
             // Scroll back to top whenever switching tabs
