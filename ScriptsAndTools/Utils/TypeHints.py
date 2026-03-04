@@ -18,6 +18,7 @@ Layer = arcpy._mp.Layer
 Table = arcpy._mp.Table
 parcelCIM = arcpy.cim.CIMVectorLayers.CIMParcelLayer
 Extent = arcpy.Extent
+Camera = arcpy._mp.Camera
 Scur = arcpy.da.SearchCursor
 Icur = arcpy.da.InsertCursor
 Ucur = arcpy.da.UpdateCursor
