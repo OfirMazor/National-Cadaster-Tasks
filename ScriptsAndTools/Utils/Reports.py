@@ -1,7 +1,7 @@
 from Utils.Configs import CNFG
 from Utils.TypeHints import *
 from Utils.VersionManagement import get_VersionName, layer_is_at_version
-from Utils.Helpers import delete_file, timestamp, get_layer, get_RecordGUID, get_ActiveRecord, get_feature_layer_id, AddTabularMessage
+from Utils.Helpers import delete_file, timestamp, get_layer, get_ActiveRecord, get_feature_layer_id, AddTabularMessage
 from Utils.NewCadasterHelpers import get_RecordGUID_NewCadaster
 import pandas as pd
 from pandas.io.formats.style import Styler
@@ -79,16 +79,16 @@ def compute_matching_points_report(ProcessName: str, task: TaskType, distance: i
         task (TaskType): The type of task being processed, which determines the source points layer.
         distance (int, optional): The search radius in meters for matching points. Default is 5 meters.
     """
-    AddMessage('\n ⭕ Generating reports \n')
+    AddMessage('\n ⭕ Generating report \n')
     AddMessage(f'{timestamp()} | 🛠️ Computing the Matching Points Report, please wait...')
     CurrentMap: Map = ArcGISProject("current").activeMap
     CurrentMap.clearSelection()
     CurrentPoints: Layer = CurrentMap.listLayers('נקודות גבול')[0]
     InProcessPoints: Layer = SourcePointsByTask(task)
 
-    CurrentPoints_selection: Layer = SelectByLocation(in_layer= CurrentPoints, select_features= InProcessPoints, overlap_type= 'WITHIN_A_DISTANCE', search_distance= f'{distance} Meters')
+    CurrentPoints_selection: Layer = SelectByLocation(in_layer= CurrentPoints, select_features= InProcessPoints, overlap_type= 'WITHIN_A_DISTANCE', search_distance= f'{distance} Meters')[0]
     if task == "CreateNewCadaster":
-        CurrentPoints_selection: Layer = SelectByAttribute(CurrentPoints_selection, "SUBSET_SELECTION", f"""CreatedByRecord<>'{get_RecordGUID_NewCadaster(ProcessName)}'""").getOutput(0)
+        CurrentPoints_selection: Layer = SelectByAttribute(CurrentPoints_selection, "SUBSET_SELECTION", f"CreatedByRecord<>'{get_RecordGUID_NewCadaster(ProcessName)}'").getOutput(0)
 
     # Compute distances
     shelf: str = ProcessName.replace('/', '_')
@@ -206,96 +206,100 @@ def compare_and_document_version_changes(user_name: str, password: str) -> None:
         for idx, name in enumerate(layer_names, start=1):
 
             #  Layer information:
-            object_IDs: set[int|None] = {i[0] for i in SearchCursor(get_layer(name), 'OBJECTID')}
+            object_IDs: set[int|None] = set(sorted([i[0] for i in SearchCursor(get_layer(name), 'OBJECTID')]))
             layer_ID: int|None = get_feature_layer_id(name)
 
             if len(object_IDs) > 0 and layer_ID and branch_version_name:
+                try:
+                    # Output paths
+                    AddMessage(f"{timestamp()} | {idx}/{total} | {name}")
+                    shelf: str = fr"{CNFG.Library}{process_name.replace('/', '_')}/Modifications/{name}"
+                    output: str = fr"{shelf}\Differences.xlsx"
+                    makedirs(shelf, exist_ok=True)
+                    delete_file(output)
 
-                # Output paths
-                AddMessage(f"{timestamp()} | {idx}/{total} | {name}")
-                shelf: str = fr"{CNFG.Library}{process_name.replace('/', '_')}/Modifications/{name}"
-                output: str = fr"{shelf}\Differences.xlsx"
-                makedirs(shelf, exist_ok=True)
-                delete_file(output)
+                    # Extract layer changes in the version
+                    after: dict[str, list[dict[str, Any]]] = version_management_server.get(branch_version_name, 'read').differences("features", layers=[layer_ID])
+                    if 'features' in after.keys():
+                        features: list[dict[str, Any]] = after['features']
+                        for entry in features:
+                            for mod_type in ["updates", "inserts", "delete"]:
+                                if mod_type in entry:
+                                    rows: list[dict[str, dict]] = []
+                                    for item in entry[mod_type]:
+                                        # Only keep attributes, exclude geometry
+                                        attrs = item.get("attributes", {}).copy()
+                                        if attrs.get("OBJECTID") in object_IDs:
+                                            # attrs["layerId"] = entry["layerId"]
+                                            attrs["modification"] = mod_type
+                                            rows.append(attrs)
 
-                # Extract layer changes in the version
-                after: dict[str, list[dict[str, Any]]] = version_management_server.get(branch_version_name, 'read').differences("features", layers=[layer_ID])
-                if 'features' in after.keys():
-                    features: list[dict[str, Any]] = after['features']
-                    for entry in features:
-                        for mod_type in ["updates", "inserts", "delete"]:
-                            if mod_type in entry:
-                                rows: list[dict[str, dict]] = []
-                                for item in entry[mod_type]:
-                                    # Only keep attributes, exclude geometry
-                                    attrs = item.get("attributes", {}).copy()
-                                    if attrs.get("OBJECTID") in object_IDs:
-                                        # attrs["layerId"] = entry["layerId"]
-                                        attrs["modification"] = mod_type
-                                        rows.append(attrs)
+                                    if rows:
+                                        after: df = pd.DataFrame(rows)
+                                        after.to_csv(fr"{shelf}/after.csv", index=False)
 
-                                if rows:
-                                    after: df = pd.DataFrame(rows)
-                                    after.to_csv(fr"{shelf}/after.csv", index=False)
+                                        after_columns: list[str] = after.columns.to_list()
+                                        is_area: bool = True if 'Shape.STArea()' in after_columns else False
+                                        is_length: bool = True if 'Shape.STLength()' in after_columns else False
 
-                                    after_columns: list[str] = after.columns.to_list()
-                                    is_area: bool = True if 'Shape.STArea()' in after_columns else False
-                                    is_length: bool = True if 'Shape.STLength()' in after_columns else False
+                                        # Extract pre changes data:
+                                        before_path: str = f"{CNFG.ParcelFabricFeatureServer};VERSION=sde.DEFAULT;VERSIONGUID='{CNFG.default_version_guid}'/{layer_ID}"
+                                        fields: list[str] = [f for f in after_columns if f not in ["Shape.STArea()", "Shape.STLength()", "modification"]]
+                                        fields: list[str] = fields + ['Shape__Area'] if is_area else fields
+                                        fields: list[str] = fields + ['Shape__Length'] if is_length else fields
 
-                                    # Extract pre changes data:
-                                    before_path: str = f"{CNFG.ParcelFabricFeatureServer};VERSION=sde.DEFAULT;VERSIONGUID='{CNFG.default_version_guid}'/{layer_ID}"
-                                    fields: list[str] = [f for f in after_columns if f not in ["Shape.STArea()", "Shape.STLength()", "modification"]]
-                                    fields: list[str] = fields + ['Shape__Area'] if is_area else fields
-                                    fields: list[str] = fields + ['Shape__Length'] if is_length else fields
+                                        object_ids_string: str = ", ".join(str(oid) for oid in sorted(object_IDs))
+                                        query: str = f"OBJECTID IN ({object_ids_string})" if name != 'גבולות רישומים' else f"Name = '{process_name}'"
+                                        before: df = pd.DataFrame(SearchCursor(before_path, fields, query), columns=fields)\
+                                                       .rename(columns= {"Shape__Area": "Shape.STArea()", "Shape__Length": "Shape.STLength()"})
 
-                                    object_ids_string: str = ", ".join(str(oid) for oid in sorted(object_IDs))
-                                    query: str = f"OBJECTID IN ({object_ids_string})" if name != 'גבולות רישומים' else f"Name = '{process_name}'"
-                                    before: df = pd.DataFrame(SearchCursor(before_path, fields, query), columns=fields)\
-                                                   .rename(columns= {"Shape__Area": "Shape.STArea()", "Shape__Length": "Shape.STLength()"})
+                                        before.to_csv(fr"{shelf}/before.csv", index=False)
 
-                                    before.to_csv(fr"{shelf}/before.csv", index=False)
+                                        del fields, before_path
 
-                                    del fields, before_path
+                                        # Updates:
+                                        query: str = "modification == 'updates'" if name != 'גבולות רישומים' else f"modification == 'updates' and Name == '{process_name}'"
+                                        updates: df = after.query(query).drop(columns='modification')
+                                        updates: df = set_date_columns(updates)
 
-                                    # Updates:
-                                    query: str = "modification == 'updates'" if name != 'גבולות רישומים' else f"modification == 'updates' and Name == '{process_name}'"
-                                    updates: df = after.query(query).drop(columns='modification')
-                                    updates: df = set_date_columns(updates)
+                                        before_updates: df = before[before['GlobalID'].isin(updates['GlobalID'])]
+                                        before_updates: df = set_date_columns(before_updates)
 
-                                    before_updates: df = before[before['GlobalID'].isin(updates['GlobalID'])]
-                                    before_updates: df = set_date_columns(before_updates)
+                                        before_updates: df = before_updates.set_index('GlobalID').sort_index()
+                                        updates: df = updates.set_index('GlobalID').sort_index()
 
-                                    before_updates: df = before_updates.set_index('GlobalID').sort_index()
-                                    updates: df = updates.set_index('GlobalID').sort_index()
+                                        updates: df = before_updates.compare(updates, result_names=('Before', 'After'))
+                                        del before_updates
 
-                                    updates: df = before_updates.compare(updates, result_names=('Before', 'After'))
-                                    del before_updates
+                                        # Inserts:
+                                        inserts: df = after.query("modification == 'inserts'").drop(columns='modification')
+                                        inserts: df = set_date_columns(inserts)
+                                        inserts: df = inserts.set_index('GlobalID')
 
-                                    # Inserts:
-                                    inserts: df = after.query("modification == 'inserts'").drop(columns='modification')
-                                    inserts: df = set_date_columns(inserts)
-                                    inserts: df = inserts.set_index('GlobalID')
+                                        # Deletions:
+                                        deletes: df = after.query("modification == 'delete'").drop(columns='modification')
+                                        deletes: df = set_date_columns(deletes)
+                                        deletes: df = deletes.set_index('GlobalID')
 
-                                    # Deletions:
-                                    deletes: df = after.query("modification == 'delete'").drop(columns='modification')
-                                    deletes: df = set_date_columns(deletes)
-                                    deletes: df = deletes.set_index('GlobalID')
+                                        modifications_df: df = pd.DataFrame(data= {f'{idx}/{total}': f'{name}',
+                                                                                   'New features': len(inserts),
+                                                                                   'Updated features': len(updates),
+                                                                                   'Deleted features': len(deletes)},
+                                                                            index= [0])
 
-                                    modifications_df: df = pd.DataFrame(data= {f'{idx}/{total}': f'{name}',
-                                                                               'New features': len(inserts),
-                                                                               'Updated features': len(updates),
-                                                                               'Deleted features': len(deletes)},
-                                                                        index= [0])
+                                        AddTabularMessage(modifications_df)
 
-                                    AddTabularMessage(modifications_df)
+                                        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+                                            updates.to_excel(writer, sheet_name="Updates", index=True)
+                                            inserts.to_excel(writer, sheet_name="Inserts", index=True)
+                                            deletes.to_excel(writer, sheet_name="Deletes", index=True)
 
-                                    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-                                        updates.to_excel(writer, sheet_name="Updates", index=True)
-                                        inserts.to_excel(writer, sheet_name="Inserts", index=True)
-                                        deletes.to_excel(writer, sheet_name="Deletes", index=True)
+                    else:
+                        AddMessage(f"{timestamp()} | No modifications found \n ")
 
-                else:
-                    AddMessage(f"{timestamp()} | No modifications found \n ")
+
+                except RuntimeError as e:
+                    AddMessage(f"{timestamp()} | Query failed for {name}. Skipping documentation. \n Error: {e}")
 
             else:
                 AddMessage(f"{timestamp()} | {idx}/{total} | {name}: No features in the area of interest \n ")

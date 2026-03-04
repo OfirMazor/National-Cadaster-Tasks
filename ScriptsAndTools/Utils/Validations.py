@@ -114,6 +114,34 @@ def process_exist(ProcessName: str) -> Validation:
         return 'Invalid'
 
 
+def record_exist(RecordName: str) -> Validation:
+    """
+    Checks if a cadastral record with the specified `RecordName` exists in the CadasterRecordsBorders table.
+
+    Parameters:
+        RecordName (str): The name of the record to search for.
+
+    Returns:
+        str: 'Valid' if a process with the given `RecordName` exists, 'Invalid' otherwise.
+    """
+
+    CadasterRecordsBorders: str = fr"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}CadasterRecordsBorders"
+    query: list[str] = [row[0] for row in SearchCursor(CadasterRecordsBorders, 'Name', f"Name = '{RecordName}'")]
+    count: int = len(query)
+    del query, CadasterRecordsBorders
+
+    if count == 0:
+        AddError(f'{timestamp()} | ❌ Record name {RecordName} is not exist')
+        return 'Invalid'
+    elif count == 1:
+        AddMessage(f'{timestamp()} | ✅ Record name {RecordName} found')
+        return 'Valid'
+    else:
+        AddError(f'{timestamp()} | ❌ Record exists {count} times')
+        return 'Invalid'
+
+
+
 def validate_status(ProcessName: str, desire_status: int | list[int]) -> Validation:
     """
     Validate if the current process status is equal to desired status
@@ -382,7 +410,7 @@ def validate_substantiated_Parcels2D(ProcessName: str) -> Validation:
             search: Scur = SearchCursor(Parcels2D, 'Name', f"Name = '{value[0]}'")
             if cursor_length(search) != 1:
                 errors += 1
-                AddMessage(f'{timestamp()} | ❌ Substraction {key} references 2D parcel {value[0]} which either not exist or is inactive')
+                AddMessage(f'{timestamp()} | ❌ Substraction {key} references 2D parcel {value[0]} which either not exist or is retired')
         else:
             AddMessage(f'{timestamp()} | ❌ Referenced 2D parcel type is invalid (got {value[1]} but must be 1 or 2)')
 
@@ -398,10 +426,9 @@ def validate_substantiated_Parcels3D(ProcessName: str) -> Validation:
     """
     Validates the consistency of 3D parcel data in a specific process 3D parcel.
 
-    This function compares parcel data associated with the given process (`ProcessName`)
-    against the active 3D parcel layer. It checks for mismatches in the attributes: StatedVolume,
-    ProjectedArea, UpperLevel, and LowerLevel. If any discrepancies are found or if
-    parcels in the process do not exist in the active layer, the validation is considered  invalid.
+    This function compares parcel data associated with the given process (`ProcessName`) against the active 3D parcel layer.
+    It checks for mismatches in the attributes: StatedVolume, ProjectedArea, UpperLevel, and LowerLevel.
+    If any discrepancies are found or if parcels in the process do not exist in the active layer, the validation is considered  invalid.
 
     Parameters:
         ProcessName (str): The name of the process whose 3D parcel data needs validation.
@@ -494,62 +521,63 @@ def validation_set(task: TaskType, ProcessName: str) -> bool:
     """
 
     AddMessage(f'\n ⭕ Validating:')
+    # Mapping the early validation by the task type
+    if task == 'ImproveCurrentCadaster':
+        vals: df = DataFrame(data={'Validation': 'Results',
+                                   'Signed-in': user_is_signed_in(),
+                                   'Process Exist': process_exist(ProcessName),
+                                   'Status Check': validate_status(ProcessName, desire_status=[4, 6, 10, 13]),
+                                   'Areas Check': validate_stated_areas(ProcessName)},
+                             index=[0])
 
-    if task not in ['ImproveCurrentCadaster', 'RetireAndCreateCadaster', 'ImproveNewCadaster', 'CreateNewCadaster', 'RetireAndCreateCadaster3D', 'FreeEdit']:
-        AddError(f"{timestamp()} | Task type is invalid")
-        return False
+    elif task == 'RetireAndCreateCadaster':
+        vals: df = DataFrame(data= {'Validation': 'Results',
+                                    'Signed-in': user_is_signed_in(),
+                                    'Process Exist': process_exist(ProcessName),
+                                    'Status Check': validate_status(ProcessName, desire_status=[5]),
+                                    'Final Parcels Numbers Check': final_parcels_obtained(ProcessName),
+                                    'Absorbing Blocks Check': absorbing_block_exist(ProcessName),
+                                    'Areas Check': validate_stated_areas(ProcessName)},
+                             index= [0])
 
+    elif task == 'ImproveNewCadaster':
+        vals: df = DataFrame(data= {'Validation': 'Results',
+                                    'Signed-in': user_is_signed_in()})
+
+    elif task == 'CreateNewCadaster':
+        vals: df = DataFrame(data= {'Validation': 'Results',
+                                    'Signed-in': user_is_signed_in()})
+
+    elif task == 'RetireAndCreateCadaster3D':
+        vals: df = DataFrame(data={'Validation': 'Results',
+                                   'Signed-in': user_is_signed_in(),
+                                   'Process Exist': process_exist(ProcessName),
+                                   'Status Check': validate_status(ProcessName, desire_status=[5]),
+                                   'Final Parcels Numbers Check': final_parcels_obtained(ProcessName),
+                                   'Final Substractions Numbers Check': final_substractions_obtained(ProcessName),
+                                   'Substantiated 2D Parcels Check': validate_substantiated_Parcels2D(ProcessName),
+                                   'Substantiated 3D Parcels Check': validate_substantiated_Parcels3D(ProcessName),
+                                   'Absorbing Blocks Check': absorbing_block_exist(ProcessName)},
+                             index=[0])
+
+    elif task == 'FreeEdit':
+        vals: df = DataFrame(data= {'Validation': 'Results',
+                                    'Signed-in': user_is_signed_in(),
+                                    'Record Exist': record_exist(ProcessName)},
+                             index= [0])
     else:
+        AddError(f"{timestamp()} | Task type is invalid")
+        vals: None = None
 
-        if task == 'ImproveCurrentCadaster':
-            vals: df = DataFrame(data= {'Validation': ['Signed-in', 'Process Exist', 'Status Check', 'Areas Check'],
-                                        'Results': [user_is_signed_in(),
-                                                    process_exist(ProcessName),
-                                                    validate_status(ProcessName, desire_status=[4, 6, 10, 13]),
-                                                    validate_stated_areas(ProcessName)]})
+    # Summary results and report
+    if vals is not None:
 
-        elif task == 'RetireAndCreateCadaster':
-            vals: df = DataFrame(data= {'Validation': ['Signed-in', 'Process Exist', 'Status Check', 'Final Parcels Numbers Check', 'Absorbing Blocks Check', 'Areas Check'],
-                                        'Results': [user_is_signed_in(),
-                                                    process_exist(ProcessName),
-                                                    validate_status(ProcessName, desire_status=[5]),
-                                                    final_parcels_obtained(ProcessName),
-                                                    absorbing_block_exist(ProcessName),
-                                                    validate_stated_areas(ProcessName)]})
-
-        elif task == 'ImproveNewCadaster':
-            vals: df = DataFrame(data= {'Validation': 'Results',
-                                        'Signed-in': user_is_signed_in()},
-                                 index= [0])
-
-        elif task == 'CreateNewCadaster':
-            vals: df = DataFrame(data= {'Validation': 'Results',
-                                        'Signed-in': user_is_signed_in()},
-                                 index= [0])
-
-        elif task == 'RetireAndCreateCadaster3D':
-            vals: df = DataFrame(data= {'Validation': 'Results',
-                                        'Signed-in': user_is_signed_in(),
-                                        'Process Exist': process_exist(ProcessName),
-                                        'Status Check': validate_status(ProcessName, desire_status=[5]),
-                                        'Final Parcels Numbers Check': final_parcels_obtained(ProcessName),
-                                        'Final Substractions Numbers Check': final_substractions_obtained(ProcessName),
-                                        'Substantiated 2D Parcels Check': validate_substantiated_Parcels2D(ProcessName),
-                                        'Substantiated 3D Parcels Check': validate_substantiated_Parcels3D(ProcessName),
-                                        'Absorbing Blocks Check': absorbing_block_exist(ProcessName)},
-                                 index= [0])
-
-        if task == 'FreeEdit':
-            vals: df = DataFrame(data= {'Validation': 'Results',
-                                        'Signed-in': user_is_signed_in()},
-                                 index= [0])
-
-        # Summary report
         has_invalid: bool = (vals == 'Invalid').values.any()
         if has_invalid:
             vals: df = vals.replace({'Valid': '✅', 'Invalid': '❌'})
             AddTabularMessage(vals)
             return False
-
         else:
             return True
+    else:
+        return False
