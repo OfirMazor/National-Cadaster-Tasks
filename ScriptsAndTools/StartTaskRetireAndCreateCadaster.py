@@ -8,12 +8,12 @@ from Utils.VersionManagement import open_version
 from Utils.Reports import compute_matching_points_report
 from Utils.Validations import validation_set, creating_record_is_duplicated, features_exist
 from Utils.UpdateAttributes import retire_parcels, retire_fronts, retire_substractions_by_2D_process, retire_blocks, \
-     update_record_status, reshape_transferring_block, reshape_or_construct_absorbing_blocks
+                                   update_record_status, reshape_transferring_block, reshape_or_construct_absorbing_blocks
 from Utils.Helpers import create_shelf, get_ProcessGUID, get_RecordGUID, get_ProcessType, Type2CreateType, \
-    get_BlockGUID, refresh_map_view, timestamp, activate_record, zoom_to_aoi, load_to_records, \
-    filter_to_aoi, get_FinalParcel, reopen_map, start_editing, stop_editing, cursor_length, \
-    set_priority, process_is_transferring, get_layer, Type2CancelType, get_process_shape, process_will_retire_its_block, \
-    get_aprx_name
+                          get_BlockGUID, refresh_map_view, timestamp, activate_record, zoom_to_aoi, load_to_records, \
+                          filter_to_aoi, get_FinalParcel, reopen_map, start_editing, stop_editing, cursor_length, \
+                          set_priority, process_is_transferring, get_layer, Type2CancelType, get_process_shape, \
+                          process_will_retire_its_block, get_aprx_name
 
 ENV.preserveGlobalIds = False
 
@@ -134,7 +134,6 @@ def load_new_parcels(ProcessName: str) -> None:
         Parcels2DData.insertRow(parcel_data)
 
         AddMessage(f'{timestamp()} | {idx}/{total} | ✔️ Temporary parcel {temporary_parcel} added as active parcel {parcel_final_number} at block {parcel_data[1]}/{parcel_data[2]}')
-
     del NewParcelsData, Parcels2DData, NewParcels_layer, total
     stop_editing(editor)
     RefreshLayer(Parcels2D_layer)
