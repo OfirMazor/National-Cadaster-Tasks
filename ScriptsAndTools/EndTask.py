@@ -1,16 +1,14 @@
 from ReinitializeProject import reinitialize
-from Utils.TypeHints import Optional
 from Utils.VersionManagement import close_version
-from Utils.UpdateAttributes import set_as_recorded
+from Utils.UpdateAttributes import set_as_recorded, update_record_status
 from Utils.Reports import compare_and_document_version_changes
-from Utils.Helpers import get_ActiveRecord, get_ProcessType, get_ProcessStatus, reopen_map, respond_to_CMS
-from arcpy import GetParameter, GetParameterAsText, env
+from Utils.Helpers import get_ActiveRecord, get_ProcessStatus, reopen_map, respond_to_CMS, get_RecordType
+from arcpy import GetParameter, GetParameterAsText, env as ENV, AddMessage
+
+ENV.overwriteOutput = True
 
 
-env.overwriteOutput = True
-
-
-def EndTask(user_name: str, password: str, reinitializer: Optional[bool] = False) -> None:
+def EndTask(user_name: str, password: str, reinitializer: bool = False) -> None:
     """
     Performs final operations in the task to post edits.
 
@@ -21,28 +19,32 @@ def EndTask(user_name: str, password: str, reinitializer: Optional[bool] = False
     Parameters:
         user_name (srt): The name of the user in ArcGIS Portal
         password (str): The password for the given user.
-        reinitializer (Optional[bool]): A boolean indicating whether to reinitialize the project or not. Default is False.
-
+        reinitializer (bool): A boolean indicating whether to reinitialize the project or not. Default is False.
     """
-
 
     ProcessName: str|None = get_ActiveRecord()
 
     if ProcessName:
         compare_and_document_version_changes(user_name, password)
         close_version()
-        process_type: int = get_ProcessType(ProcessName)
-        process_status: int = get_ProcessStatus(ProcessName, 'MAP')
+        RecordType: int = get_RecordType(ProcessName)
 
-        # Update Recorded field for in-process layers
-        if process_type in [1, 11]:
-            if process_status in [4, 6, 10]:
+        # Post edits attributes modifications:
+        ### Update Free Edit record status to עריכה הסתיימה
+
+        if RecordType == 16:
+            update_record_status(ProcessName, 18)  # עריכה הסתיימה
+
+        ### Update Recorded field for in-process layers of registered tazars
+
+        if RecordType in [1, 11]:  # [תצ"ר, תצ"ר בשטח לא מוסדר, עריכה חופשית]
+            if get_ProcessStatus(ProcessName, 'MAP') in [4, 6, 10]:  # [כשרה לרישום, מאושרת לתיעוד גבולות, כשרה לרישום - הוארך תוקפה לרישום]
                 pass
-        else:
-            set_as_recorded(ProcessName)
+            else:
+                set_as_recorded(ProcessName)
 
         # Send feedback to CMS
-        respond_to_CMS(ProcessName, process_type)
+        respond_to_CMS(ProcessName, RecordType)
 
 
         if reinitializer:
