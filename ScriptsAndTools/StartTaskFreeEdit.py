@@ -1,48 +1,32 @@
 from os import startfile
-from Utils.TypeHints import *
 from Utils.Configs import CNFG
+from Utils.TypeHints import Layer, Map
+from Utils.Validations import validation_set
 from Utils.VersionManagement import open_version
-from Utils.Helpers import filter_to_aoi, set_priority, create_shelf, activate_record, get_BlockGUID, zoom_to_aoi, timestamp
-from arcpy import AddMessage, GetParameterAsText, GetParameter
-from arcpy.da import InsertCursor
+from Utils.Helpers import filter_to_roi, set_priority, create_shelf, activate_record, get_layer, zoom_to_aoi
+from arcpy import GetParameterAsText
+from arcpy.mp import ArcGISProject
+from arcpy.conversion import ExportFeatures
 
 
-def create_free_edit_record(RecordName: str, BlockNumber: int, SubBlockNumber: int = 0) -> None:
-    """
-    Adds a new record data to CadasterRecordsBorders Table.
+def display_process_data(RecordName: str) -> None:
 
-    Parameters:
-        RecordName (str): The Name of the record.
-        BlockNumber (int): The number of the block containing the record borders.
-        SubBlockNumber (int): The sub number of the block containing the record borders. Default is 0.
+    RecordsBorders: str = fr'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}CadasterRecordsBorders'
+    output: str = fr"{ArcGISProject('current').defaultGeodatabase}\FreeEditRecordBorders"
 
-    Returns:
-        None
-    """
-
-    records_feature_class: str = f'{CNFG.ParcelFabricDataset}PF.CadasterRecordsBorder'
-
-    record_data: dict[str, Any] = {'Name': RecordName,
-                                   'RecordType': 16,      # עריכה חופשית
-                                   'GeodeticNetwork': 3,  # רשת ישראל התקפה
-                                   'Status': 14,          # בביצוע
-                                   'DataSource': 0,       # לא ידוע
-                                   'BlockUniqueID': get_BlockGUID('BlockName', f'{BlockNumber}/{SubBlockNumber}')}
-
-    records: Icur = InsertCursor(in_table = records_feature_class, field_names = list(record_data.keys()))
-    records.insertRow(tuple(record_data.values()))
-    del records
-    AddMessage(f'{timestamp()} | Record {RecordName} created')
+    ExportFeatures(RecordsBorders, output, f"Name = '{RecordName}'", field_mapping= fr'Name "שם המפה" true true true 255 Text 0 0,First,#,{RecordsBorders},Name,0,254')
+    current_map: Map = ArcGISProject('current').activeMap
+    current_map.addDataFromPath(fr'{CNFG.LayerFiles}FreeEditRecordBorders.lyrx')
+    layer: Layer = get_layer("גבול תכנית")
+    layer.name = f'{RecordName} גבול תכנית'
 
 
-def start_task_FreeEdit(RecordName: str, BlockNumber: int, SubBlockNumber: int = 0) -> None:
+def start_task_FreeEdit(RecordName: str) -> None:
     """
     Workflow for starting the Free Editing task.
 
     Parameters:
-        RecordName (str): The Name of the record to be edited.
-        BlockNumber (int): The number of the block containing the record borders.
-        SubBlockNumber (int): The sub number of the block containing the record borders. Default is 0.
+        RecordName (str): The name of the free edit record to be edited.
 
     Returns:
         None
@@ -50,24 +34,23 @@ def start_task_FreeEdit(RecordName: str, BlockNumber: int, SubBlockNumber: int =
 
     set_priority()
 
-    shelf: str = create_shelf(RecordName)
+    qualified: bool = validation_set('FreeEdit', RecordName)
 
-    open_version(RecordName)
+    if qualified:
+        shelf: str = create_shelf(RecordName)
 
-    startfile(fr'{shelf}')
+        open_version(RecordName)
 
-    create_free_edit_record(RecordName, BlockNumber, SubBlockNumber)
+        startfile(fr'{shelf}')
 
-    filter_to_aoi(RecordName)
+        filter_to_roi(RecordName)
 
-    activate_record(RecordName)
+        display_process_data(RecordName)
 
-    zoom_to_aoi()
+        activate_record(RecordName)
+
+        zoom_to_aoi()
 
 
 if __name__ == "__main__":
-    RecordName: str = GetParameterAsText(0)
-    BlockNumber: int = GetParameter(1)
-    SubBlockNumber: int|None = GetParameter(2)
-
-    start_task_FreeEdit(RecordName, BlockNumber, SubBlockNumber)
+    start_task_FreeEdit(GetParameterAsText(0))

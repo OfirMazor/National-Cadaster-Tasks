@@ -51,7 +51,9 @@ def drop_intermediate_layers() -> None:
                             if
                             layer.name in ['נקודות סמוכות', 'חורים וחפיפות', 'קונפליקטים']
                             or
-                            (any(substring in layer.name for substring in [' תכנית', 'תכנית ']) and layer.isGroupLayer)]
+                            (any(substring in layer.name for substring in [' תכנית', 'תכנית ']) and layer.isGroupLayer)
+                            or
+                            (any(substring in layer.name for substring in ['גבול תכנית']))]
 
     for layer in to_remove:
         drop_layer(layer)
