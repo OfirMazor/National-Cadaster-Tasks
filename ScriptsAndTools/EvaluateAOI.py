@@ -1,6 +1,7 @@
 from Utils.TypeHints import Literal, Optional, Extent
 from Utils.Helpers import get_LayerExtent, zoom_to_layer, get_ActiveRecord, timestamp
-from Utils.QA import track_deviated_parcel_areas, track_adjacent_points, track_gaps_overlaps, track_disconnected_points, eval_topology_rules, eval_validation_rules
+from Utils.QA import track_deviated_parcel_areas, track_adjacent_points, track_gaps_overlaps, track_disconnected_points,\
+                     eval_topology_rules, eval_validation_rules, track_redundant_vertices, track_volumetric_overlaps
 from arcpy import AddMessage, env as ENV, GetParameter, GetParameterAsText
 from arcpy.mp import ArcGISProject
 
@@ -13,7 +14,9 @@ def EvaluateAOI(qa_extent: Literal['Full map', 'Record', 'Current display'] = 'F
                 validate_adjacent_points: Optional[bool] = True,
                 tolerance: Optional[float] = 0.1,
                 validate_disconnected_points: Optional[bool] = True,
-                validate_deviated_areas: Optional[bool] = True) -> None:
+                validate_deviated_areas: Optional[bool] = True,
+                validate_redundant_vertices: Optional[bool] = True,
+                validate_volumetric_overlaps: Optional[bool] = True) -> None:
     """
     Performs quality assurance (QA) checks on parcel fabric data within the area of interest (AOI).
     The function validates topology rules, detects gaps and overlaps between parcels and identifies adjacent parcel points.
@@ -48,6 +51,10 @@ def EvaluateAOI(qa_extent: Literal['Full map', 'Record', 'Current display'] = 'F
         validate_disconnected_points: If True, identifies disconnected active points. Defaults to True.
 
         validate_deviated_areas (bool, optional): If True, calculates the deviations areas for ant parcel in the AOI. Defaults to True.
+
+        validate_redundant_vertices (bool, optional): If True, identifies redundant vertices. Defaults to True.
+
+        validate_volumetric_overlaps (bool, optional): If True, detects volumetric overlaps between active 3D parcels and active substractions features. Defaults to True.
     """
     original_overwrite: bool = ENV.overwriteOutput
     original_extent: str|Extent|None = ENV.extent
@@ -70,8 +77,7 @@ def EvaluateAOI(qa_extent: Literal['Full map', 'Record', 'Current display'] = 'F
 
         # Evaluations:
         if validate_validation:
-            pass
-            AddMessage(f"{timestamp()} | ⚠️ Currently evaluate validations rules is not available, use the Error Inspector to evaluate")
+            AddMessage(f"{timestamp()} | ⚠️ Currently evaluate validations Rules is not available, use the Error Inspector to evaluate.")
             # eval_validation_rules()
 
         if validate_topology:
@@ -89,6 +95,13 @@ def EvaluateAOI(qa_extent: Literal['Full map', 'Record', 'Current display'] = 'F
         if validate_deviated_areas:
             track_deviated_parcel_areas()
 
+        if validate_redundant_vertices:
+            track_redundant_vertices()
+
+        if validate_volumetric_overlaps:
+            AddMessage(f"{timestamp()} | ⚠️ Currently validating Volumetric Overlaps is not available")
+            # track_volumetric_overlaps()
+
         # Return to original environment settings:
         ENV.extent = original_extent
         ENV.overwriteOutput = original_overwrite
@@ -105,4 +118,6 @@ if __name__ == "__main__":
                 validate_adjacent_points= GetParameter(5),
                 tolerance= GetParameter(6),
                 validate_disconnected_points= GetParameter(7),
-                validate_deviated_areas= GetParameter(8))
+                validate_deviated_areas= GetParameter(8),
+                validate_redundant_vertices= GetParameter(9),
+                validate_volumetric_overlaps= GetParameter(10))

@@ -100,17 +100,17 @@ def AddTabularMessage(table: df):
     first_row = table.iloc[0]
 
     # Build the "data" array: [[col, value], ...]
-    data_part = [[col, str(first_row[col])] for col in table.columns]
+    data_part: list[list[str|Any]] = [[col, str(first_row[col])] for col in table.columns]
 
     # Example elementProps (static, can be extended dynamically if needed)
-    element_props = {"striped": "true",
-                     "0": {"align": "center", "pad": "30px"},
-                     "1": {"align": "center", "pad": "30px"}}
+    element_props: dict[str, str|dict[str,str]] = {"striped": "true",
+                                                   "0": {"align": "center", "pad": "30px"},
+                                                   "1": {"align": "center", "pad": "30px"}}
 
     # Build the full structure
-    result = {"element": "table",
-              "data": data_part,
-              "elementProps": element_props}
+    result: dict[str, Any] = {"element": "table",
+                              "data": data_part,
+                              "elementProps": element_props}
 
     # Convert to string with prefix "json:"
     json_message: str = "json:" + dumps([result], ensure_ascii=False)
@@ -141,6 +141,10 @@ def get_active_user(mode: Literal['short', 'long'] = 'short') -> str|None:
             return user.username.split('@')[0]
         elif mode == 'long':
             return user.username
+        else:
+            return None
+    else:
+        return None
 
 
 def get_layer(layer_name: str, map_name: MapType = 'Active map') -> Layer | None:
@@ -295,6 +299,18 @@ def get_ProcessType(ProcessName: str) -> int:
     return ProcessType
 
 
+def get_RecordType(RecordName: str) -> int:
+    """Returns the type of cadastral record border by an input record name"""
+
+    table: str = fr'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}CadasterRecordsBorders'
+    query: str = f"Name = '{RecordName}'"
+    search: Scur = SearchCursor(table, 'RecordType', query)
+    RecordType: int = int(search.next()[0])
+    del search
+
+    return RecordType
+
+
 def get_ProcessStatus(ProcessName: str, source: Literal['MAP', 'SDE'] = 'SDE') -> int | None:
     """Returns the current status of a cadastral process border by an input process name"""
 
@@ -307,20 +323,23 @@ def get_ProcessStatus(ProcessName: str, source: Literal['MAP', 'SDE'] = 'SDE') -
         AddError("source parameter must be on of ['SDE', 'MAP']")
 
 
-    Scursor: Scur = SearchCursor(table, 'Status', f""" ProcessName = '{ProcessName}' """)
+    Scursor: Scur = SearchCursor(table, 'Status', f"ProcessName = '{ProcessName}'")
     Scursor_len: int = cursor_length(Scursor)
 
     if Scursor_len == 1:
         ProcessStatus: int = int([row[0] for row in Scursor][0])
         return ProcessStatus
+
     if Scursor_len == 0:
         AddMessage(f'{timestamp()} |  ⚠️ Process {ProcessName} Not found')
         return None
+
     if Scursor_len > 1:
         AddMessage(f'{timestamp()} |  ⚠️ Found {Scursor_len} processes named {ProcessName}')
         return None
 
-    del table, Scursor, Scursor_len
+    else:
+        return None
 
 
 def get_ProcessGUID(ProcessName: str, source: Literal['MAP', 'SDE'] = 'SDE') -> str | None:
@@ -334,20 +353,25 @@ def get_ProcessGUID(ProcessName: str, source: Literal['MAP', 'SDE'] = 'SDE') -> 
         table: None = None
         AddError("source parameter must be on of ['SDE', 'MAP']")
 
-    Scursor: Scur = SearchCursor(table, 'GlobalID', f""" ProcessName = '{ProcessName}' """)
+    Scursor: Scur = SearchCursor(table, 'GlobalID', f"ProcessName = '{ProcessName}'")
     Scursor_len: int = cursor_length(Scursor)
+    del table
 
     if Scursor_len == 1:
-        ProcessGUID: str = [row[0] for row in Scursor][0]
+        ProcessGUID: str = Scursor.next()[0]
+        del Scursor
         return ProcessGUID
     if Scursor_len == 0:
         AddMessage(f'{timestamp()} |  ⚠️ Process {ProcessName} Not found')
+        del Scursor
         return None
     if Scursor_len > 1:
         AddMessage(f'{timestamp()} |  ⚠️ Found {Scursor_len} processes named {ProcessName}')
+        del Scursor
         return None
-
-    del table, Scursor, Scursor_len
+    else:
+        del Scursor
+        return None
 
 
 def get_RecordGUID(ProcessName: str, source: Literal['MAP', 'SDE', 'SHELF'] = 'SDE', warnings: bool = True) -> str|None:
@@ -371,6 +395,7 @@ def get_RecordGUID(ProcessName: str, source: Literal['MAP', 'SDE', 'SHELF'] = 'S
 
         if Scursor_len == 1:
             RecordGUID: str = Scursor.next()[0]
+            del Scursor
             return RecordGUID
         if Scursor_len == 0:
             if warnings: AddMessage(f'{timestamp()} | ⚠️ Record {ProcessName} Not found')
@@ -378,13 +403,13 @@ def get_RecordGUID(ProcessName: str, source: Literal['MAP', 'SDE', 'SHELF'] = 'S
         if Scursor_len > 1:
             if warnings: AddMessage(f'{timestamp()} | ⚠️ Found {Scursor_len} records named {ProcessName}')
             return None
-
-        del source_dict, Scursor, Scursor_len
+        else:
+            del Scursor
+            return None
 
     else:
         AddError(f"{timestamp()} | source parameter must be on of ['SDE', 'MAP', 'SHELF]")
         return None
-
 
 
 def get_process_shape(ProcessName: str) -> Polygon|None:
@@ -404,6 +429,7 @@ def get_process_shape(ProcessName: str) -> Polygon|None:
         return shape
     else:
         AddMessage(f"{timestamp()} | Process {ProcessName} not exist or duplicated")
+        return None
 
 
 def get_BlockGUID(by: Literal['ProcessName', 'BlockName'], name: str) -> str | None:
@@ -1011,11 +1037,12 @@ def get_ActiveRecord(value: Literal['Name', 'GUID'] = 'Name') -> str|None:
         elif value == 'Name':
             Name: str|None = SearchCursor(get_layer('גבולות רישומים'), 'Name', f"GlobalID = '{active_record_guid}'").next()[0]
             return Name
+        else:
+            AddError(f"{timestamp()} | value parameter in get_ActiveRecord function must be one of ['Name', 'GUID']")
+            return None
     else:
         AddError(f"{timestamp()} | Activate the relevant record before running this step")
         return None
-
-    del active_record, active_record_guid
 
 
 def Type2CreateType(Type: int) -> int | None:
@@ -1058,7 +1085,7 @@ def Type2CancelType(Type: int) -> int | None:
 def zoom_to_aoi(map_name: MapType = 'Active map') -> None:
     """ Zoom-in the canvas camera view to the area of interest (the process border feature) """
 
-    current_camera = ArcGISProject('current').activeView.camera
+    current_camera: Camera = ArcGISProject('current').activeView.camera
     aoi_layer: Layer = get_layer('*גבול תכנית', map_name)
     aoi_extent: Extent = SearchCursor(aoi_layer, 'SHAPE@').next()[0].extent
 
@@ -1076,9 +1103,8 @@ def zoom_to_layer(layer_name: str) -> None:
     Parameters:
         layer_name(str): The name of the layer in the active map to zoom-in.
     """
-
-    current_camera = ArcGISProject('current').activeView.camera
-    extent = get_LayerExtent(layer_name)
+    current_camera: Camera = ArcGISProject('current').activeView.camera
+    extent: Extent = get_LayerExtent(layer_name)
 
     if extent:
         current_camera.setExtent(extent)
@@ -1105,6 +1131,8 @@ def get_LayerExtent(layer_name: str) -> Extent|None:
 
         layer_extent: Extent = Extent(min_x, min_y, max_x, max_y)
         return layer_extent
+    else:
+        return None
 
 
 def get_AOIExtent() -> Extent:
@@ -1142,7 +1170,6 @@ def filter_to_aoi(ProcessName: str, map_name: MapType = 'Active map') -> None:
         ProcessName (str): The name of the process to filter by.
         map_name (MapType): The name of the map object to use.  Default is the currently active map view ("Active map").
     """
-
     aoi_map: Map = ArcGISProject("current").activeMap if map_name == 'Active map' else ArcGISProject("current").listMaps(map_name)[0]
     process_layer: Layer = aoi_map.listLayers('גבול תכנית')[0]
     blocks_layer: Layer = aoi_map.listLayers('גושים')[0]
@@ -1154,7 +1181,7 @@ def filter_to_aoi(ProcessName: str, map_name: MapType = 'Active map') -> None:
 
 
     # Get blocks guids:
-    aoi_blocks_layer: Layer = SelectByLocation(in_layer= blocks_layer, select_features= process_layer, overlap_type= 'INTERSECT', search_distance="1 Meter")
+    aoi_blocks_layer: Layer = SelectByLocation(in_layer= blocks_layer, select_features= process_layer, overlap_type= 'INTERSECT', search_distance="1 Meter")[0]
     aoi_blocks: Scur = SearchCursor(aoi_blocks_layer, 'GlobalID', "RetiredByRecord IS NULL")
     aoi_blocks: str = ', '.join(["'" + row[0] + "'" for row in aoi_blocks])
     del process_layer, aoi_blocks_layer
@@ -1226,6 +1253,91 @@ def filter_to_aoi(ProcessName: str, map_name: MapType = 'Active map') -> None:
         AddDefinitionQuery(layer, query_params)
 
     del query_params, spatial_clause, aoi_map, RecordGUID, aoi_blocks
+
+
+def filter_to_roi(RecordName: str, map_name: MapType = 'Active map') -> None:
+    """
+    Reduces the display view by filtering the cadastral layers based on the regions of all blocks borders intersecting the free edit record border.
+
+    Parameters:
+        RecordName (str): The name of the record to filter by.
+        map_name (MapType): The name of the map object to use.  Default is the currently active map view ("Active map").
+    """
+    ENV.addOutputsToMap = False
+    roi_map: Map = ArcGISProject("current").activeMap if map_name == 'Active map' else ArcGISProject("current").listMaps(map_name)[0]
+    record_layer: Layer = MakeFeatureLayer(fr'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}CadasterRecordsBorders', 'Free Edit Record', f"Name = '{RecordName}' AND RecordType = 16")[0]
+    blocks_layer: Layer = roi_map.listLayers('גושים')[0]
+    name: str = 'Area of Interest'
+
+    RecordGUID: str|None = get_RecordGUID(RecordName, 'SDE', False)
+
+    # Get blocks guids:
+    aoi_blocks_layer: Layer = SelectByLocation(in_layer= blocks_layer, select_features= record_layer, overlap_type= 'INTERSECT', search_distance="1 Meter")[0]
+    aoi_blocks: Scur = SearchCursor(aoi_blocks_layer, 'GlobalID', "RetiredByRecord IS NULL")
+    aoi_blocks: str = ', '.join(["'" + row[0] + "'" for row in aoi_blocks])
+    del record_layer, aoi_blocks_layer
+
+    roi_map.clearSelection()
+
+    # Filter active blocks layer
+    query_params: dict[str, Any] = {'name': name, 'sql': f"RetiredByRecord IS NULL AND GlobalID IN ({aoi_blocks})", 'isActive': True}
+    AddDefinitionQuery(blocks_layer, query_params)
+    RefreshLayer(blocks_layer)
+
+    # Get aoi polygon geometry from filtered blocks layer:
+    Dissolve(blocks_layer, r"memory\aoi")
+    aoi_blocks_geom: Polygon = SearchCursor(r"memory\aoi", "Shape@").next()[0]
+    spatial_clause: list[dict[str, Polygon]] = [{'geometry': aoi_blocks_geom}]
+    del blocks_layer
+
+
+    # Filter active 2D parcels, 3D parcels and substractions layers
+    query_params: dict[str, Any] = {'name': name, 'sql': f"RetiredByRecord IS NULL AND BlockUniqueID IN ({aoi_blocks})", 'isActive': True}
+    for layer_name in ['חלקות', 'חלקות תלת-ממדיות', 'גריעות']:
+        layer: Layer = roi_map.listLayers(layer_name)[0]
+        AddDefinitionQuery(layer, query_params)
+
+
+    # Filter active 2D points, active 3D points, and active fronts layers
+    query_params: dict[str, Any] = {'name': name, 'sql': f"RetiredByRecord IS NULL OR CreatedByRecord = '{RecordGUID}'", 'spatialClause': spatial_clause, 'isActive': True}
+
+    for layer_name in ['נקודות גבול', 'נקודות גבול תלת-ממדיות', 'חזיתות']:
+        layer: Layer = roi_map.listLayers(layer_name)[0]
+        AddDefinitionQuery(layer, query_params)
+
+
+    # Filter control points
+    control_points_layer: Layer = roi_map.listLayers('נקודות בקרה')[0]
+    query_params: dict[str, Any] = {'name': name, 'spatialClause': spatial_clause, 'isActive': True}
+    AddDefinitionQuery(control_points_layer, query_params)
+    del control_points_layer
+
+
+    # Filter QA layers
+    validation_names: list[str] = ['קווי אימות' , 'נקודות אימות', 'שטחי אימות']
+    topology_names: list[str] = ['שגיאות מסוג פוליגון' , 'שגיאות מסוג קו' , 'שגיאות מסוג נקודה' , 'אזורים לא חוקיים']
+    qa_names: list[str] = validation_names + topology_names
+    qa_layers: list[Layer] = [layer for layer in roi_map.listLayers() if layer.name in qa_names]
+    query_params: dict[str, Any] = {'name': name, 'spatialClause': spatial_clause, 'isActive': True}
+    for layer in qa_layers:
+        AddDefinitionQuery(layer, query_params)
+    del validation_names, topology_names, qa_names, qa_layers
+
+
+    # Filter Retired Cadastral layers:
+    query_params: dict[str, Any] = {'name': name, 'sql': "RetiredByRecord IS NOT NULL", 'spatialClause': spatial_clause, 'isActive': True}
+    for layer_name in ['גושים מבוטלים', 'חלקות מבוטלות', 'חלקות תלת-ממדיות מבוטלות', 'גריעות מבוטלות', 'נקודות גבול מבוטלות', 'נקודות גבול תלת-ממדיות מבוטלות', 'חזיתות מבוטלות']:
+        layer: Layer = roi_map.listLayers(layer_name)[0]
+        AddDefinitionQuery(layer, query_params)
+
+
+    # Filter active projected 3D parcels and projected substractions (scene map)
+    query_params: dict[str, Any] = {'name': name, 'spatialClause': spatial_clause, 'isActive': True}
+    for layer_name in ['היטלי חלקות תלת-ממדיות', 'היטלי גריעות']:
+        layer: Layer = roi_map.listLayers(layer_name)[0]
+        AddDefinitionQuery(layer, query_params)
+
+    del query_params, spatial_clause, roi_map, RecordGUID, aoi_blocks
 
 
 def respond_to_CMS(ProcessName: str, ProcessType: int, ProjectStatus: Optional[int] = 1) -> None:
