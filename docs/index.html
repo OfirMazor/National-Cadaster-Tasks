@@ -103,7 +103,7 @@
                     Download (ZIP)
                 </a>
                 <p class="mt-4 text-sm text-gray-500">
-                    Current Version: v1.7.0
+                    Current Version: v1.8.0
                 </p>
             </section>
 
@@ -121,22 +121,40 @@
 
             <!-- CHANGELOG SECTION -->
             <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
-                <h2 class="text-2xl section-header">
-                    Changelog
-                </h2>
+                <h2 class="text-2xl section-header"> Changelog </h2>
                 <ul class="list-none space-y-4 text-gray-400">
 
-                    <!-- Version 1.7.0 (Open by default) -->
+                    <!-- Version 1.8.0 (Open by default) -->
                     <li class="border-b border-gray-700 pb-2">
-                        <button onclick="toggleChangelog('v170')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
-                            <span class="font-semibold text-[#238636] text-lg mr-3">v1.7.0 (2026-02-03)</span>
+                        <button onclick="toggleChangelog('v180')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
+                            <span class="font-semibold text-[#238636] text-lg mr-3">v1.8.0 (2026-03-05)</span>
                             <!-- Down/Up Arrow (Initially pointing up for open state) -->
                             <svg id="arrow-v170" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
                         </button>
                         <!-- Content (Initially visible - no 'hidden' class) -->
-                        <div id="v170-content" class="pt-1 collapse-content">
+                        <div id="v180-content" class="pt-1 collapse-content">
                             <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
-                                <li>In the Update Attribute step, when a process front does not match to exactly 1 active front, an unmatched fronts layer will be added to the map- helping to visualize the unmatched front on the map..</li>
+                                <li>Fixed errors table displayed in the 1st step message log.</li>
+                                <li>Fixed changes documentation action in end task step when layer contain vast amount of features to query.</li>
+                                <li>Added new quality check for redundant vertices in parcels, blocks and fronts.</li>
+                                <li>New updated User Guide.</li>
+                                <li>Task item is published to the organization portal and can be imported directly from there.</li>
+                                <li>base map in the ArcGIS Pro project is now SoI's Orthophoto 2025.</li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <!-- Version 1.7.0-->
+                    <li class="border-b border-gray-700 pb-2">
+                        <button onclick="toggleChangelog('v170')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
+                            <span class="font-semibold text-gray-500 text-lg mr-3">v1.7.0</span>
+                            <!-- Down/Up Arrow (Initially pointing down for closed state) -->
+                            <svg id="arrow-v170" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                        </button>
+                        <!-- Content (Initially hidden) -->
+                        <div id="v160-content" class="pt-1 collapse-content hidden">
+                            <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
+                                <li>In the Update Attribute step, when a process front does not match to exactly 1 active front, an unmatched fronts layer will be added to the map- helping to visualize the unmatched front on the map.</li>
                                 <li>The Stated Areas eraly validtaion check will warn if an incoming temporary parcel does not yet have it's final number (an eralier record should be updated before the current one).</li>
                             </ul>
                         </div>
