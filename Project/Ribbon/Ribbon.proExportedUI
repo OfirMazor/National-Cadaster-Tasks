@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<ArcGIS.Desktop xmlns="http://schemas.esri.com/DADF/Registry">
+  <QAT>esri_core_newProjectButton;esri_core_openProjectButton;esri_core_saveProjectButton;esri_core_undoSplitButton;esri_core_redoSplitButton;</QAT>
+  <QAT>esri_core_newProjectButton;esri_core_openProjectButton;esri_core_saveProjectButton;esri_core_undoSplitButton;esri_core_redoSplitButton;</QAT>
+  <modules>
+    <insertModule id="Custom">
+      <tabs>
+        <tab id="esriTabff266c8d19a09c5b" caption="Cadaster Editor" placeWith="esri_sharing_shareTab" insert="after">
+          <group refID="esriGroup592ae6c23cbeed16" />
+        </tab>
+      </tabs>
+      <groups>
+        <group id="esriGroup592ae6c23cbeed16" caption="Assistants">
+          <button refID="esri_geoprocessing_NCDBCustomTools_DisplayProcessData" size="large" />
+          <button refID="esri_geoprocessing_NCDBCustomTools_GetProcessIDs" size="large" />
+          <button refID="esri_geoprocessing_NCDBCustomTools_ImportOrModifyPoints" size="large" />
+          <button refID="esri_geoprocessing_NCDBCustomTools_LastParcelNumber" size="large" />
+          <button refID="esri_geoprocessing_NCDBCustomTools_RetirePointsOrFronts" size="large" />
+          <button refID="esri_geoprocessing_NCDBCustomTools_ReinitializeProject" size="large" />
+        </group>
+      </groups>
+      <controls>
+        <button id="esri_geoprocessing_NCDBCustomTools_GetProcessIDs" caption="Get Process IDs" smallImage="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx|GetProcessIDs.tool\tool.icon.png" largeImage="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx|GetProcessIDs.tool\tool.icon.png" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx\GetProcessIDs" name="Get Process IDs" xmlns="" />
+          </args>
+          <tooltip heading="Get Process IDs"></tooltip>
+        </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_ReinitializeProject" caption="Reinitialize Project" smallImage="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx|ReinitializeProject.tool\tool.icon.png" largeImage="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx|ReinitializeProject.tool\tool.icon.png" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx\ReinitializeProject" name="Reinitialize Project" xmlns="" />
+          </args>
+          <tooltip heading="Reinitialize Project">Reinitialize current project</tooltip>
+        </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_StartTaskCreateAndRetire" caption="Start Task (Create &amp; Retire)" smallImage="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx|StartTaskCreateAndRetire.tool\tool.icon.png" largeImage="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx|StartTaskCreateAndRetire.tool\tool.icon.png" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx\StartTaskCreateAndRetire" name="Start Task (Create &amp; Retire)" xmlns="" />
+          </args>
+          <tooltip heading="Start Task (Create &amp; Retire)"></tooltip>
+        </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_UpdateAttributesCreateAndRetire" caption="Update Attributes (Create &amp; Retire)" smallImage="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx|UpdateAttributesCreateAndRetire.tool\tool.icon.png" largeImage="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx|UpdateAttributesCreateAndRetire.tool\tool.icon.png" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx\UpdateAttributesCreateAndRetire" name="Update Attributes (Create &amp; Retire)" xmlns="" />
+          </args>
+          <tooltip heading="Update Attributes (Create &amp; Retire)">This tool aim to update the attributes of current cadastral features that cannot be update by Parcel Fabric tools</tooltip>
+        </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_EndTask" caption="End Task" smallImage="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx|EndTask.tool\tool.icon.png" largeImage="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx|EndTask.tool\tool.icon.png" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevEnvironment\Project\NCDBCustomTools.atbx\EndTask" name="End Task" xmlns="" />
+          </args>
+          <tooltip heading="End Task">Reconcile and post latest version of the cadastral process</tooltip>
+        </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_StartTaskImprove" caption="Start Task (Improve)" smallImage="\\mapi_shares\MNCDB\ParcelFabric\DevEnvironment\Project\NCDBCustomTools.atbx|StartTaskImprove.tool\tool.icon.png" largeImage="\\mapi_shares\MNCDB\ParcelFabric\DevEnvironment\Project\NCDBCustomTools.atbx|StartTaskImprove.tool\tool.icon.png" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\ParcelFabric\DevEnvironment\Project\NCDBCustomTools.atbx\StartTaskImprove" name="Start Task (Improve)" xmlns="" />
+          </args>
+          <tooltip heading="Start Task (Improve)"></tooltip>
+        </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_UpdateAttributesImproveCurrentCadaster" caption="Update Attributes (Improve)" smallImage="\\mapi_shares\MNCDB\ParcelFabric\DevEnvironment\Project\NCDBCustomTools.atbx|UpdateAttributesImproveCurrentCadaster.tool\tool.icon.png" largeImage="\\mapi_shares\MNCDB\ParcelFabric\DevEnvironment\Project\NCDBCustomTools.atbx|UpdateAttributesImproveCurrentCadaster.tool\tool.icon.png" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\ParcelFabric\DevEnvironment\Project\NCDBCustomTools.atbx\UpdateAttributesImproveCurrentCadaster" name="Update Attributes (Improve)" xmlns="" />
+          </args>
+          <tooltip heading="Update Attributes (Improve)">This tool aim to update the attributes of current cadastral features that cannot be update by Parcel Fabric tools</tooltip>
+        </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_GetLastParcelNumber" caption="Get Last Parcel Number" smallImage="GeoprocessingScript16" largeImage="GeoprocessingScript32" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx\GetLastParcelNumber" name="Get Last Parcel Number" xmlns="" />
+          </args>
+          <tooltip heading="Get Last Parcel Number"></tooltip>
+        </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_DisplayProcessData" caption="Display Process Data" smallImage="GeoprocessingScript16" largeImage="GeoprocessingScript32" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx\DisplayProcessData" name="Display Process Data" xmlns="" />
+          </args>
+          <tooltip heading="Display Process Data">Display process-related data layers in the current ArcGIS project map.</tooltip>
+        </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_RetirePointsOrFronts" caption="Retire Points Or Fronts" smallImage="GeoprocessingScript16" largeImage="GeoprocessingScript32" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx\RetirePointsOrFronts" name="Retire Points Or Fronts" xmlns="" />
+          </args>
+          <tooltip heading="Retire Points Or Fronts">Retire selected points or fronts. </tooltip>
+        </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_ImportOrModifyPoints" caption="Import or Modify Points" smallImage="GeoprocessingScript16" largeImage="GeoprocessingScript32" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx\ImportOrModifyPoints" name="Import or Modify Points" xmlns="" />
+          </args>
+          <tooltip heading="Import or Modify Points">Import and update parcel fabric active points in an active ArcGIS Parcel Fabric.
+This function uses `ImportParcelFabricPoints` to import points from a source layer into the active parcel fabric, updating matched points and/or creating unmatched points based on the specified mode.
+The results are processed and displayed in a tabular format in ArcGIS messages.</tooltip>
+        </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_LastParcelNumber" caption="Last Parcel Number" smallImage="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx|LastParcelNumber.tool\tool.icon.png" largeImage="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx|LastParcelNumber.tool\tool.icon.png" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx\LastParcelNumber" name="Last Parcel Number" xmlns="" />
+          </args>
+          <tooltip heading="Last Parcel Number">Prints the last active parcel number in the specified block.
+
+This tool queries the Parcels2D and Parcels3D feature classes within the configured parcel fabric dataset,
+filtering only active parcels (i.e., those not retired).
+It then determines the highest parcel number in each class for the given block and sub-block, and prints the maximum of the two.
+</tooltip>
+        </button>
+      </controls>
+    </insertModule>
+    <updateModule refID="Custom">
+      <controls />
+    </updateModule>
+    <updateModule refID="esri_mapping">
+      <tabs>
+        <updateTab refID="esri_mapping_homeContingentValuesViewTab">
+          <insertGroup refID="esriGroup4e26f0ff00876650" />
+        </updateTab>
+      </tabs>
+      <groups>
+        <insertGroup id="esriGroup4e26f0ff00876650" caption="New Group" />
+      </groups>
+      <controls />
+    </updateModule>
+  </modules>
+</ArcGIS.Desktop>
