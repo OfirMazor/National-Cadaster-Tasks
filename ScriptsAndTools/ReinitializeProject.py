@@ -20,7 +20,8 @@ def reset_definition_queries() -> None:
 
     retired_layer: list[str] = ['נקודות גבול מבוטלות', 'חזיתות מבוטלות', 'חלקות מבוטלות', 'גושים מבוטלים',
                                 'נקודות גבול תלת-ממדיות מבוטלות', 'חלקות תלת-ממדיות מבוטלות', 'גריעות מבוטלות']
-    retired_base_query: list[dict[str, Any]] = [{'name': 'Base', 'sql': 'RetiredByRecord IS NOT NULL', 'isActive': True}]
+    retired_base_query: list[dict[str, Any]] = [
+        {'name': 'Base', 'sql': 'RetiredByRecord IS NOT NULL', 'isActive': True}]
     for name in retired_layer:
         layer: Layer = current_map.listLayers(name)[0]
         layer.updateDefinitionQueries(retired_base_query)
@@ -32,7 +33,8 @@ def reset_definition_queries() -> None:
         if layer:
             layer.updateDefinitionQueries(query)
 
-    qa_names: list[str] = ['קווי אימות' , 'נקודות אימות', 'שגיאות מסוג פוליגון' , 'שגיאות מסוג קו' , 'שגיאות מסוג נקודה' , 'אזורים לא חוקיים' , 'שטחי אימות']
+    qa_names: list[str] = ['קווי אימות', 'נקודות אימות', 'שגיאות מסוג פוליגון', 'שגיאות מסוג קו', 'שגיאות מסוג נקודה',
+                           'אזורים לא חוקיים', 'שטחי אימות']
     for name in qa_names:
         layer: Layer = current_map.listLayers(name)[0]
         layer.updateDefinitionQueries(None)
@@ -45,11 +47,12 @@ def drop_intermediate_layers() -> None:
     Removes layer and tables created during a task from the content panel.
     """
 
-    # Drop unwanted layers
+    # Drop intermediate layers
+    intermediates: list[str] = ['נקודות מפנה מיותרות', 'נקודות מנותקות', 'נקודות סמוכות', 'חורים וחפיפות', 'קונפליקטים', 'חפיפות בין גריעות', 'חפיפות בין חלקות תלת-ממדיות']
     layers: list[Layer] = [layer for layer in ArcGISProject('current').activeMap.listLayers()]
     to_remove: list[str] = [layer.name for layer in layers
                             if
-                            layer.name in ['נקודות סמוכות', 'חורים וחפיפות', 'קונפליקטים']
+                            layer.name in intermediates
                             or
                             (any(substring in layer.name for substring in [' תכנית', 'תכנית ']) and layer.isGroupLayer)
                             or
@@ -58,11 +61,11 @@ def drop_intermediate_layers() -> None:
     for layer in to_remove:
         drop_layer(layer)
         AddMessage(f"{timestamp()} | ✔️ Layer {layer} dropped")
-    del layers, to_remove
 
-    # Drop unwanted table
+    # Drop intermediate tables
+    intermediates: list[str] = ['חלקות עם שטחים חורגים', 'פעולות בתכנית']
     tables: list[Table] = [table for table in ArcGISProject('current').activeMap.listTables()]
-    to_remove: list[str] = [table.name for table in tables if table.name not in ['טבלת אימות', 'סדר פעולות']]
+    to_remove: list[str] = [table.name for table in tables if table.name in intermediates]
 
     for table in to_remove:
         drop_dbtable(table)
@@ -73,12 +76,11 @@ def return_to_default_version() -> None:
     """Changing the project layers back to sde.DEFAULT version if they are set on other version."""
 
     layers: list[str] = ['רישומים', 'גריעות', 'גריעות מבוטלות', 'חלקות תלת-ממדיות', 'חלקות תלת-ממדיות מבוטלות',
-                         'חלקות תלת-ממדיות מבוטלות', 'נקודות גבול תלת-ממדיות', 'נקודות גבול תלת-ממדיות מבוטלות',
-                         'היטלי חלקות תלת-ממדיות', 'היטלי גריעות']
+                         'חלקות תלת-ממדיות מבוטלות', 'נקודות גבול תלת-ממדיות', 'נקודות גבול תלת-ממדיות מבוטלות', 'היטלי חלקות תלת-ממדיות', 'היטלי גריעות']
     for name in layers:
         if get_VersionName(name, source='layer') != 'sde.DEFAULT':
             layer: Layer = get_layer(name)
-            ChangeVersion(layer, "BRANCH", 'sde.DEFAULT', include_participating= "INCLUDE" if name == 'רישומים' else "EXCLUDE")
+            ChangeVersion(layer, "BRANCH", 'sde.DEFAULT', include_participating="INCLUDE" if name == 'רישומים' else "EXCLUDE")
 
     AddMessage(f"{timestamp()} | ✔️ Layers returned to default version")
 

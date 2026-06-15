@@ -62,7 +62,7 @@ def drop_layer(layer_name: str) -> None:
 
 
 def drop_dbtable(table_name: str) -> None:
-    """ Remove a table from a map in a project. """
+    """ Remove a table from a map in a project (if exists). """
     current_map: Map = ArcGISProject('current').activeMap
     table_list: list[Table|None] = current_map.listTables(table_name)
     if table_list:
@@ -103,9 +103,9 @@ def AddTabularMessage(table: df):
     data_part: list[list[str|Any]] = [[col, str(first_row[col])] for col in table.columns]
 
     # Example elementProps (static, can be extended dynamically if needed)
-    element_props: dict[str, str|dict[str,str]] = {"striped": "true",
-                                                   "0": {"align": "center", "pad": "30px"},
-                                                   "1": {"align": "center", "pad": "30px"}}
+    element_props: dict[str, str|dict[str, str]] = {"striped": "true",
+                                                    "0": {"align": "center", "pad": "30px"},
+                                                    "1": {"align": "center", "pad": "30px"}}
 
     # Build the full structure
     result: dict[str, Any] = {"element": "table",
@@ -134,7 +134,7 @@ def get_active_user(mode: Literal['short', 'long'] = 'short') -> str|None:
     Returns:
         str | None: The username of the active user if available, otherwise `None`.
     """
-    from arcgis.gis import GIS, User
+    from arcgis.gis import GIS
     user: User = GIS("pro").users.me
     if user:
         if mode == 'short':
@@ -299,12 +299,17 @@ def get_ProcessType(ProcessName: str) -> int:
     return ProcessType
 
 
-def get_RecordType(RecordName: str) -> int:
+def get_RecordType(RecordName: str, source: Literal['SDE', 'ActiveMap'] = 'SDE') -> int|None:
     """Returns the type of cadastral record border by an input record name"""
+    if source == 'SDE':
+        table: str = fr'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}CadasterRecordsBorders'
+    elif source == 'ActiveMap':
+        table: Layer = get_layer('גבולות רישומים')
+    else:
+        AddError(f'{timestamp()} | source parameter must be on of: [SDE, ActiveMap]')
+        return None
 
-    table: str = fr'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}CadasterRecordsBorders'
-    query: str = f"Name = '{RecordName}'"
-    search: Scur = SearchCursor(table, 'RecordType', query)
+    search: Scur = SearchCursor(table, 'RecordType', f"Name = '{RecordName}'")
     RecordType: int = int(search.next()[0])
     del search
 
@@ -383,7 +388,8 @@ def get_RecordGUID(ProcessName: str, source: Literal['MAP', 'SDE', 'SHELF'] = 'S
             RecordGUID: str = open(txt_file, "r").read().strip()
             return RecordGUID
         else:
-            if warnings: AddError(f'{timestamp()} | Text file {txt_file} not exists')
+            if warnings:
+                AddError(f'{timestamp()} | Text file {txt_file} not exists')
             return None
 
     if source in ['SDE', 'MAP']:
@@ -398,10 +404,12 @@ def get_RecordGUID(ProcessName: str, source: Literal['MAP', 'SDE', 'SHELF'] = 'S
             del Scursor
             return RecordGUID
         if Scursor_len == 0:
-            if warnings: AddMessage(f'{timestamp()} | ⚠️ Record {ProcessName} Not found')
+            if warnings:
+                AddMessage(f'{timestamp()} | ⚠️ Record {ProcessName} Not found')
             return None
         if Scursor_len > 1:
-            if warnings: AddMessage(f'{timestamp()} | ⚠️ Found {Scursor_len} records named {ProcessName}')
+            if warnings:
+                AddMessage(f'{timestamp()} | ⚠️ Found {Scursor_len} records named {ProcessName}')
             return None
         else:
             del Scursor
@@ -510,6 +518,7 @@ def get_BlockStatus(by: Literal['Name', 'GlobalID'], value: str) -> int | None:
 
     if not status:
         AddMessage('Block status returned as None')
+        return None
     else:
         return status
 
@@ -535,7 +544,7 @@ def get_ActiveParcel2DGUID(name: str, source: Literal['MAP', 'SDE'] = 'MAP') -> 
         AddError("Parameter ️'source' must be on of ['SDE', 'MAP']")
 
     if table:
-        Scursor: Scur = SearchCursor(table, 'GlobalID', f""" Name = '{name}' AND RetiredByRecord IS NULL""")
+        Scursor: Scur = SearchCursor(table, 'GlobalID', f"Name = '{name}' AND RetiredByRecord IS NULL")
         Scursor_len: int = cursor_length(Scursor)
 
         if Scursor_len == 1:
@@ -547,9 +556,10 @@ def get_ActiveParcel2DGUID(name: str, source: Literal['MAP', 'SDE'] = 'MAP') -> 
         if Scursor_len > 1:
             AddMessage(f'{timestamp()} | ⚠️ Found {Scursor_len} parcels named {name}')
             return None
-
-        del Scursor, Scursor_len
-    del table
+        else:
+            return None
+    else:
+        return None
 
 
 def get_ActiveParcel3DGUID(name: str, source: Literal['MAP', 'SDE'] = 'MAP') -> str | None:
@@ -585,9 +595,11 @@ def get_ActiveParcel3DGUID(name: str, source: Literal['MAP', 'SDE'] = 'MAP') -> 
         if Scursor_len > 1:
             AddMessage(f'{timestamp()} | ⚠️ Found {Scursor_len} parcels named {name}')
             return None
+        else:
+            return None
+    else:
+        return None
 
-        del Scursor, Scursor_len
-    del table
 
 
 def get_FinalParcel(temp_number: int, block_number: int, subblock_number: int = 0, process_guid: str|None = None) -> int|None:
@@ -644,7 +656,8 @@ def get_FinalParcel(temp_number: int, block_number: int, subblock_number: int = 
 
         return final_number
 
-    del pairs, fields, source_temp_name
+    else:
+        return None
 
 
 def get_StartPointGUID(line_geometry: Line, tolerance: float = 0.01) -> str | None:
@@ -672,6 +685,8 @@ def get_StartPointGUID(line_geometry: Line, tolerance: float = 0.01) -> str | No
         return None
     if count == 0:
         AddMessage(f'{timestamp()} |  ⚠️ Start point ({first_x}, {first_y}) is not matching any border point')
+        return None
+    else:
         return None
 
 
@@ -701,9 +716,11 @@ def get_EndPointGUID(line_geometry: Line,  tolerance: float = 0.01) -> str | Non
     if count == 0:
         AddMessage(f'{timestamp()} |  ⚠️ Start point ({last_x}, {last_y}) is not matching any border point')
         return None
+    else:
+        return None
 
 
-def process_will_retire_its_block(ProcessName: str) -> bool|None:
+def process_will_retire_its_block(ProcessName: str) -> bool:
     """
     Check whether a process resulting in retiring the block it is modifying by counting the active parcels remaining after the incoming parcels of the process will retire.
     Note: this check is not relevant for 3D cadastral processes or process that improve the active cadaster since they are not allowed to retire a block.
@@ -711,33 +728,48 @@ def process_will_retire_its_block(ProcessName: str) -> bool|None:
     Parameters:
         ProcessName (str): The name of the process to verify whether it's block will be retired.
     """
-
-    # Get the retiring parcels of the process as a unified text to use in a query
+    ProcessGUID: str = get_ProcessGUID(ProcessName)
+    BlockGUID: str = get_BlockGUID("ProcessName", ProcessName)
+    BlockNumber, SubBlockNumber = get_BlockName(BlockGUID).split('/')
     InProcessParcels2D: str = fr"{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}InProcessParcels2D"
-    query: str = f"CPBUniqueID = '{get_ProcessGUID(ProcessName)}' And ParcelRole = 1"
-    fields: list[str] = ['ParcelNumber', 'BlockNumber', 'SubBlockNumber']
-    retired_parcel_of_process: Scur = SearchCursor(InProcessParcels2D, fields, query)
 
-    # If the process has parcels to retire:
-    if cursor_length(retired_parcel_of_process) > 0:
-        retired_parcel_as_text: str = ",".join([f"'{i[0]}/{i[1]}/{i[2]}'" for i in retired_parcel_of_process])
+    # Count the new output parcels from the process that remain in the same incoming block of the cadastral plan:
+    query: str = f"CPBUniqueID= '{ProcessGUID}' And BlockNumber= {BlockNumber} And SubBlockNumber= {SubBlockNumber} And ParcelRole= 2"
+    new_parcels_in_the_incoming_block: int = cursor_length(SearchCursor(InProcessParcels2D, 'ObjectID', query))
 
-        # Query the for active parcels of the block, excluding the retiring parcels pf the process
-        Parcels2D: str = fr"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Parcels2D"
-        query: str = f"""BlockUniqueID = '{get_BlockGUID("ProcessName", ProcessName)}' And RetiredByRecord Is Null And Name Not In ({retired_parcel_as_text})"""
-        active_2D_Parcels: Scur = SearchCursor(Parcels2D, 'Name', query)
-        active_2D_Parcels_count: int = cursor_length(active_2D_Parcels)
-
-        del retired_parcel_of_process, active_2D_Parcels
-
-        if active_2D_Parcels_count == 0:
-            return True
-        else:
-            return False
+    if new_parcels_in_the_incoming_block > 0:
+        # If there are new active output parcels in the same block of the cadastral plan - The block will not retire.
+        return False
 
     else:
-        del retired_parcel_of_process
-        return False
+        # Otherwise, the function will trace for other remaining active parcels in the block that are not serve sa incoming parcels in the cadastral plan.
+        query: str = f"CPBUniqueID= '{ProcessGUID}' And ParcelRole= 1"
+        fields: list[str] = ['ParcelNumber', 'BlockNumber', 'SubBlockNumber']
+        retired_parcel_of_process: Scur = SearchCursor(InProcessParcels2D, fields, query)
+
+        # If the process has parcels to retire:
+        if cursor_length(retired_parcel_of_process) > 0:
+            # Get the retiring parcels of the process as a unified text to use in a query
+            retired_parcel_as_text: str = ",".join([f"'{i[0]}/{i[1]}/{i[2]}'" for i in retired_parcel_of_process])
+
+            # Check for active parcels in the block while excluding the retiring parcels 0f the process
+            Parcels2D: str = fr"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Parcels2D"
+            query: str = f"BlockUniqueID= '{BlockGUID}' And RetiredByRecord Is Null And Name Not In ({retired_parcel_as_text})"
+            active_2D_Parcels: Scur = SearchCursor(Parcels2D, 'Name', query)
+            active_2D_Parcels_count: int = cursor_length(active_2D_Parcels)
+
+            del retired_parcel_of_process, active_2D_Parcels, ProcessGUID, BlockGUID
+
+            if active_2D_Parcels_count == 0:
+                return True
+            else:
+                return False
+
+        else:
+            # If the process does not have parcels to retire:
+            del retired_parcel_of_process
+            return False
+
 
 
 def process_is_transferring(ProcessName: str, source: Literal['MAP', 'SDE'] = 'MAP') -> bool:
@@ -797,6 +829,8 @@ def process_is_establish_block(ProcessName: str, source: Literal['MAP', 'SDE'] =
             return True
         else:
             return False
+    else:
+        return None
 
 
 def get_AbsorbingBlockGUIDs() -> list[str] | None:
@@ -826,7 +860,7 @@ def get_AbsorbingBlockGUIDs() -> list[str] | None:
             guids.append(get_BlockGUID(by= 'BlockName', name = name))
         return guids
 
-    if total < 1:
+    else:
         AddError('No absorbing Blocks found for the transfer action')
         return None
 
@@ -943,13 +977,13 @@ def rewrite_record_data(ProcessName: str) -> None:
         ProcessName (str):  The name of the process used as a filter to identify relevant records.
     """
     fields_to_update: list[str] = ['BlockUniqueID', 'GeodeticNetwork', 'SurveyorLicenseID', 'DataSource', 'PlanName', 'Shape@']
-    new_data: tuple[Any, ...] = SearchCursor(get_layer('גבולות תהליכי קדסטר'), fields_to_update, f" ProcessName = '{ProcessName}' ").next()
+    new_data: tuple[Any, ...] = SearchCursor(get_layer('גבולות תהליכי קדסטר'), fields_to_update, f"ProcessName = '{ProcessName}'").next()
 
     editor: Editor = start_editing(ENV.workspace)
-    records_layer = get_layer('גבולות רישומים')
+    records_layer: Layer = get_layer('גבולות רישומים')
     record_data: Ucur = UpdateCursor(records_layer, fields_to_update, f" Name = '{ProcessName}' ")
     for row in record_data:
-        row = new_data
+        row: tuple[Any, ...] = new_data
         record_data.updateRow(row)
 
     stop_editing(editor); RefreshLayer(records_layer); reopen_map('מפת עריכה');
@@ -1246,13 +1280,30 @@ def filter_to_aoi(ProcessName: str, map_name: MapType = 'Active map') -> None:
         AddDefinitionQuery(layer, query_params)
 
 
-    # Filter active projected 3D parcels and projected substractions (scene map)
-    query_params: dict[str, Any] = {'name': name, 'spatialClause': spatial_clause, 'isActive': True}
-    for layer_name in ['היטלי חלקות תלת-ממדיות', 'היטלי גריעות']:
-        layer: Layer = aoi_map.listLayers(layer_name)[0]
-        AddDefinitionQuery(layer, query_params)
+    # Filter active projected 3D parcels
+    guids: list[str] = [i[0] for i in SearchCursor(f"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Parcels3D", "GlobalID", f"RetiredByRecord IS NULL AND BlockUniqueID IN ({aoi_blocks})")]
+    if guids:
+        guids_str: str = ', '.join(["'" + guid + "'" for guid in guids])
+        query_params: dict[str, Any] = {'name': name, 'sql': f"Parcel3DUniqueID IN ({guids_str})", 'isActive': True}
+    else:
+        # Define a query that return nothing from the layer
+        query_params: dict[str, Any] = {'name': name, 'sql': f"OBJECTID = -1", 'isActive': True}
+    layer: Layer = aoi_map.listLayers('היטלי חלקות תלת-ממדיות')[0]
+    AddDefinitionQuery(layer, query_params)
 
-    del query_params, spatial_clause, aoi_map, RecordGUID, aoi_blocks
+
+    # Filter active projected substractions
+    guids: list[str] = [i[0] for i in SearchCursor(f"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Substractions", "GlobalID", f"RetiredByRecord IS NULL AND BlockUniqueID IN ({aoi_blocks})")]
+    if guids:
+        guids_str: str = ', '.join(["'" + guid + "'" for guid in guids])
+        query_params: dict[str, Any] = {'name': name, 'sql': f"Parcel3DUniqueID IN ({guids_str})", 'isActive': True}
+    else:
+        # Define a query that return nothing from the layer
+        query_params: dict[str, Any] = {'name': name, 'sql': f"OBJECTID = -1", 'isActive': True}
+    layer: Layer = aoi_map.listLayers('היטלי גריעות')[0]
+    AddDefinitionQuery(layer, query_params)
+
+    del query_params, spatial_clause, aoi_map, RecordGUID, aoi_blocks, guids, layer
 
 
 def filter_to_roi(RecordName: str, map_name: MapType = 'Active map') -> None:
@@ -1363,30 +1414,33 @@ def respond_to_CMS(ProcessName: str, ProcessType: int, ProjectStatus: Optional[i
     """
     AddMessage(f'\n ⭕ Sending feedback to CMS \n')
 
+    # Build the URL
     if ProcessType in [5, 9]:  # -> Block regulation or Coordinates based cadastre
         SubBlockNumber: str = ProcessName.split("/")[1]
         SubBlockNumber: str = '0' + SubBlockNumber if len(SubBlockNumber) == 1 else SubBlockNumber
 
         BlockNumber: str = ProcessName.split("/")[0]
-        to_pad: int = 8 - len(BlockNumber)  # -> 8 is total 10 characters minus 2 characters of SubBlockNumber
+        to_pad: int = 8 - len(BlockNumber)  # -> 8 = total 10 characters minus 2 characters of SubBlockNumber
         if to_pad > 0:
             BlockNumber: str = '0' * to_pad + BlockNumber
 
         ProcessNumber: str = f'{BlockNumber}{SubBlockNumber}'
         ProcessYear: str = '0'
+
     else:
         ProcessNumber: str = ProcessName.split("/")[0]
         ProcessYear: str = ProcessName.split("/")[1]
 
     url: str = f'{CNFG.CMS_url}{ProcessNumber}/{ProcessYear}/{ProcessType}/{ProjectStatus}'
 
+    # Send a request to CMS
     try:
-        r = requests.get(url)
-        r.raise_for_status()    # Raises an HTTPError for bad responses (4xx and 5xx)
+        response: Response = requests.get(url, proxies={"http": None, "https": None})
+        response.raise_for_status()    # Raises an HTTPError for bad responses (4xx and 5xx)
         AddMessage(f'{timestamp()} | ✅ Responded to CMS')
 
     except requests.exceptions.HTTPError as e:
-        if r.status_code == 404:
+        if response.status_code == 404:
             AddMessage(f"{timestamp()} | ❌ Error: The URL {url} was not found or not valid")
         else:
             AddMessage(f"{timestamp()} | ❌ Error: HTTP error occurred: {e}")
@@ -1412,3 +1466,46 @@ def get_aprx_name(aprx_path: str = 'current') -> str:
                                              .replace("_", "/")
 
     return aprx_name
+
+
+def activate_extension(name: Extension) -> bool:
+    """
+    Checks if an extension is active or available, and activates it if a license is available.
+
+    Returns:
+        bool: True if active or activated successfully, False otherwise.
+    """
+
+    from arcpy import CheckExtension, CheckOutExtension
+
+    # Check the current status of the license
+    status: Literal["Available", "Unavailable", "NotLicensed", "Failed"] = CheckExtension(name)
+
+    if status == "Available":
+        # License is free to take, let's activate it
+        checkout_status: Literal["NotInitialized", "Unavailable", "CheckedOut"] = CheckOutExtension(name)
+        if checkout_status == "CheckedOut":
+            return True
+        else:
+            AddError(f"{timestamp()} | ❌ Failed to activate {name} extension. Status returned: {checkout_status}")
+            return False
+
+
+    elif status == "Unavailable":
+        # 'Unavailable' can mean all licenses are currently in use by others Or it means it is already activated by your current session.
+        checkout_status = CheckOutExtension(name)
+        if checkout_status == "CheckedOut":
+            return True
+        else:
+            AddError(f"{timestamp()} | ❌ Not enough licenses available! {name} extension could not be activated.")
+            return False
+
+
+    elif status == "NotLicensed":
+        AddError(f"{timestamp()} | ❌ The {name} extension is not licensed or valid for this product installation.")
+        return False
+
+
+    else:
+        AddError(f"{timestamp()} | ❌ System or environment failure occurred. Status returned: {status}")
+        return False

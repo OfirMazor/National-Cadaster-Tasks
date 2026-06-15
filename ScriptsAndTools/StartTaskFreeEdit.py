@@ -12,12 +12,15 @@ from arcpy.conversion import ExportFeatures
 def display_process_data(RecordName: str) -> None:
 
     RecordsBorders: str = fr'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}CadasterRecordsBorders'
-    output: str = fr"{ArcGISProject('current').defaultGeodatabase}\FreeEditRecordBorders"
+    home_gdb: str = fr"{ArcGISProject('current').defaultGeodatabase}"
+    output: str = fr"{home_gdb}\FreeEditRecordBorders"
 
     ExportFeatures(RecordsBorders, output, f"Name = '{RecordName}'", field_mapping= fr'Name "שם המפה" true true true 255 Text 0 0,First,#,{RecordsBorders},Name,0,254')
     current_map: Map = ArcGISProject('current').activeMap
     current_map.addDataFromPath(fr'{CNFG.LayerFiles}FreeEditRecordBorders.lyrx')
     layer: Layer = get_layer("גבול תכנית")
+    layer.updateConnectionProperties(None, output)
+
     layer.name = f'{RecordName} גבול תכנית'
 
 
