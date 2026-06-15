@@ -47,7 +47,7 @@ def display_process_data(ProcessName: str) -> None:
 
         if process_type == 2:
 
-            current_map.addDataFromPath(fr'{CNFG.LayerFiles}Display3DProcessData.lyrx')
+            current_map.addDataFromPath(fr'{CNFG.LayerFiles}Display3DProcessData_{CNFG.Environment}.lyrx')
             group_layer: Layer = current_map.listLayers('תכנית')[0]
             top_layer: str = 'בקרת איכות' if current_map.name == 'מפת עריכה' else 'קדסטר בתהליך'
             current_map.moveLayer(current_map.listLayers(top_layer)[0], group_layer, "BEFORE")

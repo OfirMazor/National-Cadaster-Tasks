@@ -497,7 +497,7 @@ def retire_3D_parcels_and_substractions(ProcessName: str) -> None:
         AddMessage(f'{timestamp()} | ✔️ 3D Parcels retired successfully')
         CurrentMap.clearSelection()
 
-        # ! If there are 3D parcels to retire there must be substractions to retire.
+        # If there are 3D parcels to retire there must be substractions to retire.
         substractions: Layer = CurrentMap.listLayers('גריעות')[0]
         substractions_to_retire: list[str] = sorted([f'{row[0]}/{row[1]}/{row[2]}' for row in inprocess_substractions])
         substraction_numbers: list[int] = [int(p.split('/')[0]) for p in substractions_to_retire]
@@ -628,7 +628,7 @@ def retire_blocks(ProcessName: str) -> None:
     text_file: str = fr"{CNFG.Library}{ProcessName.replace('/', '_')}/RetiredBlocks.txt"
     delete_file(text_file)
 
-    block_to_retire: Ucur = UpdateCursor(get_layer('גושים'), ['Name', 'RetiredByRecord'], f"""GlobalID = '{get_BlockGUID("ProcessName", ProcessName)}' AND RetiredByRecord IS NULL""")
+    block_to_retire: Ucur = UpdateCursor(get_layer('גושים'), ['Name', 'RetiredByRecord'], f"""GlobalID= '{get_BlockGUID("ProcessName", ProcessName)}' AND RetiredByRecord IS NULL""")
 
     for value in block_to_retire:
         value[1]: str = get_RecordGUID(ProcessName, 'SHELF')
@@ -657,7 +657,7 @@ def retire_3D_points(ProcessName: str, tolerance: float = 0.002) -> None:
 
     active_points_layer: Layer = get_layer('נקודות גבול תלת-ממדיות')
     query: str = f"CPBUniqueID = '{get_ProcessGUID(ProcessName, 'MAP')}' AND Role = 1"
-    points_to_retire: Layer = MakeLayer(get_layer('נקודות גבול תלת-ממדיות בתהליך'), 'points_to_retire', query)
+    points_to_retire: Layer = MakeLayer(get_layer('נקודות גבול תלת-ממדיות בתהליך'), 'points_to_retire', query)[0]
 
     to_retire: Result = SelectByLocation(active_points_layer, 'INTERSECT_3D', points_to_retire, f"{tolerance} Meters")
     total: int = int(to_retire.getOutput(2))
@@ -701,7 +701,7 @@ def reshape_transferring_block(ProcessName: str) -> None:
 
     # (1) The block retired by the process
     if process_will_retire_its_block(ProcessName):
-        #   No borders reshape is needed if the block has retires.
+        #   No borders reshaping is needed if the block has retire.
         pass
 
     # (2) The block remained with active parcels and required reshape of its borders.
@@ -724,16 +724,22 @@ def reshape_transferring_block(ProcessName: str) -> None:
         #   Query the for active parcels of the block, excluding the retiring parcels pf the process
         Parcels2D: str = fr"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Parcels2D"
         query: str = f"""BlockUniqueID = '{sender_block_guid}' And RetiredByRecord Is Null And Name Not In ({retired_parcel_as_text})"""
-        remaining_active_parcels: Layer = MakeLayer(Parcels2D, 'remaining_active_parcels', query).getOutput(0)
+        remaining_active_parcels: Layer = MakeLayer(Parcels2D, 'remaining_active_parcels', query)[0]
 
         #   Query the new parcels of the sender block (they were added earlier in load_new_parcels but are not yet implemented on the map (known bug)
         query: str = f"CPBUniqueID = '{get_ProcessGUID(ProcessName)}' And ParcelRole = 2 And BlockUniqueId = '{sender_block_guid}'"
-        new_parcels: Layer = MakeLayer(InProcessParcels2D, 'new_active_parcels', query).getOutput(0)
+        new_parcels: Layer = MakeLayer(InProcessParcels2D, 'new_active_parcels', query)[0]
         merged: Result = Merge([remaining_active_parcels, new_parcels], fr'{home_gdb}\merged_parcels_of_{sender_block_name.replace("/", "_")}')
 
         #   Compute the updated geometry
-        dissolve: Result = Dissolve(merged.getOutput(0), fr'{home_gdb}\sender_block_{sender_block_name.replace("/", "_")}_geometry')
-        updated_shape: Polygon = SearchCursor(dissolve.getOutput(0), 'Shape@').next()[0]
+        dissolve: Result = Dissolve(merged[0], fr'{home_gdb}\sender_block_{sender_block_name.replace("/", "_")}_geometry')
+        updated_shape: Polygon = SearchCursor(dissolve[0], 'Shape@').next()[0]
+
+        #   Warn if the updated shape is multipart
+        updated_shape_parts_count: int = updated_shape.partCount
+        if updated_shape_parts_count > 1:
+            AddMessage(f'{timestamp()} | ⚠️ The updated shape has {updated_shape_parts_count} parts')
+        del updated_shape_parts_count
 
         #   Update the block attributes
         block_to_update: Ucur = UpdateCursor(get_layer('גושים'), 'Shape@', f"GlobalID = '{sender_block_guid}' And RetiredByRecord Is Null")
@@ -775,6 +781,7 @@ def reshape_or_construct_absorbing_blocks(ProcessName: str) -> None:
 
 
     for idx, guid in enumerate(absorbing_blocks_guids, start=1):
+        RefreshLayer(get_layer('גושים'))
         block_name: str = get_BlockName(guid)
         block_status: int = get_BlockStatus('GlobalID', guid)
         query_new_parcels_of_the_block: str = f"CPBUniqueID = '{process_guid}' And ParcelRole = 2 And BlockUniqueID = '{guid}'"
@@ -785,13 +792,17 @@ def reshape_or_construct_absorbing_blocks(ProcessName: str) -> None:
             AddMessage(f"{timestamp()} | {idx}/{total_absorbing} | 💡 The absorbing block {block_name} borders will be constructed")
 
             # Get the relevant transferred parcels geometries that will create the new block
-            parcels_of_new_block: Layer = MakeLayer(InProcessParcels2D, 'parcels_of_new_block', query_new_parcels_of_the_block).getOutput(0)
+            parcels_of_new_block: Layer = MakeLayer(InProcessParcels2D, 'parcels_of_new_block', query_new_parcels_of_the_block)[0]
 
             #  Get outer geometry and modify attributes
             dissolve: Result = Dissolve(parcels_of_new_block, fr'{home_gdb}\new_block_{block_name.replace("/", "_")}_geometry')
-            new_shape: Polygon = SearchCursor(dissolve.getOutput(0), 'Shape@').next()[0]
+            new_shape: Polygon = SearchCursor(dissolve[0], 'Shape@').next()[0]
 
-            del parcels_of_new_block, dissolve
+            #   Warn if the new shape is multipart
+            new_shape_parts_count: int = new_shape.partCount
+            if new_shape_parts_count > 1:
+                AddMessage(f'{timestamp()} | ⚠️ The new shape has {new_shape_parts_count} parts')
+            del new_shape_parts_count, parcels_of_new_block, dissolve
 
             # NOTE:
             #  When accessing the active blocks layer directly with a cursor, the cursor fails to locate the relevant block for unknown reasons.
@@ -812,26 +823,33 @@ def reshape_or_construct_absorbing_blocks(ProcessName: str) -> None:
         else:
             AddMessage(f"{timestamp()} | {idx}/{total_absorbing} | 💡 The absorbing block {block_name} borders will be reshaped")
             # Get the relevant parcels geometries that are transferred to the existing block
-            transferred_parcels: Layer = MakeLayer(InProcessParcels2D, 'transferred_parcels', query_new_parcels_of_the_block).getOutput(0)
+            transferred_parcels: Layer = MakeLayer(InProcessParcels2D, 'transferred_parcels', query_new_parcels_of_the_block)[0]
 
             # Get the current active parcels geometries of the existing block
             Parcels2D: str = fr"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Parcels2D"
             query: str = f"BlockUniqueID = '{guid}' And RetiredByRecord Is Null"
-            current_parcels: Layer = MakeLayer(Parcels2D, 'current_parcels', query).getOutput(0)
+            current_parcels: Layer = MakeLayer(Parcels2D, 'current_parcels', query)[0]
 
             #   Compute the updated geometry
-            merged: Result = Merge([current_parcels, transferred_parcels], fr'{home_gdb}\merged_parcels_of_{block_name.replace("/", "_")}')
-            dissolved: Result = Dissolve(merged.getOutput(0), fr'{home_gdb}\Block_{block_name.replace("/", "_")}_dissolved')
-            updated_shape: Polygon = SearchCursor(dissolved.getOutput(0), 'Shape@').next()[0]
+            merged: str = Merge([current_parcels, transferred_parcels], fr'{home_gdb}\merged_parcels_of_{block_name.replace("/", "_")}')[0]
+            dissolved: str = Dissolve(merged, fr'{home_gdb}\Block_{block_name.replace("/", "_")}_dissolved')[0]
+            updated_shape: Polygon = SearchCursor(dissolved, 'Shape@').next()[0]
+
+            #   Warn if the updated shape is multipart
+            updated_shape_parts_count: int = updated_shape.partCount
+            if updated_shape_parts_count > 1:
+                AddMessage(f'{timestamp()} | ⚠️ The updated shape has {updated_shape_parts_count} parts')
+
+            del updated_shape_parts_count, dissolved, merged, current_parcels, query, Parcels2D, transferred_parcels
 
             #   Update the block shape geometry
             block_to_update: Ucur = UpdateCursor(get_layer('גושים'), 'Shape@', f"GlobalID = '{guid}'")
             for row in block_to_update:
                 row[0]: Polygon = updated_shape
                 block_to_update.updateRow(row)
+                AddMessage(f"{timestamp()} | ✔️ Block {block_name} borders reshaped successfully")
 
-            AddMessage(f"{timestamp()} | ✔️ Block {block_name} borders reshaped successfully")
-            del transferred_parcels, Parcels2D, query, current_parcels, merged, dissolved, updated_shape, block_to_update
+            del updated_shape, block_to_update
 
         del block_name, block_status, query_new_parcels_of_the_block
 
@@ -889,7 +907,8 @@ def set_as_recorded(ProcessName: str) -> None:
         process_layers: list[str] = ['InProcessBorderPoints', 'InProcessFronts', 'InProcessParcels2D']
 
     for name in process_layers:
-        data: Ucur = UpdateCursor(fr"{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}{name}", 'Recorded', f"CPBUniqueID = '{get_ProcessGUID(ProcessName)}'")
+        data: Ucur = UpdateCursor(fr"{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}{name}", 'Recorded',
+                                  f"CPBUniqueID = '{get_ProcessGUID(ProcessName)}'")
         for value in data:
             value[0]: int = 1  # כן
             data.updateRow(value)
@@ -910,7 +929,7 @@ def build_record(ProcessName: str) -> None:
     AddMessage(f'\n ⭕ Building active record \n')
 
     try:
-        BuildParcelFabric(get_layer('רישומים'), extent= "MAXOF", record_name= ProcessName)
+        BuildParcelFabric(get_layer('רישומים'), extent="MAXOF", record_name=ProcessName)
         AddMessage(f"{timestamp()} | ✔️ Record {ProcessName} Built successfully \n ")
         activate_record(ProcessName)  # Temporary action due to a bug, will be removed after ArcGIS Pro 3.6
     except Exception as e:

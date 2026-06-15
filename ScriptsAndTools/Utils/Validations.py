@@ -1,19 +1,20 @@
 from pandas import DataFrame
 from Utils.Configs import CNFG
-from Utils.TypeHints import Validation, Layer, Scur, df, series, Map, MapType, TaskType
+from Utils.TypeHints import Validation, Layer, Scur, df, Map, MapType, TaskType
 from Utils.Helpers import get_active_user, get_ProcessGUID, get_ProcessType, timestamp, get_DomainValue, get_layer, \
-                          process_is_transferring, cursor_length, process_only_creates, AddTabularMessage
-from arcpy import AddMessage, AddError
+    process_is_transferring, cursor_length, process_only_creates, AddTabularMessage
+from arcpy import AddMessage, AddError, GetActivePortalURL
 from arcpy.da import SearchCursor
 from arcpy.mp import ArcGISProject
 from arcpy.management import GetCount
 
 
 def user_is_signed_in() -> Validation:
-    """Validates user is signed in to the organization portal"""
+    """Validates user is signed in to the organization portal in the correct environment"""
 
     user_name: str|None = get_active_user()
-    if user_name:
+    portal_name: bool = True if GetActivePortalURL().split('/')[2] == CNFG.gis_url.split('/')[2] else False
+    if user_name and portal_name:
         AddMessage(f'{timestamp()} | ✅ User is signed-in to portal')
         return 'Valid'
     else:
@@ -30,8 +31,8 @@ def compare_counts(layer_1: Layer, layer_2: Layer) -> bool:
         layer_2 (Layer): Second layer.
     """
     
-    count_1: int = int(GetCount(layer_1).getOutput(0))
-    count_2: int = int(GetCount(layer_2).getOutput(0))
+    count_1: int = int(GetCount(layer_1)[0])
+    count_2: int = int(GetCount(layer_2)[0])
 
     if count_1 != count_2:
         AddMessage(f'    The total selected features from layer {layer_1.name}: {count_1}. \n    The total selected features from layer  {layer_2.name}: {count_2} \n ')
@@ -51,7 +52,7 @@ def process_in_records(ProcessName: str) -> bool:
         bool: True if a record with the given `ProcessName` exists as a record, False otherwise.
     """
 
-    search: Scur = SearchCursor(get_layer('גבולות רישומים'), 'Name', f""" Name = '{ProcessName}' """)
+    search: Scur = SearchCursor(get_layer('גבולות רישומים'), 'Name', f"Name = '{ProcessName}'")
     count: int = cursor_length(search)
 
     if count == 0:
@@ -71,7 +72,7 @@ def creating_record_is_duplicated(ProcessName: str) -> bool | None:
         str: True if a record with the given `ProcessName` exists, False otherwise.
     """
 
-    query: str = f""" Name = '{ProcessName}' AND RecordType IN (1,11) """
+    query: str = f"Name = '{ProcessName}' AND RecordType IN (1,11)"
     Records_layer: Layer = get_layer('גבולות רישומים')
     
     query: list[str] = [row[0] for row in SearchCursor(Records_layer, 'Name', query)]
@@ -141,10 +142,12 @@ def record_exist(RecordName: str) -> Validation:
         return 'Invalid'
 
 
-
 def validate_status(ProcessName: str, desire_status: int | list[int]) -> Validation:
     """
-    Validate if the current process status is equal to desired status
+    Validate if the current process status is equal to desired status.
+    Parameters:
+        ProcessName (str): The name of the process to search for.
+        desire_status (int or list[int]): the desire status or statues to validate.
     """
 
     status_text: list = []
@@ -265,7 +268,7 @@ def features_exist(layer: Layer) -> None:
         layer: The layer object
     """
     
-    count: int = int(GetCount(layer).getOutput(0))
+    count: int = int(GetCount(layer)[0])
     if count < 1:
         AddError(f'{timestamp()} | ❌ Layer {layer.name} is empty, verify the process data content before starting the task')
     else:
@@ -356,18 +359,18 @@ def absorbing_block_exist(ProcessName: str, map_name: MapType = 'Active map') ->
         current_map.clearSelection()
 
         table: str = fr"{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}SequenceActions".replace("/", "\\")
-        query: str = f""" CPBUniqueID = '{get_ProcessGUID(ProcessName, source='MAP')}' AND ActionType = 3 """
+        query: str = f"CPBUniqueID = '{get_ProcessGUID(ProcessName, source='MAP')}' AND ActionType = 3"  # AND IsTax = 0
         absorbing_blocks: Scur = SearchCursor(table, ['ToBlockNumber', 'ToSubBlockNumber'], query)
         absorbing_blocks: set[str] = {f'{row[0]}/{row[1]}' if row[1] is not None else f'{row[0]}/0' for row in absorbing_blocks}
 
         table: str = fr"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Blocks".replace("/", "\\")
         errors: int = 0
         for name in absorbing_blocks:
-            block: Scur = SearchCursor(table, 'Name', f""" Name = '{name}' """)
+            block: Scur = SearchCursor(table, 'Name', f"Name = '{name}'")
             block: int = cursor_length(block)
             if block != 1:
                 errors += 1
-                AddMessage(f'{timestamp()} | ❌ Absorbing block {name} is not exist or not active')
+                AddError(f'{timestamp()} | ❌ Absorbing block {name} is not exist or not active')
 
 
         if errors == 0:
@@ -384,38 +387,47 @@ def absorbing_block_exist(ProcessName: str, map_name: MapType = 'Active map') ->
 
 def validate_substantiated_Parcels2D(ProcessName: str) -> Validation:
     """
-    Validates that 2D parcel numbers referenced in a new subtraction process are final numbers
-    and exist as active parcels in the Parcels2D layer.
+    Validates that 2D parcel numbers referenced in a new subtraction process are final numbers and exist as active parcels in the Parcels2D layer.
 
     Parameters:
         ProcessName (str): The name of the process contains the in-process substractions.
     """
 
-    Parcels2D: str = fr"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}.Parcels2D"
-
-    InProSubstractions: str = fr'{CNFG.ParcelFabricDatabase}\{CNFG.OwnerName}.InProcessSubstractions'
-    fields: list[str] = ['Parcel2DNumber', 'BlockNumber', 'SubBlockNumber', 'TemporarySubstractionNumber', 'Parcel2DType']
-    query: str = f" CPBUniqueID = '{get_ProcessGUID(ProcessName, 'MAP')}' "
-    search: Scur = SearchCursor(InProSubstractions, fields, query)
-    Parcels2D_dict: dict[int, list[str, int]] = {row[3]: [f'{row[0]}/{row[1]}/{row[2]}', row[4]] for row in search}  # -> {TemporarySubstractionNumber : [Parcel2DName, Parcel2DType]}
-    del InProSubstractions, search, fields, query
-
     errors: int = 0
-    for key, value in Parcels2D_dict.items():
-        if value[1] == 1:  # ארעית
-            AddMessage(f'{timestamp()} | ❌ The referenced 2D parcel {value[0].split("/")[0]} of substraction {key} is temporary but must be final')
-            errors += 1
 
-        elif value[1] == 2:  # סופית
-            search: Scur = SearchCursor(Parcels2D, 'Name', f"Name = '{value[0]}'")
-            if cursor_length(search) != 1:
+    Parcels2D: str = fr"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Parcels2D"
+    InprocessParcels2D: str = fr'{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}InprocessParcels2D'
+    InprocessSubstractions: str = fr'{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}InProcessSubstractions'
+    fields: list[str] = ['TemporarySubstractionNumber', 'Parcel2DNumber', 'BlockNumber', 'SubBlockNumber', 'Parcel2DType', 'Parcel2DUniqueID']
+    search: Scur = SearchCursor(InprocessSubstractions, fields, f"CPBUniqueID = '{get_ProcessGUID(ProcessName, 'MAP')}'")
+
+    for row in search:
+        parcel_2D_type: int|None = row[4]
+        parcel_2D_guid: str = row[5]
+
+        # Verify whether the temporary 2D parcel is set as recorded (that means it's 2D process were registered and updated in the active national cadaster data)
+        if parcel_2D_type == 1:  # Temporary
+            recorded: int = SearchCursor(InprocessParcels2D, 'Recorded', f"GlobalID = '{parcel_2D_guid}'").next()[0]
+            if recorded == 0:
+                AddError(f'{timestamp()} | ❌ Temporary Substraction {row[0]} is currently referencing to temporary 2D parcel {row[1]}, but the parcel must be final.')
                 errors += 1
-                AddMessage(f'{timestamp()} | ❌ Substraction {key} references 2D parcel {value[0]} which either not exist or is retired')
+
+        # Verify whether the final 2D parcel exists as active parcel.
+        elif parcel_2D_type == 2:  # Final
+            active_parcel: Scur = SearchCursor(Parcels2D, 'GlobalID', f"GlobalID = '{parcel_2D_guid}' And RetiredByRecord IS NULL")
+            if cursor_length(active_parcel) != 1:
+                errors += 1
+                AddError(f'{timestamp()} | ❌ Temporary substraction {row[0]} is currently referencing to an active 2D parcel {row[1]} which either not exist or is retired')
+
         else:
-            AddMessage(f'{timestamp()} | ❌ Referenced 2D parcel type is invalid (got {value[1]} but must be 1 or 2)')
+            # If the Parcel2DType contains any invalid integer that is not equals to 1 or 2.
+            errors += 1
+            AddError(f'{timestamp()} | ❌ Temporary substraction {row[0]} is currently referencing to a 2D parcel with invalid type: got {row[4]} but must be 1 or 2')
+
+    del search, InprocessSubstractions, fields, InprocessParcels2D, Parcels2D
 
     if errors > 0:
-        AddMessage(f'{timestamp()} | ❌ Invalid 2D parcels reference in the new substractions')
+        AddError(f'{timestamp()} | ❌ Invalid 2D parcels reference in the new substractions')
         return 'Invalid'
     else:
         AddMessage(f'{timestamp()} | ✅ New substractions referencing to valid 2D parcels')
@@ -539,11 +551,11 @@ def validation_set(task: TaskType, ProcessName: str) -> bool:
                                     'Absorbing Blocks Check': absorbing_block_exist(ProcessName),
                                     'Areas Check': validate_stated_areas(ProcessName)},
                              index= [0])
-
+    # TODO
     elif task == 'ImproveNewCadaster':
         vals: df = DataFrame(data= {'Validation': 'Results',
                                     'Signed-in': user_is_signed_in()})
-
+    # TODO
     elif task == 'CreateNewCadaster':
         vals: df = DataFrame(data= {'Validation': 'Results',
                                     'Signed-in': user_is_signed_in()})

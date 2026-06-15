@@ -41,19 +41,19 @@ def IPFP(source_points: Layer,
             Default is 'All Attributes'.
     """
     original_overwrite: bool = ENV.overwriteOutput
-    update_mode_dict: dict[str,  Literal['UPDATE_AND_CREATE', 'CREATE_ONLY', 'UPDATE_ONLY']] = {"Update matched and create unmatched": "UPDATE_AND_CREATE",
-                                                                                                "Only create unmatched": "CREATE_ONLY",
-                                                                                                "Only update matched": "UPDATE_ONLY"}
+    update_mode_dict: dict[str, str] = {"Update matched and create unmatched": "UPDATE_AND_CREATE",
+                                        "Only create unmatched": "CREATE_ONLY",
+                                        "Only update matched": "UPDATE_ONLY"}
 
 
-    update_type_dict: dict[str, Literal["All Attributes", "Geometry (X, Y, Z)", "Retire & replace"]] = {"All Attributes": "ALL",
-                                                                                                        "Geometry (X, Y, Z)": "GEOMETRY_XYZ",
-                                                                                                        "Retire & replace": "RETIRE_AND_REPLACE"}
+    update_type_dict: dict[str, str] = {"All Attributes": "ALL",
+                                        "Geometry (X, Y, Z)": "GEOMETRY_XYZ",
+                                        "Retire & replace": "RETIRE_AND_REPLACE"}
 
 
     record_name: str|None = get_ActiveRecord('Name')
-    Mode: Literal['UPDATE_AND_CREATE', 'CREATE_ONLY', 'UPDATE_ONLY'] = update_mode_dict[update_mode]
-    Type: Literal["All Attributes", "Geometry (X, Y, Z)", "Retire & replace"] = update_type_dict[update_type]
+    Mode: str  = update_mode_dict[update_mode]
+    Type: str  = update_type_dict[update_type]
 
     if record_name and Mode and Type:
         ENV.overwriteOutput = True
@@ -78,16 +78,27 @@ def IPFP(source_points: Layer,
 
         result_table: dict[str, int|str] = {}
         conflicts_count: int = 0
+        fixed_shapes_points: bool = False
 
         for m in results.getAllMessages()[1:-1]:
-            if m[0] != 50:  # Exclude warning messages
+            log_type: int =m[0]  # Massages are 0 and warnings are 50
+
+            if log_type != 50:  # Massages
                 key, value = m[2].rsplit(': ', 1)
                 result_table[key]: int = value
-            else:
+
+            elif log_type == 50 and m[1] == 3027:  # Warning of Fixed-Shaped Points (Usually When Class is set as 1)
+                fixed_shapes_points = True
+
+            elif log_type == 50 and m[1] != 3027:
                 conflicts_count += 1
 
         result_table: df = DataFrame({'Metric': 'Stats', **result_table}, index=[0])
         AddTabularMessage(result_table)
+
+        # When there are active points with fixed-shape in the matching process.
+        if fixed_shapes_points:
+            AddMessage(f'{timestamp()} | ⚠️ Fixed-shape points were involved in the matching and cannot be move or update. Unfix these points to enable movement or updates.')
 
         # When conflicts are found, a buffered layer of the conflict points will be computed and added to the active map.
         if conflicts_count > 0:
@@ -98,7 +109,7 @@ def IPFP(source_points: Layer,
             conflicts_oid: str = ', '.join([str(row[0]) for row in SearchCursor(conflicts_table, 'SOURCE_OID')])
 
             ENV.addOutputsToMap = False
-            conflicts_points: Layer = MakeLayer(source_points, 'conflicts', f"OBJECTID IN ({conflicts_oid})").getOutput(0)
+            conflicts_points: Layer = MakeLayer(source_points, 'conflicts', f"OBJECTID IN ({conflicts_oid})")[0]
             Buffer(conflicts_points, conflicts_buffer, distance)
 
             ENV.addOutputsToMap = True

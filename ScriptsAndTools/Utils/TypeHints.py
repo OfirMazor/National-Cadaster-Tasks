@@ -1,4 +1,6 @@
 import arcpy
+from arcgis import gis
+from requests import Response
 from pandas import DataFrame, Series
 from typing import Any, Literal, Optional, Callable
 
@@ -10,6 +12,7 @@ Optional = Optional
 Callable = Callable
 df = DataFrame
 series = Series
+Response = Response
 
 # Arcpy types
 Pro = arcpy._mp.ArcGISProject
@@ -28,9 +31,11 @@ Point = arcpy.Point
 Line = arcpy.Polyline
 Polygon = arcpy.Polygon
 Result = arcpy.Result
+User = gis.User
 
 # Custom types
 EnviType = Literal["Development", "Test", "Production"]
 MapType = Literal["מפת עריכה", "סצנת עריכה", "Active map"]
 Validation = Literal["Valid", "Invalid"]
 TaskType = Literal['ImproveCurrentCadaster', 'RetireAndCreateCadaster', 'ImproveNewCadaster', 'CreateNewCadaster', 'RetireAndCreateCadaster3D', 'FreeEdit']
+Extension = Literal["3D", "Aeronautical", "Airports", "ArcScan", "Bathymetry", "BusinessPrem", "DataReviewer", "DataInteroperability", "Defense", "Foundation", "GeoStats", "Indoors", "ImageAnalyst", "JTX", "LocationReferencing", "LocateXT", "Nautical", "Network", "Publisher", "Schematics", "SMPAsiaPacific", "SMPEurope", "SMPJapan", "SMPLatinAmerica", "SMPMiddleEastAfrica", "SMPNorthAmerica", "Spatial", "Tracking"]
