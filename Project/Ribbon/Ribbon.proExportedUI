@@ -5,18 +5,23 @@
   <modules>
     <insertModule id="Custom">
       <tabs>
-        <tab id="esriTabff266c8d19a09c5b" caption="Cadaster Editor" placeWith="esri_sharing_shareTab" insert="after">
+        <tab id="esriTabff266c8d19a09c5b" caption="Bankal" placeWith="esri_sharing_shareTab" insert="after">
           <group refID="esriGroup592ae6c23cbeed16" />
+          <group refID="esriGroup6350757b8a03d16c" />
         </tab>
       </tabs>
       <groups>
         <group id="esriGroup592ae6c23cbeed16" caption="Assistants">
+          <button refID="esri_editor_versionRefreshMapButton" size="large" />
           <button refID="esri_geoprocessing_NCDBCustomTools_DisplayProcessData" size="large" />
           <button refID="esri_geoprocessing_NCDBCustomTools_GetProcessIDs" size="large" />
-          <button refID="esri_geoprocessing_NCDBCustomTools_ImportOrModifyPoints" size="large" />
           <button refID="esri_geoprocessing_NCDBCustomTools_LastParcelNumber" size="large" />
-          <button refID="esri_geoprocessing_NCDBCustomTools_RetirePointsOrFronts" size="large" />
+          <button refID="esri_editing_standaloneTable_openSelectedTablePaneButton" size="large" />
           <button refID="esri_geoprocessing_NCDBCustomTools_ReinitializeProject" size="large" />
+        </group>
+        <group id="esriGroup6350757b8a03d16c" caption="Quality">
+          <button refID="esri_geoprocessing_NCDBCustomTools_EvaluateAreaOfInterest" size="large" />
+          <button refID="esri_geoprocessing_edit_SimplifyByStraightLinesAndCircularArcs" size="large" />
         </group>
       </groups>
       <controls>
@@ -99,10 +104,27 @@ filtering only active parcels (i.e., those not retired).
 It then determines the highest parcel number in each class for the given block and sub-block, and prints the maximum of the two.
 </tooltip>
         </button>
+        <button id="esri_geoprocessing_NCDBCustomTools_EvaluateAreaOfInterest" caption="Evaluate Area of Interest" smallImage="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx|EvaluateAreaOfInterest.tool\tool.icon.png" largeImage="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx|EvaluateAreaOfInterest.tool\tool.icon.png" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="NCDBCustomTools">
+          <args>
+            <params toolPath="\\mapi_shares\MNCDB\Parcel Fabric\DevelopmentEnvironment\Project\NCDBCustomTools.atbx\EvaluateAreaOfInterest" name="Evaluate Area of Interest" xmlns="" />
+          </args>
+          <tooltip heading="Evaluate Area of Interest">Performs a series of quality assurance (QA) checks on parcel fabric data in the area of interest, including validation rules, topology rules, detection of gaps, overlaps, and adjacent parcel points.
+
+* The active record must be activated before running this tool. If no active record is found, an error message will be added to the ArcGIS geoprocessing messages.</tooltip>
+        </button>
+        <button id="esri_geoprocessing_edit_SimplifyByStraightLinesAndCircularArcs" caption="Simplify By Straight Lines And Circular Arcs" smallImage="GeoprocessingTool16" largeImage="C:\Program Files\ArcGIS\Pro\Resources\ArcToolBox\Images\GeoprocessingToolbox_edit_dark.png" isCustomCommand="true" assembly="" className="esri_geoprocessing_module:Commands.ExecuteGPToolButton" extendedCaption="Editing Tools" helpContextID="24000002">
+          <args>
+            <params toolPath="edit.SimplifyByStraightLinesAndCircularArcs" name="Simplify By Straight Lines And Circular Arcs" xmlns="" />
+          </args>
+          <tooltip heading="Simplify By Straight Lines And Circular Arcs">Simplifies polygon and line features by replacing consecutive line segments  or edges with  fewer line segments or edges. Lines segments and polygon edges are simplified based on a specified maximum allowable offset.  Additionally, circular arcs can be created from consecutive  line segments or polygon edges.</tooltip>
+        </button>
       </controls>
     </insertModule>
     <updateModule refID="Custom">
-      <controls />
+      <controls>
+        <updateButton refID="esri_geoprocessing_NCDBCustomTools_EvaluateAreaOfInterest" caption="Evaluation" />
+        <updateButton refID="esri_geoprocessing_edit_SimplifyByStraightLinesAndCircularArcs" caption="SLACA" />
+      </controls>
     </updateModule>
     <updateModule refID="esri_mapping">
       <tabs>
@@ -114,6 +136,11 @@ It then determines the highest parcel number in each class for the given block a
         <insertGroup id="esriGroup4e26f0ff00876650" caption="New Group" />
       </groups>
       <controls />
+    </updateModule>
+    <updateModule refID="esri_editing_EditingModule">
+      <controls>
+        <updateButton refID="esri_editing_standaloneTable_openSelectedTablePaneButton" caption="Attribute Table of Selection" />
+      </controls>
     </updateModule>
   </modules>
 </ArcGIS.Desktop>
