@@ -3,16 +3,14 @@ from pandas import DataFrame
 from Utils.TypeHints import *
 from Utils.Configs import CNFG
 from Utils.VersionManagement import get_VersionName
-from Utils.Helpers import get_layer, timestamp, drop_layer, AddTabularMessage, get_display_extent, get_table, \
-                          refresh_map_view, activate_extension
+from Utils.Helpers import get_layer, timestamp, drop_layer, AddTabularMessage, get_display_extent, get_table, activate_extension
 from arcpy import AddMessage, AddError, Exists, EnvManager, env as ENV, Array, Polygon, Point, SpatialReference
 from arcpy.mp import ArcGISProject
 from arcpy.conversion import ExportFeatures
 from arcpy.da import SearchCursor, InsertCursor
 from arcpy.ddd import Intersect3D, AddZInformation
 from arcpy.parcel import FindGapsAndOverlaps, FindAdjacentParcelPoints, FindDisconnectedParcelPoints
-from arcpy.management import Copy, Delete, ValidateTopology, EvaluateRules, SelectLayerByLocation as SelectByLocation, \
-                             FeatureVerticesToPoints, MakeFeatureLayer, GetCount
+from arcpy.management import Copy, Delete, ValidateTopology, EvaluateRules, SelectLayerByLocation as SelectByLocation, GetCount
 
 
 def eval_validation_rules() -> None:
@@ -129,14 +127,12 @@ def track_deviated_parcel_areas() -> None:
 
         del cols, results
 
-
         ArcGISProject('current').activeMap.addDataFromPath(results_path)
         ArcGISProject('current').activeMap.addTableToGroup(get_layer("בקרת איכות"), get_table('חלקות עם שטחים חורגים'))
         to_drop: list[Table] = ArcGISProject('current').activeMap.listTables('חלקות עם שטחים חורגים')
         if len(to_drop) > 1:
             ArcGISProject('current').activeMap.removeTable(to_drop[-1])
 
-        # del results_table
 
     else:
         AddMessage(f'{timestamp()} | ✅ No deviation in parcels areas were found')
@@ -195,13 +191,10 @@ def track_gaps_overlaps(max_width: Optional[float|int] = 2.0) -> None:
     drop_layer('חורים וחפיפות')
 
     # Select the features in the chosen extent
-    extent: Extent = get_display_extent()
-    extent_polygon = Polygon(Array([Point(extent.XMin, extent.YMin), Point(extent.XMin, extent.YMax),
-                                    Point(extent.XMax, extent.YMax), Point(extent.XMax, extent.YMin)]),
-                             SpatialReference(2039))
+    extent_polygon: Polygon = get_display_extent('Polygon')
 
-    parcels: Layer = SelectByLocation(in_layer=get_layer("חלקות"), select_features=extent_polygon).getOutput(0)
-    blocks: Layer = SelectByLocation(in_layer=get_layer("גושים"), select_features=extent_polygon).getOutput(0)
+    parcels: Layer = SelectByLocation(in_layer=get_layer("חלקות"), select_features=extent_polygon)[0]
+    blocks: Layer = SelectByLocation(in_layer=get_layer("גושים"), select_features=extent_polygon)[0]
 
     # Find the gaps and overlaps between active parcels and active blocks
     results: Result = FindGapsAndOverlaps(in_parcel_features= [parcels, blocks], out_feature_class= output, maximum_width= max_width, detection_type= "WITHIN_LAYER")
@@ -223,7 +216,7 @@ def track_gaps_overlaps(max_width: Optional[float|int] = 2.0) -> None:
                                             f"{'❌' if gaps_between_blocks > 0 else '✅'} | Gaps between blocks": gaps_between_blocks,
                                             f"{'❌' if overlaps_between_parcels > 0 else '✅'} | Overlaps between parcels": overlaps_between_parcels,
                                             f"{'❌' if overlaps_between_blocks > 0 else '✅'} | Overlaps between blocks": overlaps_between_blocks},
-                                     index = [0])
+                                     index= [0])
         AddTabularMessage(errors_table)
 
         current_map: Map = ArcGISProject('current').activeMap
@@ -236,7 +229,7 @@ def track_gaps_overlaps(max_width: Optional[float|int] = 2.0) -> None:
         AddMessage(f"{timestamp()} | ✅ No gaps or overlaps were found")
 
     ArcGISProject('current').activeMap.clearSelection()
-    del output, parcels, blocks, extent_polygon, extent, results
+    del output, parcels, blocks, extent_polygon, results
 
 
 def track_disconnected_points() -> None:
@@ -270,6 +263,7 @@ def track_disconnected_points() -> None:
 
 
 def track_redundant_vertices() -> None:
+
     """
     Identifies and extracts redundant vertices from active layers within the given display extent.
 
@@ -280,104 +274,71 @@ def track_redundant_vertices() -> None:
     project's default geodatabase. A summary table is then logged to the geoprocessing messages, and
     a configured layer ('נקודות מפנה מיותרות') is added to the active map.
 
-    Reference:
-        https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/feature-vertices-to-points.htm
-
     Note:
-        1) The Feature Vertices to Point GP tool requires ArcGIS Pro's Advanced licensing.
-        2) To avoid crashes in ArcGIS Pro The active fronts layer is been queried from the feature server with the
-        MakeFeature function (specifying the current branch version info) instead of the direct active fronts layer
-        from the current ArcGIS Project ('חזיתות').
-        Assuming the "Area of Interest" definition query in that layer is leading to the program crash.
-        Changing the definition query of the current layer were not helpful.
-
+        The GP tool Feature vertices to points causes crashes and slow performance, hence it is now been used here.
     """
+
     AddMessage(f'\n{timestamp()} | Tracking for redundant vertices')
 
+    # Basic variables
     project: Pro = ArcGISProject('current')
     active_map: Map = project.activeMap
     active_map.clearSelection()
-    home_gdb: str = project.defaultGeodatabase
-    output: str = fr'{home_gdb}\RedundantVertices'
+    output: str = fr'{project.defaultGeodatabase}\RedundantVertices'
+    summary: dict[str, int] = {'גושים': 0, 'חלקות': 0, 'חזיתות': 0}
 
+    # Initialize
     if Exists(output):
         Delete(output)
     drop_layer('נקודות מפנה מיותרות')
 
-    redundant_data: list[tuple[str, Point] | None] = []
+    Copy(fr'{CNFG.TemplatesPath}Templates.gdb\RedundantVertices', output)
 
-    summary: dict[str, int] = {'גושים': 0, 'חלקות': 0, 'חזיתות': 0}
+    # IO variables
+    to_insert: Icur = InsertCursor(output, ['ReferencedLayer', 'Shape@'])
+    active_points_cords: set[tuple[float, float]] = {row[0] for row in SearchCursor(get_layer('נקודות גבול'), "SHAPE@XY")}
 
-    active_border_points: Layer = get_layer('נקודות גבול')
+    # compute the extent as a polygon
+    extent: Extent = get_display_extent('Polygon')
 
-    # Select the features in the chosen extent
-    extent: Extent = get_display_extent()
-    extent: Polygon = Polygon(Array([Point(extent.XMin, extent.YMin),
-                                     Point(extent.XMin, extent.YMax),
-                                     Point(extent.XMax, extent.YMax),
-                                     Point(extent.XMax, extent.YMin)]),
-                              SpatialReference(2039))
+    # Compute by looping through active parcels, fronts and blocks in the selected extent
+    for layer_name in ['חלקות', 'חזיתות', 'גושים']:
+        redundant_count: int = 0
+        geometries: list[Polygon|Line] = [row[0] for row in SearchCursor(get_layer(layer_name), "Shape@", spatial_filter= extent)]
+        for geometry in geometries:
+            for part in geometry:
+                for vertex in part:
+                    if vertex:
+                        x_y: tuple[float, float] = (vertex.X, vertex.Y)
+                        if x_y not in active_points_cords:
+                            to_insert.insertRow([layer_name, vertex])
+                            redundant_count += 1
 
-    for layer_name in summary.keys():
-        if layer_name != 'חזיתות':
-            layer: Layer = get_layer(layer_name)
-        else:
-            # To avoid crash (Note #2)
-            layer: Layer = MakeFeatureLayer(fr"{CNFG.ParcelFabricFeatureServer};version={get_VersionName('חזיתות')}/14", 'temp', 'RetiredByRecord IS NULL')[0]
+        summary[layer_name]: int = redundant_count
 
-        # Select the features of a layer in the given extent
-        features: Layer = SelectByLocation(layer, select_features=extent)[0]
-
-        # Compute all the vertices of the selected features in the layer
-        vertices: str = FeatureVerticesToPoints(features, r'memory\Vertices', "ALL")[0]
-        vertices: Layer = MakeFeatureLayer(vertices, 'Vertices')[0]
-        active_map.clearSelection()
-        del features, layer
-
-        # Exclude essential vertices from the results
-        redundant: Result = SelectByLocation(vertices, 'ARE_IDENTICAL_TO', active_border_points, invert_spatial_relationship= "INVERT")
-
-        # Collect information if redundant vertices were found in a layer
-        if int(redundant[2]) > 0:
-            export: str = ExportFeatures(redundant[0], fr"{home_gdb}/redundant_{layer_name}")[0]
-            summary[layer_name]: int = int(GetCount(export)[0])
-            redundant_data.extend([(f"{layer_name}", row[0]) for row in SearchCursor(export, 'Shape@')])
-            Delete(export)
-
-        del redundant
-        active_map.clearSelection()
-
-    del active_border_points, extent
-
-    # Report actions if any redundant were found
-    if len(redundant_data) > 0:
-        # copy an empty template feature class
-        Copy(fr'{CNFG.TemplatesPath}Templates.gdb\RedundantVertices', output)
-
-        # Load the vertices data to the template feature class
-        insert: Icur = InsertCursor(output, ['ReferencedLayer', 'Shape@'])
-        for vertex in redundant_data:
-            insert.insertRow(vertex)
-
-        # Log a tabular summary message
-        errors_table: df = DataFrame(data= {"Layer": "Redundant Vertices Count",
-                                            "גושים": summary['גושים'],
-                                            "חלקות": summary['חלקות'],
-                                            "חזיתות": summary['חזיתות']}, index= [0])
-        AddTabularMessage(errors_table)
+    # Report the results
+    total_redundant_count: int = sum(summary.values())
+    if total_redundant_count > 1:
 
         # Add the redundant layer with connection to the collected data
         active_map.addDataFromPath(fr'{CNFG.LayerFiles}RedundantVertices.lyrx')
         layer: Layer = get_layer("נקודות מפנה מיותרות")
         active_map.moveLayer(get_layer("אימות נתונים"), layer, "BEFORE")
-        active_map.clearSelection()
-        refresh_map_view()
         layer.updateConnectionProperties(None, output)
+        active_map.clearSelection()
 
-        del insert, errors_table, active_map, layer
+        # Log a tabular summary message
+        errors_table: df = DataFrame(data={"Layer": "Redundant Vertices Count",
+                                           "גושים": f"{summary['גושים']:,}",
+                                           "חלקות": f"{summary['חלקות']:,}",
+                                           "חזיתות": f"{summary['חזיתות']:,}",
+                                           'סה"כ': f"{total_redundant_count:,}"}, index=[0])
+        AddTabularMessage(errors_table)
 
     else:
         AddMessage(f"{timestamp()} | ✅ No redundant vertices were found")
+
+    del project, active_map, extent, active_points_cords, to_insert, total_redundant_count
 
 
 def track_volumetric_overlaps() -> None:
