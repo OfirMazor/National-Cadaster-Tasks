@@ -1,4 +1,3 @@
-from os import startfile
 from arcpy.mp import ArcGISProject
 from arcpy.da import SearchCursor, InsertCursor
 from arcpy import RefreshLayer, AddMessage, GetParameterAsText, GetParameter, env as ENV
@@ -198,11 +197,9 @@ def start_task_RetireAndCreateCadaster(Independent: bool, ProcessName: str|None,
 
     if qualified:
 
-        shelf: str = create_shelf(ProcessName)
+        create_shelf(ProcessName, auto_open= True)
 
         open_version(ProcessName)
-
-        startfile(fr'{shelf}')
 
         if creating_record_is_duplicated(ProcessName):
             update_record_status(ProcessName, new_status=5)  # מעדכן סטאטוס לרשומה
@@ -220,9 +217,10 @@ def start_task_RetireAndCreateCadaster(Independent: bool, ProcessName: str|None,
 
         retire_fronts(ProcessName)
 
-        #    If there are active substractions in the AOI
+        #  If there are active substractions in the AOI
         retire_substractions_by_2D_process(ProcessName)
 
+        # Advanced actions caused by transfer action in the process
         transfer_included: bool = process_is_transferring(ProcessName, 'MAP')
         block_should_retire: bool = process_will_retire_its_block(ProcessName)
 
@@ -250,9 +248,8 @@ def start_task_RetireAndCreateCadaster(Independent: bool, ProcessName: str|None,
         # Report
         if Report:
             compute_matching_points_report(ProcessName, task= 'RetireAndCreateCadaster')
-            startfile(fr'{shelf}/PointsDistanceReport-{ProcessName.replace("/","_")}.xlsx')
 
-        del shelf, transfer_included, block_should_retire
+        del transfer_included, block_should_retire
 
 
 if __name__ == "__main__":

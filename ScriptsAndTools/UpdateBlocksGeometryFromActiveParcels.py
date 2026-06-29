@@ -21,11 +21,11 @@ from arcpy.mp import ArcGISProject
 
 ENV.preserveGlobalIds = False
 
-def update_blocks_geometry_from_active_parcels(Independent: bool, BlockNumber: int, SubBlockNumber: int, IsTax:bool, ProcessName: str|None) -> None:
-    ''' 
-    Updating the geometry of the block by the active parcels
 
-    '''
+def update_blocks_geometry_from_active_parcels(Independent: bool, BlockNumber: int, SubBlockNumber: int, IsTax:bool, ProcessName: str|None) -> None:
+    """
+    Updating the geometry of the block by the active parcels
+    """
 
     if IsTax:
         IsTax = 1
@@ -97,6 +97,7 @@ def update_blocks_geometry_from_active_parcels(Independent: bool, BlockNumber: i
             AddWarning(f'{timestamp()} | Block {block_name} was already retired while some of its parcels were active or doesn\'t exist, please review data integrity.')
         else:
             AddError(f'{timestamp()} | An error occurred while updating geometry for block {block_name}')
+
 
 if __name__ == "__main__":
 

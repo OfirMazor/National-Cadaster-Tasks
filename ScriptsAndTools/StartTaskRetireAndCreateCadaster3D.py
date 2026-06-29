@@ -1,6 +1,3 @@
-from os import startfile
-
-import arcpy.typing.describe
 from arcpy import AddMessage, GetParameter, GetParameterAsText, env as ENV, Exists
 from arcpy.mp import ArcGISProject
 from arcpy.conversion import ExportFeatures
@@ -556,11 +553,9 @@ def start_task_RetireAndCreateCadaster3D(Independent: bool, ProcessName: str|Non
 
     if qualified:
 
-        shelf: str = create_shelf(ProcessName)  # Will skip if executed from CMS
+        create_shelf(ProcessName, True)  # Will skip if executed from CMS
 
         open_version(ProcessName)
-
-        startfile(fr'{shelf}')
 
         if creating_record_is_duplicated(ProcessName):
             update_record_status(ProcessName, new_status=5)  # מעדכן סטאטוס לרשומה

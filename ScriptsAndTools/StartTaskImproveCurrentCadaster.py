@@ -1,4 +1,3 @@
-from os import startfile
 from Utils.Configs import CNFG
 from Utils.TypeHints import *
 from Utils.Helpers import create_shelf, get_ProcessGUID, activate_record, load_to_records, filter_to_aoi, zoom_to_aoi, \
@@ -67,11 +66,9 @@ def start_task_ImproveCurrentCadaster(Independent: bool, ProcessName: str|None, 
 
     if qualified:
 
-        shelf: str = create_shelf(ProcessName)
+        create_shelf(ProcessName, auto_open= True)
 
         open_version(ProcessName)
-
-        startfile(fr'{shelf}')
 
         if process_in_records(ProcessName):
             rewrite_record_data(ProcessName)
@@ -87,7 +84,6 @@ def start_task_ImproveCurrentCadaster(Independent: bool, ProcessName: str|None, 
         # Report
         if Report:
             compute_matching_points_report(ProcessName, 'ImproveCurrentCadaster')
-            startfile(fr'{shelf}/PointsDistanceReport-{ProcessName.replace("/","_")}.xlsx')
 
 
 if __name__ == "__main__":

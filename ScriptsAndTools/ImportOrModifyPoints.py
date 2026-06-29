@@ -81,7 +81,7 @@ def IPFP(source_points: Layer,
         fixed_shapes_points: bool = False
 
         for m in results.getAllMessages()[1:-1]:
-            log_type: int =m[0]  # Massages are 0 and warnings are 50
+            log_type: int = m[0]  # Massages are 0 and warnings are 50
 
             if log_type != 50:  # Massages
                 key, value = m[2].rsplit(': ', 1)

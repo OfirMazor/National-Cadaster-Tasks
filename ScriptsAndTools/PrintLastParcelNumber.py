@@ -17,7 +17,7 @@ def print_last_parcel_number(block_number: int, sub_block_number: int = 0) -> No
         block_number (int): The block number to search within.
         sub_block_number (int, optional): The sub-block number to search within. Defaults to 0.
     """
-    query: str = f"RetiredByRecord IS NULL AND BlockNumber = {block_number} AND SubBlockNumber = {sub_block_number}"
+    query: str = f"BlockNumber= {block_number} AND SubBlockNumber= {sub_block_number}"
     Parcels2D: Scur = SearchCursor(fr"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Parcels2D", 'ParcelNumber', query)
     Parcels3D: Scur = SearchCursor(fr"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Parcels3D", 'ParcelNumber', query)
 
@@ -30,7 +30,7 @@ def print_last_parcel_number(block_number: int, sub_block_number: int = 0) -> No
             Parcels3D: int = 0
 
         last_parcel: int = max(Parcels2D, Parcels3D)
-        Message: str = fr"Last active parcel at block {block_number}/{sub_block_number} is {last_parcel}"
+        Message: str = fr"Last parcel at block {block_number}/{sub_block_number} is {last_parcel}"
         AddMessage(Message)
 
     else:
