@@ -8,10 +8,10 @@ from Utils.Configs import CNFG
 from Utils.TypeHints import *
 from Utils.Validations import compare_counts
 from Utils.Helpers import timestamp, get_ProcessGUID, get_RecordGUID, get_ActiveParcel2DGUID, get_ProcessType, \
-                          get_layer, Type2CancelType, start_editing, stop_editing, get_BlockGUID, refresh_map_view, \
-                          get_DomainValue, get_StartPointGUID, get_EndPointGUID, cursor_length, \
-                          get_AbsorbingBlockGUIDs, get_BlockStatus, get_BlockName, reopen_map, activate_record, delete_file, get_ActiveRecord, \
-                          process_will_retire_its_block, AddDefinitionQuery, drop_layer
+    get_layer, Type2CancelType, start_editing, stop_editing, get_BlockGUID, refresh_map_view, \
+    get_DomainValue, get_StartPointGUID, get_EndPointGUID, cursor_length, \
+    get_AbsorbingBlockGUIDs, get_BlockStatus, get_BlockName, activate_record, delete_file, get_ActiveRecord, \
+    process_will_retire_its_block, AddDefinitionQuery, drop_layer, get_FinalParcel
 
 ENV.overwriteOutput = True
 
@@ -412,15 +412,28 @@ def retire_parcels(ProcessName: str, method: Literal[1, 2] = 1) -> None:
 
     Parcels2D: Layer = CurrentMap.listLayers('חלקות')[0]
     InProcessParcels: Layer = CurrentMap.listLayers('חלקות בתהליך')[0]
+    SequenceActions: Table = CurrentMap.listTables('פעולות בתכנית')[0]
     RecordGUID: str = get_RecordGUID(ProcessName, 'SHELF')
     CancelProcessType: int = Type2CancelType(get_ProcessType(ProcessName))
 
-    ToRetire: Scur = SearchCursor(InProcessParcels, ['ParcelNumber', 'BlockNumber', 'SubBlockNumber'], f"CPBUniqueID = '{get_ProcessGUID(ProcessName, 'MAP')}' AND ParcelRole = 1")
-    ToRetire: list[str] = sorted([f'{row[0]}/{row[1]}/{row[2]}' for row in ToRetire])
+    # List the retiring parcels as list of full names.
+    # * Temporary parcels numbers will be converted to their final numbers.
+    ToRetireList: list[str] = []
+    ToRetireParcels: Scur = SearchCursor(InProcessParcels, ['ParcelNumber', 'BlockNumber', 'SubBlockNumber', 'ParcelType'], f"CPBUniqueID='{get_ProcessGUID(ProcessName, 'MAP')}' AND ParcelRole= 1")
+    for retiring_parcel in ToRetireParcels:
+        if retiring_parcel[3] == 1:
+            query: str = f"FromParcelTemp= {retiring_parcel[0]} And BlockNumber= {retiring_parcel[1]} And SubBlockNumber= {retiring_parcel[2]}"
+            CPBTempSourceIG: str = SearchCursor(SequenceActions, 'CPBTempSourceID', query).next()[0]
+            final_number: int = get_FinalParcel(retiring_parcel[0], retiring_parcel[1], retiring_parcel[2], CPBTempSourceIG)
+        else:
+            final_number: int = retiring_parcel[0]
 
-    parcel_numbers: list[int] = [int(p.split('/')[0]) for p in ToRetire]
-    ToRetire_expression: str = f', '.join(f'\'{p}\'' for p in ToRetire)
-    substantiated_block: str = f'{ToRetire[0].split("/")[1]}/{ToRetire[0].split("/")[2]}'
+        retiring_parcel_name: str = f"{final_number}/{retiring_parcel[1]}/{retiring_parcel[2]}"
+        ToRetireList.append(retiring_parcel_name)
+
+    parcel_numbers: list[int] = sorted([int(p.split('/')[0]) for p in ToRetireList])
+    ToRetire_expression: str = f', '.join(f'\'{p}\'' for p in ToRetireList)
+    substantiated_block: str = f'{ToRetireList[0].split("/")[1]}/{ToRetireList[0].split("/")[2]}'
 
     # Save the retiring 2D parcels  names in a text file.
     # Since there is a bug of gp tool applying the edits the text file will be used in the block_has_active_parcels function if needed.
@@ -429,7 +442,7 @@ def retire_parcels(ProcessName: str, method: Literal[1, 2] = 1) -> None:
     with open(text_file, "w") as f:
         f.write(ToRetire_expression)
 
-    AddMessage(f'{timestamp()} | 🚫 The following {len(ToRetire)} parcels at block {substantiated_block} will retire: \n              {parcel_numbers}')
+    AddMessage(f'{timestamp()} | 🚫 The following {len(ToRetireList)} parcels at block {substantiated_block} will retire: \n              {parcel_numbers}')
 
     if method == 1:
         SelectByAttribute(in_layer_or_view= Parcels2D, selection_type= 'NEW_SELECTION', where_clause= f"Name IN ({ToRetire_expression})")
@@ -449,11 +462,9 @@ def retire_parcels(ProcessName: str, method: Literal[1, 2] = 1) -> None:
     else:
         AddError(f'{timestamp()} | method Parameter must be one of [1, 2] to retire parcels')
 
-    RefreshLayer(Parcels2D)
-    del CurrentMap, Parcels2D, InProcessParcels, RecordGUID, CancelProcessType, ToRetire, parcel_numbers, ToRetire_expression, substantiated_block
+    del CurrentMap, Parcels2D, InProcessParcels, RecordGUID, CancelProcessType, ToRetireList, ToRetireParcels, parcel_numbers, ToRetire_expression, substantiated_block
     AddMessage(f'{timestamp()} | ✔️ Parcels retired successfully')
     refresh_map_view()
-    reopen_map()
 
 
 def retire_3D_parcels_and_substractions(ProcessName: str) -> None:

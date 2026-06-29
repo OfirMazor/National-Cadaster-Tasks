@@ -7,7 +7,7 @@ import datetime as dt
 from pandas import DataFrame
 from Utils.TypeHints import *
 from Utils.Configs import CNFG
-from arcpy import AddMessage, AddError, PointGeometry, Point, SpatialReference, RefreshLayer, Extent, env as ENV
+from arcpy import AddMessage, AddError, PointGeometry, Point, Array, SpatialReference, RefreshLayer, Extent, env as ENV
 from arcpy.mp import ArcGISProject
 from arcpy.da import SearchCursor, UpdateCursor, InsertCursor, Editor, ListDomains
 from arcpy.management import SelectLayerByLocation as SelectByLocation, Append, Dissolve, MakeFeatureLayer
@@ -69,13 +69,14 @@ def drop_dbtable(table_name: str) -> None:
         current_map.removeTable(table_list[0])
 
 
-def create_shelf(ProcessName: str) -> str:
+def create_shelf(ProcessName: str, auto_open: bool = False) -> str:
     """
     Create a shelf (directory) based on the provided process name.
 
     Parameters:
       ProcessName (str): The name of the process used to create the shelf.
-      This name will be sanitized by replacing '/' with '_' to ensure valid directory naming.
+                         This name will be sanitized by replacing '/' with '_' to ensure valid directory naming.
+      auto_open (bool, optional): Whether to open the folder on completion. Defaults to False.
     """
 
     shelf: str = ProcessName.replace('/', '_')
@@ -83,6 +84,9 @@ def create_shelf(ProcessName: str) -> str:
 
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
+
+    if auto_open:
+        os.startfile(folder_path)
 
     return folder_path
 
@@ -1177,10 +1181,17 @@ def get_AOIExtent() -> Extent:
     return aoi_extent
 
 
-def get_display_extent() -> Extent:
-    """Returns the current extent of the active map"""
-    current_extent: Extent = ArcGISProject('current').activeView.camera.getExtent()
-    return current_extent
+def get_display_extent(output: Literal['Extent', 'Polygon'] = 'Extent') -> Extent|Polygon:
+    """Returns the current extent of the active map שד שמ Extent object or Polygon object"""
+    extent: Extent = ArcGISProject('current').activeView.camera.getExtent()
+
+    if output == 'Polygon':
+        extent: Polygon = Polygon(Array([Point(extent.XMin, extent.YMin),
+                                         Point(extent.XMin, extent.YMax),
+                                         Point(extent.XMax, extent.YMax),
+                                         Point(extent.XMax, extent.YMin),
+                                         Point(extent.XMin, extent.YMin)]), SpatialReference(2039))
+    return extent
 
 
 def AddDefinitionQuery(layer: Layer, query: dict[str, Any]) -> None:
