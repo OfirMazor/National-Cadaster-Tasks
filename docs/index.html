@@ -16,10 +16,10 @@
             color: #c9d1d9; /* Light text for dark background */
 
             /* Layer 1: Subtle, Dark Grid Pattern (Vertical and Horizontal lines) */
-            background-image: 
+            background-image:
                 linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%),
                 linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%);
-            
+
             /* Sizing and repeating for Layer 1 only (two patterns) */
             background-size: 50px 50px, 50px 50px;
         }
@@ -120,102 +120,462 @@
             </section>
 
             <!-- CHANGELOG SECTION -->
-            <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
-                <h2 class="text-2xl section-header"> Changelog </h2>
-                <ul class="list-none space-y-4 text-gray-400">
+            <section class="bg-[#0d1117] p-0 rounded-xl border border-gray-800 shadow-2xl overflow-hidden relative">
+                <!-- Optional top border accent -->
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#58a6ff] to-transparent opacity-50"></div>
 
-                    <!-- Version 1.8.0 (Open by default) -->
-                    <li class="border-b border-gray-700 pb-2">
-                        <button onclick="toggleChangelog('v180')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
-                            <span class="font-semibold text-[#238636] text-lg mr-3">v1.8.0 (2026-03-05)</span>
-                            <!-- Down/Up Arrow (Initially pointing up for open state) -->
-                            <svg id="arrow-v170" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                        </button>
-                        <!-- Content (Initially visible - no 'hidden' class) -->
-                        <div id="v180-content" class="pt-1 collapse-content">
-                            <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
-                                <li>Fixed errors table displayed in the 1st step message log.</li>
-                                <li>Fixed changes documentation action in end task step when layer contain vast amount of features to query.</li>
-                                <li>Added new quality check for redundant vertices in parcels, blocks and fronts.</li>
-                                <li>New updated User Guide.</li>
-                                <li>Task item is published to the organization portal and can be imported directly from there.</li>
-                                <li>base map in the ArcGIS Pro project is now SoI's Orthophoto 2025.</li>
-                            </ul>
+                <!-- Changelog Header -->
+                <div class="p-6 sm:p-10 border-b border-gray-800 bg-gray-900/50">
+                    <h2 class="text-3xl font-bold text-white tracking-tight">Changelog</h2>
+                </div>
+
+                <!-- Release List -->
+                <div class="divide-y divide-gray-800 bg-gray-900/30">
+
+                    <!-- Version 1.8.2 -->
+                    <div class="flex flex-col md:flex-row gap-6 md:gap-12 p-6 sm:p-10 hover:bg-gray-800/30 transition-colors">
+                        <div class="md:w-1/4 shrink-0">
+                            <div class="sticky top-28">
+                                <button onclick="toggleChangelog('v182')" class="w-full text-left flex flex-col focus:outline-none group">
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <h3 class="text-2xl font-bold text-white tracking-tight group-hover:text-[#58a6ff] transition-colors">1.8.2</h3>
+                                        <svg id="arrow-v180" class="w-5 h-5 text-[#58a6ff] transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-[#238636]/20 text-[#238636] border border-[#238636]/30">Latest</span>
+                                    </div>
+                                    <time class="text-sm font-medium text-gray-500 block">July 5, 2026</time>
+                                </button>
+                            </div>
                         </div>
-                    </li>
+                        <div id="v182-content" class="md:w-3/4 collapse-content">
+                            <div class="space-y-6 mt-2 md:mt-0">
 
-                    <!-- Version 1.7.0-->
-                    <li class="border-b border-gray-700 pb-2">
-                        <button onclick="toggleChangelog('v170')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
-                            <span class="font-semibold text-gray-500 text-lg mr-3">v1.7.0</span>
-                            <!-- Down/Up Arrow (Initially pointing down for closed state) -->
-                            <svg id="arrow-v170" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                        </button>
-                        <!-- Content (Initially hidden) -->
-                        <div id="v160-content" class="pt-1 collapse-content hidden">
-                            <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
-                                <li>In the Update Attribute step, when a process front does not match to exactly 1 active front, an unmatched fronts layer will be added to the map- helping to visualize the unmatched front on the map.</li>
-                                <li>The Stated Areas eraly validtaion check will warn if an incoming temporary parcel does not yet have it's final number (an eralier record should be updated before the current one).</li>
-                            </ul>
+                                <!-- Fixes -->
+                                <div>
+                                    <button onclick="toggleSection('v180-fixes')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v180-fixes" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Fixes</h4>
+                                    </button>
+                                    <div id="v180-fixes-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#ff7b72]"></span>
+                                                <span class="text-gray-300 leading-relaxed">The Matching Points Report option in the Start Task step is now working correctly with ArcGIS Pro 3.6.4.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#ff7b72]"></span>
+                                                <span class="text-gray-300 leading-relaxed">The Feedback to CMS operation has been fixed.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#ff7b72]"></span>
+                                                <span class="text-gray-300 leading-relaxed">The Find Redundant Vertices evaluation tool has been redesigned for better performance and no longer requires the Feature To Vertices GP tool or an Advanced license.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Improvements -->
+                                <div>
+                                    <button onclick="toggleSection('v182-improvements')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v182-improvements" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Improvements</h4>
+                                    </button>
+                                    <div id="v180-improvements-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Projection layers for active 3D parcels and subtractions now include updated symbology and a new pop-up displaying the volumetric feature associated with each projection.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Early validations: Improved portal sign-in validation now verifies that you are connected to the production portal, not just any portal.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Early validations: The Absorbing Blocks Check now raises an error instead of an informational message when the validation fails.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Early validations: The 2D parcel-subtraction relationship validation now also checks cases where the 2D parcel is temporary.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Import or Modify Points step: The tool now warns when preserved points that are not allowed to move (typically points with Class = 1) are modified.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Branch-versioned data refresh: The Improve Current Cadaster and Create & Retire Cadaster tasks now automatically refresh the branch version after the 1st and 3rd steps.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Assistant Tools: The Last Parcel tool now also considers retired parcels.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Create & Retire Cadaster task: An informational warning is now displayed when the reconstructed geometry of the sender parcel or the new geometry of the absorbing blocks is multipart.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Other -->
+                                <div>
+                                    <button onclick="toggleSection('v182-other')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v180-other" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Other</h4>
+                                    </button>
+                                    <div id="v180-other-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-gray-500"></span>
+                                                <span class="text-gray-300 leading-relaxed">Tutorials: The first introductory video is now available on the Tutorials page.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                            </div>
                         </div>
-                    </li>
+                    </div>
 
-                    <!-- Version 1.6.0 (Closed by default) -->
-                    <li class="border-b border-gray-700 pb-2">
-                        <button onclick="toggleChangelog('v160')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
-                            <span class="font-semibold text-gray-500 text-lg mr-3">v1.6.0</span>
-                            <!-- Down/Up Arrow (Initially pointing down for closed state) -->
-                            <svg id="arrow-v160" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                        </button>
-                        <!-- Content (Initially hidden) -->
-                        <div id="v160-content" class="pt-1 collapse-content hidden">
-                            <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
-                                <li>The Import or Modify Points tool will output conflicts as red circles around the source point. The radius of the red circle is set by the input search distance.</li>
-                                <li>The Evaluation step operations are now grouped by categories, allowing better experience.</li>
-                                <li>The Stated Areas eraly validtaion check will handle cases when an incoming active parcel and incoming temporary parcel share the same number.</li>
-                                <li>The Start Task Environment step will use the process name by parsing the aprx file name- the user not reqiuerd to type the process name. At that time, users can type other process name for independant cases.</li>
-                            </ul>
+                    <!-- Version 1.8.0 -->
+                    <div class="flex flex-col md:flex-row gap-6 md:gap-12 p-6 sm:p-10 hover:bg-gray-800/30 transition-colors">
+                        <div class="md:w-1/4 shrink-0">
+                            <div class="sticky top-28">
+                                <button onclick="toggleChangelog('v180')" class="w-full text-left flex flex-col focus:outline-none group">
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <h3 class="text-2xl font-bold text-gray-300 tracking-tight group-hover:text-white transition-colors">1.8.0</h3>
+                                        <svg id="arrow-v180" class="w-5 h-5 text-gray-500 group-hover:text-white transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                    </div>
+                                    <time class="text-sm font-medium text-gray-500 block">March 5, 2026</time>
+                                </button>
+                            </div>
                         </div>
-                    </li>
+                        <div id="v180-content" class="md:w-3/4 collapse-content hidden">
+                            <div class="space-y-6 mt-2 md:mt-0">
 
-                    <!-- Version 1.5.0 (Closed by default) -->
-                    <li class="border-b border-gray-700 pb-2">
-                        <button onclick="toggleChangelog('v150')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
-                            <span class="font-semibold text-gray-500 text-lg mr-3">v1.5.0</span>
-                            <!-- Down/Up Arrow (Initially pointing down for closed state) -->
-                            <svg id="arrow-v150" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                        </button>
-                        <!-- Content (Initially hidden) -->
-                        <div id="v150-content" class="pt-1 collapse-content hidden">
-                            <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
-                                <li>Bug fixes regarding to the Evaluation step.</li>
-                                <li>Starting from the 2nd step in each task- it is reqiuerd to make sure that a record is activated in order to excecute the steps.</li>
-                            </ul>
+                                <!-- Fixes -->
+                                <div>
+                                    <button onclick="toggleSection('v180-fixes')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v180-fixes" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Fixes</h4>
+                                    </button>
+                                    <div id="v180-fixes-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#ff7b72]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Fixed errors table displayed in the 1st step message log.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#ff7b72]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Fixed changes documentation action in end task step when layer contain vast amount of features to query.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Improvements -->
+                                <div>
+                                    <button onclick="toggleSection('v180-improvements')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v180-improvements" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Improvements</h4>
+                                    </button>
+                                    <div id="v180-improvements-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Added new quality check for redundant vertices in parcels, blocks and fronts.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-300 leading-relaxed">New updated User Guide.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Base map in the ArcGIS Pro project is now SoI's Orthophoto 2025.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Other -->
+                                <div>
+                                    <button onclick="toggleSection('v180-other')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v180-other" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Other</h4>
+                                    </button>
+                                    <div id="v180-other-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-gray-500"></span>
+                                                <span class="text-gray-300 leading-relaxed">Task item is published to the organization portal and can be imported directly from there.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                            </div>
                         </div>
-                    </li>
+                    </div>
 
-                    <!-- Version 0.9 Beta (Closed by default) -->
-                    <li>
-                        <button onclick="toggleChangelog('v090')" class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition duration-150 ease-in-out hover:text-white">
-                            <span class="font-semibold text-gray-500 text-lg mr-3">v0.9</span>
-                            <!-- Down/Up Arrow (Initially pointing down for closed state) -->
-                            <svg id="arrow-v090" class="w-5 h-5 transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                        </button>
-                        <!-- Content (Initially hidden) -->
-                        <div id="v090-content" class="pt-1 collapse-content hidden">
-                            <ul class="list-disc ml-6 text-sm mt-1 space-y-1">
-                                <li>First release.</li>
-                            </ul>
+                    <!-- Version 1.7.0 -->
+                    <div class="flex flex-col md:flex-row gap-6 md:gap-12 p-6 sm:p-10 hover:bg-gray-800/30 transition-colors">
+                        <div class="md:w-1/4 shrink-0">
+                            <div class="sticky top-28">
+                                <button onclick="toggleChangelog('v170')" class="w-full text-left flex flex-col focus:outline-none group">
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <h3 class="text-2xl font-bold text-gray-300 tracking-tight group-hover:text-white transition-colors">1.7.0</h3>
+                                        <svg id="arrow-v170" class="w-5 h-5 text-gray-500 group-hover:text-white transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                    </div>
+                                </button>
+                            </div>
                         </div>
-                    </li>
+                        <div id="v170-content" class="md:w-3/4 collapse-content hidden">
+                            <div class="space-y-6 mt-2 md:mt-0">
 
-                </ul>
+                                <!-- Fixes -->
+                                <div>
+                                    <button onclick="toggleSection('v170-fixes')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v170-fixes" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Fixes</h4>
+                                    </button>
+                                    <div id="v170-fixes-content" class="collapse-content pl-2 sm:pl-6">
+                                        <p class="text-gray-600 italic text-sm pl-6">No items in this category.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Improvements -->
+                                <div>
+                                    <button onclick="toggleSection('v170-improvements')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v170-improvements" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Improvements</h4>
+                                    </button>
+                                    <div id="v170-improvements-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-400 leading-relaxed">In the Update Attribute step, when a process front does not match to exactly 1 active front, an unmatched fronts layer will be added to the map - helping to visualize the unmatched front on the map.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-400 leading-relaxed">The Stated Areas early validation check will warn if an incoming temporary parcel does not yet have its final number (an earlier record should be updated before the current one).</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Other -->
+                                <div>
+                                    <button onclick="toggleSection('v170-other')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v170-other" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Other</h4>
+                                    </button>
+                                    <div id="v170-other-content" class="collapse-content pl-2 sm:pl-6">
+                                        <p class="text-gray-600 italic text-sm pl-6">No items in this category.</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Version 1.6.0 -->
+                    <div class="flex flex-col md:flex-row gap-6 md:gap-12 p-6 sm:p-10 hover:bg-gray-800/30 transition-colors">
+                        <div class="md:w-1/4 shrink-0">
+                            <div class="sticky top-28">
+                                <button onclick="toggleChangelog('v160')" class="w-full text-left flex flex-col focus:outline-none group">
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <h3 class="text-2xl font-bold text-gray-300 tracking-tight group-hover:text-white transition-colors">1.6.0</h3>
+                                        <svg id="arrow-v160" class="w-5 h-5 text-gray-500 group-hover:text-white transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="v160-content" class="md:w-3/4 collapse-content hidden">
+                            <div class="space-y-6 mt-2 md:mt-0">
+
+                                <!-- Fixes -->
+                                <div>
+                                    <button onclick="toggleSection('v160-fixes')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v160-fixes" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Fixes</h4>
+                                    </button>
+                                    <div id="v160-fixes-content" class="collapse-content pl-2 sm:pl-6">
+                                        <p class="text-gray-600 italic text-sm pl-6">No items in this category.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Improvements -->
+                                <div>
+                                    <button onclick="toggleSection('v160-improvements')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v160-improvements" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Improvements</h4>
+                                    </button>
+                                    <div id="v160-improvements-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-400 leading-relaxed">The Import or Modify Points tool will output conflicts as red circles around the source point. The radius of the red circle is set by the input search distance.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-400 leading-relaxed">The Evaluation step operations are now grouped by categories, allowing a better experience.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-400 leading-relaxed">The Stated Areas early validation check will handle cases when an incoming active parcel and incoming temporary parcel share the same number.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-400 leading-relaxed">The Start Task Environment step will use the process name by parsing the aprx file name - the user is not required to type the process name. At that time, users can type other process names for independent cases.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Other -->
+                                <div>
+                                    <button onclick="toggleSection('v160-other')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v160-other" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Other</h4>
+                                    </button>
+                                    <div id="v160-other-content" class="collapse-content pl-2 sm:pl-6">
+                                        <p class="text-gray-600 italic text-sm pl-6">No items in this category.</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Version 1.5.0 -->
+                    <div class="flex flex-col md:flex-row gap-6 md:gap-12 p-6 sm:p-10 hover:bg-gray-800/30 transition-colors">
+                        <div class="md:w-1/4 shrink-0">
+                            <div class="sticky top-28">
+                                <button onclick="toggleChangelog('v150')" class="w-full text-left flex flex-col focus:outline-none group">
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <h3 class="text-2xl font-bold text-gray-300 tracking-tight group-hover:text-white transition-colors">1.5.0</h3>
+                                        <svg id="arrow-v150" class="w-5 h-5 text-gray-500 group-hover:text-white transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="v150-content" class="md:w-3/4 collapse-content hidden">
+                            <div class="space-y-6 mt-2 md:mt-0">
+
+                                <!-- Fixes -->
+                                <div>
+                                    <button onclick="toggleSection('v150-fixes')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v150-fixes" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Fixes</h4>
+                                    </button>
+                                    <div id="v150-fixes-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#ff7b72]"></span>
+                                                <span class="text-gray-400 leading-relaxed">Bug fixes regarding to the Evaluation step.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Improvements -->
+                                <div>
+                                    <button onclick="toggleSection('v150-improvements')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v150-improvements" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Improvements</h4>
+                                    </button>
+                                    <div id="v150-improvements-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#3fb950]"></span>
+                                                <span class="text-gray-400 leading-relaxed">Starting from the 2nd step in each task - it is required to make sure that a record is activated in order to execute the steps.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Other -->
+                                <div>
+                                    <button onclick="toggleSection('v150-other')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v150-other" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Other</h4>
+                                    </button>
+                                    <div id="v150-other-content" class="collapse-content pl-2 sm:pl-6">
+                                        <p class="text-gray-600 italic text-sm pl-6">No items in this category.</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Version 0.9 -->
+                    <div class="flex flex-col md:flex-row gap-6 md:gap-12 p-6 sm:p-10 hover:bg-gray-800/30 transition-colors">
+                        <div class="md:w-1/4 shrink-0">
+                            <div class="sticky top-28">
+                                <button onclick="toggleChangelog('v090')" class="w-full text-left flex flex-col focus:outline-none group">
+                                    <div class="flex items-start flex-col gap-1 mb-1">
+                                        <div class="flex items-center gap-3">
+                                            <h3 class="text-2xl font-bold text-gray-400 tracking-tight group-hover:text-white transition-colors">0.9</h3>
+                                            <svg id="arrow-v090" class="w-5 h-5 text-gray-500 group-hover:text-white transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        </div>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-800 text-gray-400 border border-gray-700 uppercase tracking-wider">Beta</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="v090-content" class="md:w-3/4 collapse-content hidden">
+                            <div class="space-y-6 mt-2 md:mt-0">
+
+                                <!-- Fixes -->
+                                <div>
+                                    <button onclick="toggleSection('v090-fixes')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v090-fixes" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Fixes</h4>
+                                    </button>
+                                    <div id="v090-fixes-content" class="collapse-content pl-2 sm:pl-6">
+                                        <p class="text-gray-600 italic text-sm pl-6">No items in this category.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Improvements -->
+                                <div>
+                                    <button onclick="toggleSection('v090-improvements')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v090-improvements" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Improvements</h4>
+                                    </button>
+                                    <div id="v090-improvements-content" class="collapse-content pl-2 sm:pl-6">
+                                        <p class="text-gray-600 italic text-sm pl-6">No items in this category.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Other -->
+                                <div>
+                                    <button onclick="toggleSection('v090-other')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v090-other" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Other</h4>
+                                    </button>
+                                    <div id="v090-other-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-gray-500"></span>
+                                                <span class="text-gray-400 leading-relaxed">First initial release.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </section>
         </div>
 
         <!-- ==================== TUTORIALS VIEW ==================== -->
         <div id="view-tutorials" class="max-w-4xl mx-auto space-y-12 hidden">
-            
+
             <!-- Header -->
             <header class="text-center pb-4">
                 <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-orange-500 mb-2">
@@ -234,27 +594,29 @@
             <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
                 <button onclick="toggleSection('tut0')" class="w-full text-left flex justify-between items-center pb-2 border-b-2 border-[#238636] focus:outline-none group">
                     <h2 class="text-2xl font-bold text-[#58a6ff] drop-shadow-[0_0_5px_rgba(88,166,255,0.5)] group-hover:text-white transition-colors">
-                        0. Overview
+                        0. Introductions
                     </h2>
                     <svg id="arrow-tut0" class="w-6 h-6 text-[#58a6ff] transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
                 </button>
                 <div id="tut0-content" class="collapse-content pt-4">
                     <div class="space-y-4 text-gray-400">
                         <p>This video gives an overview of the editing framework before starting a task session. <br/>
-                            It covers the project layers, the catalog structure, the connection to the organization portal, the difference between the task types and the steps required to begin a task session.</p>
-                        
+                            It covers how to connect to the Portal, how to set Advanced license level, desciption of the layers in the template project, the difference between the task types and their steps.</p>
+
                         <!-- YouTube Video Placeholder (Aspect Ratio 16:9) -->
                         <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
                             <!-- YouTube Play Icon -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
-                                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                            </svg>
-                            <span class="text-gray-500 font-medium">YouTube Video Placeholder</span>
+                            <iframe
+                                src="https://drive.google.com/file/d/12wITrIT753fx_rPcR7grvaiS4oUws5rk/preview"
+                                width="640"
+                                height="360"
+                                allowfullscreen>
+                            </iframe>
                         </div>
                     </div>
                 </div>
             </section>
-            
+
             <!-- Tutorial Section 1 -->
             <section class="bg-gray-900/70 p-6 sm:p-8 rounded-xl border border-gray-700">
                 <button onclick="toggleSection('tut1')" class="w-full text-left flex justify-between items-center pb-2 border-b-2 border-[#238636] focus:outline-none group">
@@ -267,7 +629,7 @@
                     <div class="space-y-4 text-gray-400">
                         <p>First things firts. <br/>
                            Learn how to excecute the first step and how it differ from each task type.</p>
-                        
+
                         <!-- YouTube Video Placeholder (Aspect Ratio 16:9) -->
                         <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
                             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
@@ -292,7 +654,7 @@
                         <p>
                             Discover how the "Import or Modify Points" tool works. We demonstrate how conflicts are highlighted using red circles on the map and how to use the input search distance correctly.
                         </p>
-                        
+
                         <!-- YouTube Video Placeholder -->
                         <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
                             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
@@ -317,7 +679,7 @@
                         <p>
                             This advanced tutorial goes over early validation checks, handling stated areas, and visualizing unmatched fronts on the map during the Update Attribute step.
                         </p>
-                        
+
                         <!-- YouTube Video Placeholder -->
                         <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
                             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
@@ -342,7 +704,7 @@
                         <p>
                             This advanced tutorial goes over early validation checks, handling stated areas, and visualizing unmatched fronts on the map during the Update Attribute step.
                         </p>
-                        
+
                         <!-- YouTube Video Placeholder -->
                         <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
                             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
@@ -367,7 +729,7 @@
                         <p>
                             This advanced tutorial goes over early validation checks, handling stated areas, and visualizing unmatched fronts on the map during the Update Attribute step.
                         </p>
-                        
+
                         <!-- YouTube Video Placeholder -->
                         <div class="relative w-full overflow-hidden rounded-lg bg-black border border-gray-800 flex flex-col items-center justify-center aspect-video mt-4 shadow-inner">
                             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-red-600 mb-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
@@ -428,7 +790,7 @@
             // Hide all views
             document.getElementById('view-home').classList.add('hidden');
             document.getElementById('view-tutorials').classList.add('hidden');
-            
+
             // Show target view
             document.getElementById('view-' + tabName).classList.remove('hidden');
 
@@ -440,7 +802,7 @@
                 // Active Home
                 navHome.classList.add('text-white', 'border-[#238636]');
                 navHome.classList.remove('text-gray-400', 'border-transparent');
-                
+
                 // Inactive Tutorials
                 navTutorials.classList.remove('text-white', 'border-[#238636]');
                 navTutorials.classList.add('text-gray-400', 'border-transparent');
@@ -448,7 +810,7 @@
                 // Active Tutorials
                 navTutorials.classList.add('text-white', 'border-[#238636]');
                 navTutorials.classList.remove('text-gray-400', 'border-transparent');
-                
+
                 // Inactive Home
                 navHome.classList.remove('text-white', 'border-[#238636]');
                 navHome.classList.add('text-gray-400', 'border-transparent');
