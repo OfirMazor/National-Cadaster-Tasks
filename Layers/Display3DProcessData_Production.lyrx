@@ -10,6 +10,7 @@
       "type" : "CIMFeatureLayer",
       "name" : "נקודות חדשות",
       "uRI" : "CIMPATH=_________/____________26.json",
+      "sourceURI" : "66df1d8c718744719c01d4706980bded",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : 978307200000
@@ -249,7 +250,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "3",
           "datasetType" : "esriDTFeatureClass"
@@ -842,7 +843,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "3",
           "datasetType" : "esriDTFeatureClass"
@@ -1434,7 +1435,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "3",
           "datasetType" : "esriDTFeatureClass"
@@ -2026,7 +2027,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "3",
           "datasetType" : "esriDTFeatureClass"
@@ -2491,6 +2492,7 @@
       "type" : "CIMFeatureLayer",
       "name" : "היטלי גריעות חדשות",
       "uRI" : "CIMPATH=_________/___________________2.json",
+      "sourceURI" : "66df1d8c718744719c01d4706980bded",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -2722,7 +2724,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "7",
           "datasetType" : "esriDTFeatureClass"
@@ -3020,6 +3022,7 @@
       "type" : "CIMFeatureLayer",
       "name" : "גריעות חדשות",
       "uRI" : "CIMPATH=_________/___________9.json",
+      "sourceURI" : "66df1d8c718744719c01d4706980bded",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -3449,7 +3452,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "5",
           "datasetType" : "esriDTFeatureClass"
@@ -4020,7 +4023,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "5",
           "datasetType" : "esriDTFeatureClass"
@@ -4350,6 +4353,7 @@
       "type" : "CIMFeatureLayer",
       "name" : "היטלי חלקות חדשות",
       "uRI" : "CIMPATH=_________/__________________________.json",
+      "sourceURI" : "66df1d8c718744719c01d4706980bded",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -4581,7 +4585,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "6",
           "datasetType" : "esriDTFeatureClass"
@@ -4879,6 +4883,7 @@
       "type" : "CIMFeatureLayer",
       "name" : "חלקות חדשות",
       "uRI" : "CIMPATH=_________/_______________________2.json",
+      "sourceURI" : "66df1d8c718744719c01d4706980bded",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -5257,7 +5262,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "4",
           "datasetType" : "esriDTFeatureClass"
@@ -5933,7 +5938,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "4",
           "datasetType" : "esriDTFeatureClass"
@@ -6609,7 +6614,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "4",
           "datasetType" : "esriDTFeatureClass"
@@ -7285,7 +7290,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "4",
           "datasetType" : "esriDTFeatureClass"
@@ -7617,6 +7622,7 @@
       "type" : "CIMFeatureLayer",
       "name" : "גבול תכנית",
       "uRI" : "CIMPATH=_________/__________6.json",
+      "sourceURI" : "66df1d8c718744719c01d4706980bded",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : -62135596800000
@@ -7934,7 +7940,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+          "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
           "workspaceFactory" : "FeatureService",
           "dataset" : "8",
           "datasetType" : "esriDTFeatureClass"
@@ -8414,6 +8420,7 @@
       "type" : "CIMStandaloneTable",
       "name" : "פעולות בתכנית",
       "uRI" : "CIMPATH=_________/_____________30.json",
+      "sourceURI" : "66df1d8c718744719c01d4706980bded",
       "sourceModifiedTime" : {
         "type" : "TimeInstant",
         "start" : 978307200000
@@ -8632,7 +8639,7 @@
       ],
       "dataConnection" : {
         "type" : "CIMStandardDataConnection",
-        "workspaceConnectionString" : "URL=https://arcgis-srv-p.mapi.co.il/arcgis/rest/services/NationalCadasterEditors/InProcessMapDevelopment/FeatureServer",
+        "workspaceConnectionString" : "URL=https://bnkl3dgisprod.mapi.co.il/server/rest/services/NationalCadasterEditors/InProcessMapProduction/FeatureServer",
         "workspaceFactory" : "FeatureService",
         "dataset" : "10",
         "datasetType" : "esriDTTable"
