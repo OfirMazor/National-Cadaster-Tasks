@@ -1,6 +1,5 @@
-from os import startfile
 from Utils.Configs import CNFG
-from Utils.TypeHints import Layer, Map
+from Utils.TypeHints import Map
 from Utils.Validations import validation_set
 from Utils.VersionManagement import open_version
 from Utils.Helpers import filter_to_roi, set_priority, create_shelf, activate_record, get_layer, zoom_to_aoi
@@ -10,18 +9,27 @@ from arcpy.conversion import ExportFeatures
 
 
 def display_process_data(RecordName: str) -> None:
+    """
+    Export the free edit record as a local feature class and display it on the active map.
 
+    Parameters:
+        RecordName (str): The name of the free edit record to be edited.
+
+    Returns:
+        None
+    """
+
+    # Export the polygon feature of the record border as a local feature class in the home geodatabase
     RecordsBorders: str = fr'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}CadasterRecordsBorders'
-    home_gdb: str = fr"{ArcGISProject('current').defaultGeodatabase}"
-    output: str = fr"{home_gdb}\FreeEditRecordBorders"
+    output: str = fr"{ArcGISProject('current').defaultGeodatabase}\FreeEditRecordBorders"
+    query: str = f"Name = '{RecordName}' And RecordType = 16"
+    fm: str = fr'Name "שם המפה" true true true 255 Text 0 0,First,#,{RecordsBorders},Name,0,254'
+    ExportFeatures(RecordsBorders, output, query, field_mapping= fm)
 
-    ExportFeatures(RecordsBorders, output, f"Name = '{RecordName}'", field_mapping= fr'Name "שם המפה" true true true 255 Text 0 0,First,#,{RecordsBorders},Name,0,254')
-    current_map: Map = ArcGISProject('current').activeMap
-    current_map.addDataFromPath(fr'{CNFG.LayerFiles}FreeEditRecordBorders.lyrx')
-    layer: Layer = get_layer("גבול תכנית")
-    layer.updateConnectionProperties(None, output)
-
-    layer.name = f'{RecordName} גבול תכנית'
+    # Add the exported data as a layer and adjust its place in the project
+    active_map: Map = ArcGISProject('current').activeMap
+    active_map.addDataFromPath(fr'{CNFG.LayerFiles}FreeEditRecordBorders.lyrx')
+    active_map.moveLayer(get_layer("קדסטר בתהליך"), get_layer("גבול תכנית"), "BEFORE")
 
 
 def start_task_FreeEdit(RecordName: str) -> None:
@@ -40,11 +48,9 @@ def start_task_FreeEdit(RecordName: str) -> None:
     qualified: bool = validation_set('FreeEdit', RecordName)
 
     if qualified:
-        shelf: str = create_shelf(RecordName)
+        create_shelf(RecordName, True)
 
         open_version(RecordName)
-
-        startfile(fr'{shelf}')
 
         filter_to_roi(RecordName)
 
