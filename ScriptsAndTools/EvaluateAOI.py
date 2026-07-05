@@ -99,8 +99,7 @@ def EvaluateAOI(qa_extent: Literal['Full map', 'Record', 'Current display'] = 'F
             track_redundant_vertices()
 
         if validate_volumetric_overlaps:
-            AddMessage(f"{timestamp()} | ⚠️ Currently validating Volumetric Overlaps is not available")
-            # track_volumetric_overlaps()
+            track_volumetric_overlaps()
 
         # Return to original environment settings:
         ENV.extent = original_extent

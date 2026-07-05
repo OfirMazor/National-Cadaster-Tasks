@@ -3,17 +3,16 @@ from Utils.TypeHints import *
 from Utils.VersionManagement import get_VersionName, layer_is_at_version
 from Utils.Helpers import delete_file, timestamp, get_layer, get_ActiveRecord, get_feature_layer_id, AddTabularMessage
 from Utils.NewCadasterHelpers import get_RecordGUID_NewCadaster
+from os import makedirs, startfile
 import pandas as pd
 from pandas.io.formats.style import Styler
-from os import makedirs
-from arcgis import GIS
-from arcgis.features._version import VersionManager
-from arcgis.features import GeoAccessor, GeoSeriesAccessor
 from arcpy import AddMessage, AddError, env as ENV
 from arcpy.da import SearchCursor
 from arcpy.mp import ArcGISProject
 from arcpy.analysis import GenerateNearTable
 from arcpy.management import SelectLayerByLocation as SelectByLocation, SelectLayerByAttribute as SelectByAttribute
+from arcgis import GIS
+from arcgis.features._version import VersionManager
 
 
 ENV.overwriteOutput = True
@@ -31,7 +30,7 @@ def highlight_conflicts(data: df) -> Styler:
     """
 
     def highlight(val: int, hue: str = 'red') -> str:
-        conflicts = hue if val > 1 else None
+        conflicts: str|None = hue if val > 1 else None
         return f"background-color: {conflicts}"
 
     styled_df = data.style.applymap(highlight, subset=['דירוג המרחק'])
@@ -60,16 +59,16 @@ def SourcePointsByTask(task_type: TaskType) -> Layer|None:
         # all 'in process points' when attempting to access the base points layer.
         # This is likely related to the use of subgroups within the process group layer
         def_query: str = get_layer('נקודות ביסוס').definitionQuery
-        source_points: Layer = SelectByAttribute(get_layer('נקודות בתהליך'), 'NEW_SELECTION', def_query).getOutput(0)
+        source_points: Layer = SelectByAttribute(get_layer('נקודות בתהליך'), 'NEW_SELECTION', def_query)[0]
 
     else:
         source_points: None = None
-        AddError(f'{timestamp()} | Parameter task must be one of: ImproveCurrentCadaster, RetireAndCreateCadaster, ImproveNewCadaster, CreateNewCadaster')
+        AddError(f'{timestamp()} | Parameter task_type must be one of: ImproveCurrentCadaster, RetireAndCreateCadaster, ImproveNewCadaster, CreateNewCadaster')
 
     return source_points
 
 
-def compute_matching_points_report(ProcessName: str, task: TaskType, distance: int = 5) -> None:
+def compute_matching_points_report(ProcessName: str, task: TaskType, distance: int = 5, auto_open: bool = False) -> None:
     """
     Computes a report analyzing the spatial relationship between in-process points and active points
     within a specified distance, highlighting conflicts where multiple matches occur.
@@ -78,6 +77,7 @@ def compute_matching_points_report(ProcessName: str, task: TaskType, distance: i
         ProcessName (str): The name of the process, used to set the location of the output files.
         task (TaskType): The type of task being processed, which determines the source points layer.
         distance (int, optional): The search radius in meters for matching points. Default is 5 meters.
+        auto_open (bool, Optional): Whether to open the Excel file on completion. For debugging use. Default is False.
     """
     AddMessage('\n ⭕ Generating report \n')
     AddMessage(f'{timestamp()} | 🛠️ Computing the Matching Points Report, please wait...')
@@ -86,19 +86,24 @@ def compute_matching_points_report(ProcessName: str, task: TaskType, distance: i
     CurrentPoints: Layer = CurrentMap.listLayers('נקודות גבול')[0]
     InProcessPoints: Layer = SourcePointsByTask(task)
 
-    CurrentPoints_selection: Layer = SelectByLocation(in_layer= CurrentPoints, select_features= InProcessPoints, overlap_type= 'WITHIN_A_DISTANCE', search_distance= f'{distance} Meters')[0]
     if task == "CreateNewCadaster":
-        CurrentPoints_selection: Layer = SelectByAttribute(CurrentPoints_selection, "SUBSET_SELECTION", f"CreatedByRecord<>'{get_RecordGUID_NewCadaster(ProcessName)}'").getOutput(0)
+        CurrentPoints: Layer = SelectByLocation(in_layer= CurrentPoints, select_features= InProcessPoints, overlap_type= 'WITHIN_A_DISTANCE', search_distance= f'{distance} Meters')[0]
+        CurrentPoints: Layer = SelectByAttribute(CurrentPoints, "SUBSET_SELECTION", f"CreatedByRecord<>'{get_RecordGUID_NewCadaster(ProcessName)}'")[0]
 
     # Compute distances
     shelf: str = ProcessName.replace('/', '_')
-    GenerateNearTable(in_features= InProcessPoints, near_features= CurrentPoints_selection, out_table= fr'{CNFG.Library}{shelf}/NearTable.csv',
-                      search_radius= distance, location= 'LOCATION', closest= 'ALL', distance_unit= 'Meters')
+    NearTable_csv: str = fr'{CNFG.Library}{shelf}/NearTable.csv'
+    GenerateNearTable(InProcessPoints, CurrentPoints, NearTable_csv, distance, 'LOCATION', closest= 'ALL', distance_unit= 'Meters')
 
-    # Read distances results and join data
-    InProcessPoints_df: df = pd.DataFrame.spatial.from_featureclass(InProcessPoints, fields= ['OBJECTID', 'GlobalID', 'PointName'])
-    CurrentPoints_df: df = pd.DataFrame.spatial.from_featureclass(CurrentPoints, fields= ['OBJECTID', 'GlobalID', 'Name'])
-    NearTable_df: df = pd.read_csv(fr'{CNFG.Library}{shelf}/NearTable.csv', usecols= ['IN_FID', 'NEAR_FID', 'NEAR_RANK', 'NEAR_DIST', 'FROM_X', 'FROM_Y', 'NEAR_X', 'NEAR_Y'])
+    # Read distances results and join data:
+    cols: list[str] = ['OBJECTID', 'GlobalID', 'PointName']
+    InProcessPoints_df: df = pd.DataFrame(SearchCursor(InProcessPoints, cols), columns= cols)
+
+    cols: list[str] = ['OBJECTID', 'GlobalID', 'Name']
+    CurrentPoints_df: df = pd.DataFrame(SearchCursor(CurrentPoints, cols), columns= cols)
+
+    cols: list[str] = ['IN_FID', 'NEAR_FID', 'NEAR_RANK', 'NEAR_DIST', 'FROM_X', 'FROM_Y', 'NEAR_X', 'NEAR_Y']
+    NearTable_df: df = pd.read_csv(NearTable_csv, usecols= cols)
 
     columns_names: dict[str, str] = {'NEAR_DIST' : "מרחק במטרים",
                                      'NEAR_RANK' : "דירוג המרחק",
@@ -122,11 +127,13 @@ def compute_matching_points_report(ProcessName: str, task: TaskType, distance: i
                                 "מרחק במטרים",
                                 "דירוג המרחק"]
 
-    results_df: df = NearTable_df.merge(CurrentPoints_df, left_on= 'NEAR_FID', right_on= 'OBJECTID', how= 'left')\
+    del cols, CurrentPoints, InProcessPoints
+
+    results_df: df = NearTable_df.merge(CurrentPoints_df, 'left', left_on= 'NEAR_FID', right_on= 'OBJECTID')\
                                  .drop(columns= 'OBJECTID')\
                                  .rename(columns= {'GlobalID': 'NearGUID'})\
-                                 .merge(InProcessPoints_df, left_on= 'IN_FID', right_on= 'OBJECTID', how= 'left')\
-                                 .drop(columns= ['OBJECTID', 'NEAR_FID', 'IN_FID', 'SHAPE_x', 'SHAPE_y'])\
+                                 .merge(InProcessPoints_df, 'left', left_on= 'IN_FID', right_on= 'OBJECTID')\
+                                 .drop(columns= ['OBJECTID', 'NEAR_FID', 'IN_FID'])\
                                  .sort_values(["GlobalID", "NEAR_RANK"])\
                                  .rename(columns= columns_names)[columns_order]
 
@@ -139,21 +146,30 @@ def compute_matching_points_report(ProcessName: str, task: TaskType, distance: i
         AddMessage(f"{timestamp()} | 💡 The optimal matching distance: {optimal_distance} meters")
 
     elif conflicts_count == 0:
-        AddMessage(f"{timestamp()} | ℹ️ No conflicts found within {distance} meters")
+        AddMessage(f"{timestamp()} | 💡 No conflicts were found within {distance} meters")
 
-    del conflicts_count
-
-    report_path: str = fr'{CNFG.Library}{shelf}/PointsDistanceReport-{shelf}.xlsx'
+    report_path: str = fr'{CNFG.Library}{shelf}/EarlyConflictsReport.xlsx'
     results_df.to_excel(report_path, index= False, engine= 'openpyxl', sheet_name= 'קונפליקטים')
 
     CurrentMap.clearSelection()
     AddMessage(f'{timestamp()} | 💡 Review the report to gain more insights')
-    delete_file(fr'{CNFG.Library}{shelf}/NearTable.csv')
-    delete_file(fr'{CNFG.Library}{shelf}/NearTable.csv.xml')
+    delete_file(NearTable_csv)
+    delete_file(f'{NearTable_csv}.xml')
+
+    if auto_open:
+        startfile(report_path)
+
+    del CurrentMap, conflicts_count, results_df, InProcessPoints_df, CurrentPoints_df, NearTable_df
 
 
 def set_date_columns(dataframe: df) -> df:
     """
+    Set specified date fields as DateTime data types in a DataFrame.
+    Parameters:
+        dataframe: DataFrame to process its date columns.
+
+    Returns:
+        The input DataFrame with the date columns set to DateTime data.
     """
     date_columns: list[str] = ['created_date', 'last_edited_date', 'RecordedDate', 'SetteledDate']
     for col in date_columns:
@@ -304,6 +320,3 @@ def compare_and_document_version_changes(user_name: str, password: str) -> None:
             else:
                 AddMessage(f"{timestamp()} | {idx}/{total} | {name}: No features in the area of interest \n ")
                 AddMessage(f"{timestamp()} | No features in the area of interest \n ")
-
-
-print(f"{CNFG.ParcelFabricFeatureServer};VERSION=sde.DEFAULT;VERSIONGUID='{CNFG.default_version_guid}'/{7}")
