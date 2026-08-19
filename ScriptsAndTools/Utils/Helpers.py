@@ -19,7 +19,7 @@ def timestamp() -> str:
     return current_time
 
 
-def set_priority(priority: Literal['Realtime', 'High', 'Above Normal', 'Normal', 'Below Normal', 'Low', 'Idle'] = 'High') -> None:
+def set_priority(priority: Literal['Realtime', 'High', 'AboveNormal', 'Normal', 'BelowNormal', 'Low', 'Idle'] = 'High') -> None:
     """
     Set the priority of the current process.
 
@@ -91,7 +91,7 @@ def create_shelf(ProcessName: str, auto_open: bool = False) -> str:
     return folder_path
 
 
-def AddTabularMessage(table: df):
+def AddTabularMessage(table: df) -> None:
     """
     Convert a Pandas DataFrame into a custom JSON string format and print it as a tabular message.
     The printer table will always be a 2 columns table.
@@ -216,11 +216,11 @@ def get_feature_table_id(table_name: str) -> int|None:
     return feature_table_id
 
 
-def refresh_map_view(scale: Optional[float] = 0.1) -> None:
+def refresh_map_view(scale: float = 0.1) -> None:
     """Refresh the map view by changing the map scale
 
         Parameters:
-            scale (Optional[float]): the scale (in meters) that will be added to the active map camera view. Default is  0.1 meters.
+            scale: the scale (in meters) that will be added to the active map camera view. Default is  0.1 meters.
     """
     view = ArcGISProject("current").activeView
     if view:
@@ -410,10 +410,12 @@ def get_RecordGUID(ProcessName: str, source: Literal['MAP', 'SDE', 'SHELF'] = 'S
         if Scursor_len == 0:
             if warnings:
                 AddMessage(f'{timestamp()} | ⚠️ Record {ProcessName} Not found')
+            del Scursor
             return None
         if Scursor_len > 1:
             if warnings:
                 AddMessage(f'{timestamp()} | ⚠️ Found {Scursor_len} records named {ProcessName}')
+            del Scursor
             return None
         else:
             del Scursor
@@ -784,7 +786,7 @@ def process_is_transferring(ProcessName: str, source: Literal['MAP', 'SDE'] = 'M
         ProcessName (str): The name of the process to check.
         source (str): The source of the table to query. Must be either 'MAP' or 'SDE'.
     """
-    table: Table|str = get_table('פעולות בתכנית') if source == 'MAP' else fr'{CNFG.ParcelFabricDatabase}\{CNFG.OwnerName}.SequenceActions'
+    table: Table|str = get_table('פעולות בתכנית') if source == 'MAP' else fr'{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}SequenceActions'
     query: str = "ActionType = 3" if source == 'MAP' else f"ActionType = 3 AND CPBUniqueID = '{get_ProcessGUID(ProcessName, source)}'"
 
     Actions: Scur = SearchCursor(table, 'ActionType', query)
@@ -1524,7 +1526,10 @@ def activate_extension(name: Extension) -> bool:
 
 def layer_selection_info(layer: Layer) -> dict[str, list[int]|None|bool|int]:
     """
+    Return an informative Dictionary object regarding a selected features in a Layer object.
 
+    Parameters:
+        layer (Layer): The Layer object to examine).
     """
     from arcpy.da import Describe
 

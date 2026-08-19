@@ -1,0 +1,14 @@
+# Esri support-case reproductions (aprx/atbx/video artifacts)
+/Bugs/
+
+# Claude Code local settings, skills and agents
+/.claude/
+
+# User-facing changelog/tutorials page
+/docs/
+
+# Environment switch: internal SDE/portal/CMS hosts and IPs
+/ScriptsAndTools/Utils/Configs.py
+
+# Claude Code project instructions
+/CLAUDE.md
