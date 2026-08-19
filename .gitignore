@@ -4,6 +4,9 @@
 # Claude Code local settings, skills and agents
 /.claude/
 
+# Code review report (regenerated on every review run)
+/code review.html
+
 # User-facing changelog/tutorials page
 /docs/
 

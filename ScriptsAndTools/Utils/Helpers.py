@@ -19,7 +19,7 @@ def timestamp() -> str:
     return current_time
 
 
-def set_priority(priority: Literal['Realtime', 'High', 'AboveNormal', 'Normal', 'BelowNormal', 'Low', 'Idle'] = 'High') -> None:
+def set_priority(priority: Literal['RealTime', 'High', 'AboveNormal', 'Normal', 'BelowNormal', 'Low', 'Idle'] = 'High') -> None:
     """
     Set the priority of the current process.
 
@@ -153,7 +153,7 @@ def get_active_user(mode: Literal['short', 'long'] = 'short') -> str|None:
 
 def get_layer(layer_name: str, map_name: MapType = 'Active map') -> Layer | None:
     """
-    Returns a layer object from the active map in a project.
+    Returns a layer object from a map in the project.
 
     Parameters:
         layer_name (str): The name of the layer in the content pane.
@@ -163,36 +163,37 @@ def get_layer(layer_name: str, map_name: MapType = 'Active map') -> Layer | None
         The Layer object unless the layer name was not found in the map.
     """
     if map_name == 'Active map':
-        layer: Layer|None = ArcGISProject("current").activeMap.listLayers(layer_name)[0]
+        layer_list: list[Layer] = ArcGISProject("current").activeMap.listLayers(layer_name)
     else:
-        layer: Layer|None = ArcGISProject("current").listMaps(map_name)[0].listLayers(layer_name)[0]
+        layer_list: list[Layer] = ArcGISProject("current").listMaps(map_name)[0].listLayers(layer_name)
 
-    if layer:
-        return layer
+    if layer_list:
+        return layer_list[0]
     else:
-        AddMessage(f' {map_name} does not contain the layer {layer_name}')
+        AddError(f'{timestamp()} | {map_name} does not contain the layer {layer_name}')
         return None
 
 
 def get_table(table_name: str, map_name: MapType = 'Active map') -> Table | None:
-    """ Returns a table from the active map in a project.
+    """
+    Returns a table object from a map in the project.
 
-        Parameters:
-            table_name (str): The name of the table in the content pane.
-            map_name (MapType): The name of the map containing the table. Default to the current active map.
+    Parameters:
+        table_name (str): The name of the table in the content pane.
+        map_name (MapType): The name of the map containing the table. Default to the current active map.
 
-        Return:
-            The Table object unless the table name was not found in the map.
+    Return:
+        The Table object unless the table name was not found in the map.
     """
     if map_name == 'Active map':
-        table: Table|None = ArcGISProject("current").activeMap.listTables(table_name)[0]
+        table_list: list[Table|None] = ArcGISProject("current").activeMap.listTables(table_name)
     else:
-        table: Table|None = ArcGISProject("current").listMaps(map_name)[0].listTables(table_name)[0]
+        table_list: list[Table|None] = ArcGISProject("current").listMaps(map_name)[0].listTables(table_name)
 
-    if table:
-        return table
+    if table_list:
+        return table_list[0]
     else:
-        AddMessage(f' {map_name} does not contain the table {table_name}')
+        AddError(f' {map_name} does not contain the table {table_name}')
         return None
 
 
@@ -202,8 +203,13 @@ def get_feature_layer_id(layer_name: str) -> int|None:
     Parameters:
         layer_name (str): The name of the layer in the active map.
     """
-    feature_layer_id: int|None = int(get_layer(layer_name).connectionProperties['dataset'])
-    return feature_layer_id
+    layer: Layer|None = get_layer(layer_name)
+    if layer:
+        feature_layer_id: int = int(layer.connectionProperties['dataset'])
+        return feature_layer_id
+    else:
+        return None
+    
 
 
 def get_feature_table_id(table_name: str) -> int|None:
@@ -212,8 +218,12 @@ def get_feature_table_id(table_name: str) -> int|None:
     Parameters:
         table_name (str): The name of the table in the active map.
     """
-    feature_table_id: int|None = int(get_table(table_name).connectionProperties['dataset'])
-    return feature_table_id
+    table: Table|None = get_table(table_name)
+    if table:
+        feature_table_id: int = int(table.connectionProperties['dataset'])
+        return feature_table_id
+    else:
+        return None
 
 
 def refresh_map_view(scale: float = 0.1) -> None:
@@ -328,8 +338,8 @@ def get_ProcessStatus(ProcessName: str, source: Literal['MAP', 'SDE'] = 'SDE') -
     elif source == 'MAP':
         table: Layer = get_layer('גבולות תהליכי קדסטר')
     else:
-        table: None = None
         AddError("source parameter must be on of ['SDE', 'MAP']")
+        return None
 
 
     Scursor: Scur = SearchCursor(table, 'Status', f"ProcessName = '{ProcessName}'")
@@ -359,8 +369,8 @@ def get_ProcessGUID(ProcessName: str, source: Literal['MAP', 'SDE'] = 'SDE') -> 
     elif source == 'MAP':
         table: Layer = get_layer('גבולות תהליכי קדסטר')
     else:
-        table: None = None
         AddError("source parameter must be on of ['SDE', 'MAP']")
+        return None
 
     Scursor: Scur = SearchCursor(table, 'GlobalID', f"ProcessName = '{ProcessName}'")
     Scursor_len: int = cursor_length(Scursor)
@@ -422,7 +432,7 @@ def get_RecordGUID(ProcessName: str, source: Literal['MAP', 'SDE', 'SHELF'] = 'S
             return None
 
     else:
-        AddError(f"{timestamp()} | source parameter must be on of ['SDE', 'MAP', 'SHELF]")
+        AddError(f"{timestamp()} | source parameter must be on of ['SDE', 'MAP', 'SHELF']")
         return None
 
 
@@ -513,20 +523,23 @@ def get_BlockStatus(by: Literal['Name', 'GlobalID'], value: str) -> int | None:
     int|None: The status code of the block if found, otherwise None.
     """
 
-    status: int|None = None
-    table: str = f'{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}Blocks'
+    search: Scur = SearchCursor(f'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Blocks', 'BlockStatus', f"{by} = '{value}' AND RetiredByRecord IS NULL")
+    count: int = cursor_length(search)
 
-    if by == 'Name':
-        status: int = SearchCursor(table, 'BlockStatus', f"Name = '{value}' AND RetiredByRecord IS NULL").next()[0]
+    if count == 1:
+        BlockStatus: int = search.next()[0]
+        del search
+        return BlockStatus
 
-    elif by == 'GlobalID':
-        status: int = SearchCursor(table, 'BlockStatus', f"GlobalID = '{value}' AND RetiredByRecord IS NULL").next()[0]
-
-    if not status:
-        AddMessage('Block status returned as None')
+    elif count == 0:
+        AddError(f'{timestamp()} | Active block with {by} {value} not found')
+        del search
         return None
+
     else:
-        return status
+        AddError(f'{timestamp()} | Found {count} active blocks matching {value}')
+        del search
+        return None
 
 
 def get_ActiveParcel2DGUID(name: str, source: Literal['MAP', 'SDE'] = 'MAP') -> str | None:
@@ -546,8 +559,8 @@ def get_ActiveParcel2DGUID(name: str, source: Literal['MAP', 'SDE'] = 'MAP') -> 
     elif source == 'MAP':
         table: Layer = get_layer('חלקות')
     else:
-        table: None = None
-        AddError("Parameter ️'source' must be on of ['SDE', 'MAP']")
+        AddError("Parameter 'source' must be on of ['SDE', 'MAP']")
+        return None
 
     if table:
         Scursor: Scur = SearchCursor(table, 'GlobalID', f"Name = '{name}' AND RetiredByRecord IS NULL")
@@ -555,17 +568,16 @@ def get_ActiveParcel2DGUID(name: str, source: Literal['MAP', 'SDE'] = 'MAP') -> 
 
         if Scursor_len == 1:
             ParcelGUID: str = Scursor.next()[0]
+            del Scursor
             return ParcelGUID
-        if Scursor_len == 0:
+        elif Scursor_len == 0:
             AddMessage(f'{timestamp()} | ⚠️ Parcel {name} does not exist or not active')
+            del Scursor
             return None
-        if Scursor_len > 1:
+        elif Scursor_len > 1:
             AddMessage(f'{timestamp()} | ⚠️ Found {Scursor_len} parcels named {name}')
+            del Scursor
             return None
-        else:
-            return None
-    else:
-        return None
 
 
 def get_ActiveParcel3DGUID(name: str, source: Literal['MAP', 'SDE'] = 'MAP') -> str | None:
@@ -641,7 +653,7 @@ def get_FinalParcel(temp_number: int, block_number: int, subblock_number: int = 
 
     pairs['TemporaryParcelName'] = pairs['ToParcelTemp'].astype(str) + '/' + pairs['FinalBlockName']
 
-    pairs['FinaParcelName'] = pairs['ToParcelFinal'].astype(str) + '/' + pairs['FinalBlockName']
+    pairs['FinalParcelName'] = pairs['ToParcelFinal'].astype(str) + '/' + pairs['FinalBlockName']
 
     # Filter to the input temporary parcel row
     pairs = pairs[pairs['TemporaryParcelName'] == source_temp_name]
@@ -651,10 +663,10 @@ def get_FinalParcel(temp_number: int, block_number: int, subblock_number: int = 
         parcel_action_type: int = int(pairs['ActionType'].unique()[0])
 
         if parcel_action_type == 2:  # merge action
-            final_number: int = int(pairs['FinaParcelName'].unique().item().split('/')[0])
+            final_number: int = int(pairs['FinalParcelName'].unique().item().split('/')[0])
 
         elif parcel_action_type in [1, 3, 5]:  # Divide, Transfer, Create actions
-            final_number: int = int(pairs['FinaParcelName'].item().split('/')[0])
+            final_number: int = int(pairs['FinalParcelName'].item().split('/')[0])
 
         else:
             AddMessage(f'{timestamp()} | Source parcel {source_temp_name} is not included in the process actions')
@@ -698,11 +710,11 @@ def get_StartPointGUID(line_geometry: Line, tolerance: float = 0.01) -> str | No
 
 def get_EndPointGUID(line_geometry: Line,  tolerance: float = 0.01) -> str | None:
     """
-    Retrieves the Global ID of the start point of a given line geometry (Shape@) from the current border points layer.
+    Retrieves the Global ID of the end point of a given line geometry (Shape@) from the current border points layer.
 
     Parameters:
-        line_geometry (Line): The line geometry for which to find the start point's Global ID.
-        tolerance (float): The distance for the line starting point to find it's matched border point. Default is 0.01 meters.
+        line_geometry (Line): The line geometry for which to find the end point's Global ID.
+        tolerance (float): The distance for the line ending point to find it's matched border point. Default is 0.01 meters.
 
     Returns:
         str | None: The Global ID of the end border point if found in the points layer, otherwise None.
@@ -717,10 +729,10 @@ def get_EndPointGUID(line_geometry: Line,  tolerance: float = 0.01) -> str | Non
         guid: str = SearchCursor(selection.getOutput(0), 'GlobalID').next()[0]
         return guid
     if count > 1:
-        AddMessage(f'{timestamp()} |  ⚠️ Start point ({last_x}, {last_y}) matched multiple border points')
+        AddMessage(f'{timestamp()} |  ⚠️ End point ({last_x}, {last_y}) matched multiple border points')
         return None
     if count == 0:
-        AddMessage(f'{timestamp()} |  ⚠️ Start point ({last_x}, {last_y}) is not matching any border point')
+        AddMessage(f'{timestamp()} |  ⚠️ End point ({last_x}, {last_y}) is not matching any border point')
         return None
     else:
         return None
@@ -907,38 +919,6 @@ def delete_file(file_path: str) -> None:
             os.remove(file_path)
     except Exception as e:
         AddMessage(f"An error occurred: {str(e)}")
-
-
-def load_to_records_(ProcessName: str) -> None:
-    """
-     -- DEPRECATED --
-    Copies an input process border and it's attributes from CadasterProcessBorders layer to CadasterRecordsBorder layer.
-    The CadasterRecordsBorder layer here should be under version.
-
-    Parameters:
-        ProcessName (str): The name of the process border to load into Records.
-    """
-    current_map: Map = ArcGISProject('current').activeMap
-    processes_layer: Layer = current_map.listLayers('גבולות תהליכי קדסטר')[0]
-    records_layer: Layer = current_map.listLayers('גבולות רישומים')[0]    # -->> At this moment the record layer is under new edit version
-    del current_map
-
-    field_mapping: str = fr'Name "שם מפה" true true true 255 Text 0 0,First,#,{processes_layer.name},ProcessName,0,100;' + \
-                         fr'RecordType "סוג תהליך" true true true 4 Long 0 0,First,#,{processes_layer.name},ProcessType,-1,-1;' + \
-                         fr'GeodeticNetwork "רשת בקרה" true true false 2 Short 0 0,First,#,{processes_layer.name},GeodeticNetwork,-1,-1;' + \
-                         fr'Status "סטטוס" true true false 2 Short 0 0,First,#,{processes_layer.name},Status,-1,-1;' + \
-                         fr'SurveyorLicenseID "רשיון מודד" true true false 2 Short 0 0,First,#,{processes_layer.name},SurveyorLicenseID,-1,-1;' + \
-                         fr'DataSource "מקור הנתונים" true true false 2 Short 0 0,First,#,{processes_layer.name},DataSource,-1,-1;' + \
-                         fr'PlanName "תכנית מפורטת" true true false 255 Text 0 0,First,#,{processes_layer.name},PlanName,0,255;' + \
-                         fr'BlockUniqueID "מזהה גוש" true true false 38 Guid 0 0,First,#,{processes_layer.name},BlockUniqueID,-1,-1'
-
-    Append(processes_layer, records_layer, "NO_TEST", field_mapping, expression= f"ProcessName = '{ProcessName}'", feature_service_mode= 'USE_FEATURE_SERVICE_MODE')
-
-
-    del processes_layer, field_mapping
-    AddMessage(f'{timestamp()} | ⚡ Process {ProcessName} loaded as a new record')
-    reopen_map()
-    RefreshLayer(records_layer)
 
 
 def load_to_records(ProcessName: str) -> None:
@@ -1184,7 +1164,7 @@ def get_AOIExtent() -> Extent:
 
 
 def get_display_extent(output: Literal['Extent', 'Polygon'] = 'Extent') -> Extent|Polygon:
-    """Returns the current extent of the active map שד שמ Extent object or Polygon object"""
+    """Returns the current extent of the active map as an Extent object or Polygon object"""
     extent: Extent = ArcGISProject('current').activeView.camera.getExtent()
 
     if output == 'Polygon':
@@ -1448,7 +1428,7 @@ def respond_to_CMS(ProcessName: str, ProcessType: int, ProjectStatus: Optional[i
 
     # Send a request to CMS
     try:
-        response: Response = requests.get(url, proxies={"http": None, "https": None})
+        response: Response = requests.get(url, proxies={"http": None, "https": None}, timeout=30)
         response.raise_for_status()    # Raises an HTTPError for bad responses (4xx and 5xx)
         AddMessage(f'{timestamp()} | ✅ Responded to CMS')
 
