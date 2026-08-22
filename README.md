@@ -1,24 +1,29 @@
-# National Cadaster Tasks (MNCDB)
+# 🗺️ National Cadaster Tasks (MNCDB)
 
-Python toolset backing the ArcGIS Pro **Task items** (*"אשפי בנק"ל"*) used to edit Israel's National Cadaster Database — a branch-versioned **Parcel Fabric** hosted on ArcGIS Enterprise.
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![ArcGIS Pro 3.3+](https://img.shields.io/badge/ArcGIS%20Pro-3.3%2B-green?logo=esri&logoColor=white)](https://www.esri.com/)
+[![License](https://img.shields.io/badge/License-Proprietary-red)](./LICENSE)
+[![Environments](https://img.shields.io/badge/Environments-Dev%20%7C%20Test%20%7C%20Prod-orange)](./ScriptsAndTools/Utils/Configs.py)
+
+**Python toolset backing the ArcGIS Pro Task items** (*"אשפי בנק"ל"*) used to edit Israel's National Cadaster Database — a branch-versioned **Parcel Fabric** hosted on ArcGIS Enterprise.
 
 Each step an operator clicks in an ArcGIS Pro Task maps to a *script tool* in [Project/NCDBCustomTools.atbx](Project/NCDBCustomTools.atbx), which executes one Python entry point in [ScriptsAndTools/](ScriptsAndTools/). The scripts drive the whole editing lifecycle: validating a process, opening a private branch version, loading and retiring cadastral features, running QA, and posting the result back to `sde.DEFAULT` and to the CMS.
 
-> **This is not a standalone application.** Virtually every module depends on `arcpy` and on `ArcGISProject("current")` — an open `.aprx` with a specific set of Hebrew-named layers. Nothing here runs from a plain shell.
+> ⚠️ **Not a standalone application.** Virtually every module depends on `arcpy` and on `ArcGISProject("current")` — an open `.aprx` with a specific set of Hebrew-named layers. Nothing here runs from a plain shell.
 
 ---
 
-## Table of Contents
+## 📖 Table of Contents
 
 - [Who this is for](#who-this-is-for)
-- [Features](#features)
+- [Features](#-features)
 - [How it fits together](#how-it-fits-together)
-- [Prerequisites](#prerequisites)
-- [Repository layout](#repository-layout)
-- [Installation & Deployment](#installation--deployment)
+- [Prerequisites](#-prerequisites)
+- [Repository layout](#-repository-layout)
+- [Installation & Deployment](#-installation--deployment)
 - [Usage](#usage)
 - [Configuration](#configuration)
-- [Key invariants](#key-invariants)
+- [Key invariants](#-key-invariants)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -34,28 +39,46 @@ Each step an operator clicks in an ArcGIS Pro Task maps to a *script tool* in [P
 
 ---
 
-## Features
+## ✨ Features
 
-**The three-phase editing pipeline**
+### 📊 The Three-Phase Editing Pipeline
 
-- **Start Task** — runs a per-task validation set, creates the process "shelf" folder, opens a branch version, displays the process data, loads in-process features into the fabric, retires the superseded ones, and activates the record.
-- **Update Attributes** — recalculates attributes on the currently *active record*; also owns retirement, block reshaping, record building and status updates used by the other phases.
-- **Evaluation** — QA sweep over a chosen extent: topology rules, gaps & overlaps, adjacent points, disconnected points, deviated parcel areas, redundant vertices, volumetric (3D) overlaps. Each check that finds something adds its own result layer.
-- **Completion** — diffs every edited layer into per-layer `Differences.xlsx` workbooks, reconciles and posts the version, updates status, and notifies the CMS.
+| Phase | Description |
+|-------|-------------|
+| **🚀 Start Task** | Validates process, creates shelf folder, opens branch version, displays data, loads & retires features, activates record |
+| **✏️ Update Attributes** | Recalculates attributes on active record; owns retirement, reshaping, building, status updates |
+| **🔍 Evaluation** | QA sweep: topology, gaps & overlaps, adjacent/disconnected points, deviated areas, redundant vertices, 3D overlaps |
+| **✅ Completion** | Diffs layers → `Differences.xlsx`, reconciles & posts version, updates status, notifies CMS |
 
-**Six supported task types** (`Utils/TypeHints.py::TaskType`)
+### 📋 Six Supported Task Types
 
-`ImproveCurrentCadaster` · `RetireAndCreateCadaster` · `RetireAndCreateCadaster3D` · `CreateNewCadaster` · `ImproveNewCadaster` · `FreeEdit`
+```
+🏗️ ImproveCurrentCadaster
+🔄 RetireAndCreateCadaster
+🌐 RetireAndCreateCadaster3D
+✨ CreateNewCadaster
+🎨 ImproveNewCadaster
+🎯 FreeEdit
+```
 
-**Standalone assistants** ([ScriptsAndTools/Assistants/](ScriptsAndTools/Assistants/))
+### 🛠️ Standalone Assistants
 
-Reinitialize project · Display process data · Print last parcel number · Process record info · Retire points or fronts · Locate unmatched source points · Update blocks geometry from active parcels · Update selected fronts attributes
+Eight helper tools for process management, data inspection, and bulk operations:
 
-**Cross-cutting**
+- 🔧 Reinitialize project
+- 📍 Display process data
+- 🔢 Print last parcel number
+- 📄 Process record info
+- 🗑️ Retire points or fronts
+- 🔎 Locate unmatched source points
+- 📐 Update blocks geometry from active parcels
+- 🏷️ Update selected fronts attributes
 
-- Three-environment switch (Development / Test / Production) from a single config class.
-- Durable per-process "shelf" so later steps read back state instead of re-querying SDE.
-- All operator feedback via `arcpy.AddMessage` / `AddWarning` / `AddError`, with timestamps and phase headers; tabular output via `Helpers.AddTabularMessage`.
+### 🔗 Cross-Cutting Features
+
+- 🌍 **Three-environment switch** (Development / Test / Production) from a single config class
+- 📚 **Durable per-process "shelf"** — later steps read back state instead of re-querying SDE
+- 📢 **Structured operator feedback** via `arcpy.AddMessage` / `AddWarning` / `AddError` with timestamps & phase headers
 
 ---
 
@@ -83,82 +106,115 @@ Parcel Fabric (branch version)  ·  Shelf folder  ·  CMS endpoint
 
 ---
 
-## Prerequisites
+## 📋 Prerequisites
 
-**Software**
+### 💻 Software
 
-- **ArcGIS Pro 3.3 or later**, with its bundled Python environment (`arcpy`).
-  The codebase uses PEP 604 unions (`str | None`) in annotations that are evaluated at import, so **Python 3.10 is the hard floor**.
-- **Parcel Fabric** licensing and a **Standard/Advanced** ArcGIS Pro license.
-- The **3D Analyst** extension for the 3D task family (checked out at runtime by `Helpers`).
+- ✅ **ArcGIS Pro 3.3+** with bundled Python (`arcpy`)
+  - PEP 604 unions (`str | None`) require **Python 3.10 minimum**
+- ✅ **Parcel Fabric** licensing + **Standard/Advanced** ArcGIS Pro license
+- ✅ **3D Analyst** extension for 3D task family (auto-checked at runtime)
 
-**Python packages** — all ship with the ArcGIS Pro conda environment; no `pip install` step exists or is needed:
+### 📦 Python Packages
 
-`arcpy` · `arcgis` · `pandas` · `numpy` · `requests`
+All included with ArcGIS Pro — no `pip install` needed:
 
-**Infrastructure access**
+```
+arcpy  ·  arcgis  ·  pandas  ·  numpy  ·  requests
+```
 
-- ArcGIS Enterprise portal and the `NationalCadasterEditors` feature services (fabric map + in-process map + Version Management Server).
-- SDE connection files for the target environment, on the SDE share.
-- Read/write access to the `Parcel Fabric` network share (scripts, layers, templates and the process library all live there).
-- Reachable CMS endpoint for status callbacks.
-- An organization **VDI account** — Completion asks for those credentials and appends the domain itself.
+### 🏢 Infrastructure Access
 
----
-
-## Repository layout
-
-| Path | Contents |
-| --- | --- |
-| [ScriptsAndTools/](ScriptsAndTools/) | All Python. Top-level files are script-tool entry points. |
-| [ScriptsAndTools/Utils/](ScriptsAndTools/Utils/) | Shared modules — `Configs`, `Helpers`, `Validations`, `UpdateAttributes`, `QA`, `VersionManagement`, `Reports`, `TypeHints`, plus the New Cadaster variants. |
-| [ScriptsAndTools/Assistants/](ScriptsAndTools/Assistants/) | Standalone helper tools (run from a subdirectory — see the `set_path` note below). |
-| [Project/](Project/) | The live ArcGIS Pro project: `Project.aprx`, `Project.gdb`, `NCDBCustomTools.atbx`. |
-| [Tasks/](Tasks/) | Exported `.esriTasks` Task items, versioned by filename (`MNCDB_Tasks_1.7` … `1.8.2`). |
-| [Layers/](Layers/) | `.lyrx` files loaded at runtime — process groups and QA result layers. |
-| [Templates/](Templates/) | `Versions.csv` seed, `Templates.gdb`, `TransferGeometryExpression.lxp`. |
-| [Library/](Library/) | Sample/real per-process shelf data. **Not code.** |
-| `docs/` | Changelog & tutorials page, deployment checklist (Hebrew), configuration deck. |
-| `Bugs/` | Minimal reproductions of ArcGIS Pro platform bugs, kept for Esri support cases. |
+| Component | Purpose |
+|-----------|---------|
+| **ArcGIS Enterprise portal** | Portal authentication & feature services |
+| **NationalCadasterEditors** feature services | Fabric map, in-process map, Version Management Server |
+| **SDE connection files** | Connection to Parcel Fabric for target environment |
+| **Parcel Fabric network share** | Scripts, layers, templates, process library |
+| **CMS endpoint** | Status callbacks & process updates |
+| **VDI account** | Organization credentials for Completion phase |
 
 ---
 
-## Installation & Deployment
+## 📂 Repository Layout
 
-There is **no build, no test suite and no package manifest**. "Installation" means placing the tree on the right share and repointing the project at it.
+```
+📦 NationalCadasterTasks/
+├── 🐍 ScriptsAndTools/                          All Python entry points & shared modules
+│   ├── Start/Update/Evaluation/Completion.py    Main pipeline scripts
+│   ├── Utils/                                   Helpers, Configs, QA, VersionManagement, etc.
+│   └── Assistants/                              Standalone tools (process mgmt, QA, data updates)
+├── 🎨 Project/                                  Live ArcGIS Pro project
+│   ├── Project.aprx                             The project file (requires Hebrew layers)
+│   ├── Project.gdb                              Home geodatabase
+│   └── NCDBCustomTools.atbx                     Toolbox with script-tool definitions
+├── 📋 Tasks/                                    Exported .esriTasks items (versioned)
+├── 🗺️ Layers/                                    .lyrx files (process groups & QA layers)
+├── 📐 Templates/                                Seeds & templates for new processes
+├── 📚 Library/                                  Sample per-process shelf data (not code)
+├── 📖 docs/                                     Changelog, tutorials, deployment checklist (Hebrew)
+├── 🐛 Bugs/                                     Minimal reproductions of ArcGIS Pro bugs
+└── 📄 README.md                                 This file
+```
 
-### 1. Get the code
+| Directory | Purpose |
+|-----------|---------|
+| [ScriptsAndTools/](ScriptsAndTools/) | **Python source.** Top-level `.py` files are script-tool entry points. |
+| [ScriptsAndTools/Utils/](ScriptsAndTools/Utils/) | **Shared modules:** Configs, Helpers, Validations, UpdateAttributes, QA, VersionManagement, Reports, TypeHints + New Cadaster variants. |
+| [ScriptsAndTools/Assistants/](ScriptsAndTools/Assistants/) | **Helper tools** — run from subdirectory; see `set_path` bootstrap below. |
+| [Project/](Project/) | **ArcGIS Pro project:** `.aprx`, `.gdb`, `.atbx` with tool definitions. |
+| [Tasks/](Tasks/) | **Versioned Task items** (`MNCDB_Tasks_1.7` → `1.8.2`). |
+| [Layers/](Layers/) | **Layer definitions** (process groups + QA result layers). |
+| [Templates/](Templates/) | **Seed data:** `Versions.csv`, `Templates.gdb`, expression files. |
+| [Library/](Library/) | **Sample shelf data.** Not code — real/test process artifacts. |
+| [docs/](docs/) | **Documentation** (Hebrew): deployment checklist, configuration, changelog. |
+
+---
+
+## 🚀 Installation & Deployment
+
+> 📌 **No build, no test suite, no package manifest.** "Installation" = placing the tree on the right share + repointing the project.
+
+### Step 1️⃣ — Clone the Repository
 
 ```bash
 git clone <repo-url> NationalCadasterTasks
 cd NationalCadasterTasks
 ```
 
-### 2. Create your configuration
+### Step 2️⃣ — Configure for Your Environment
 
-`ScriptsAndTools/Utils/Configs.py` is **git-ignored** — it holds internal host names, IP addresses and share paths. Create it from the checked-in template:
+Create your environment-specific config from the template:
 
 ```bash
 cp ScriptsAndTools/Utils/Configs.example.py ScriptsAndTools/Utils/Configs.py
 ```
 
-Then fill in every `<placeholder>` and set `Environment` to the environment this copy serves. See [Configuration](#configuration).
+Then fill in **every placeholder** and set `Environment` to your target (Development / Test / Production). See [Configuration](#configuration) for details.
 
-### 3. Deploy to an environment
+### Step 3️⃣ — Deploy to Network Share
 
-The full checklist (Hebrew) lives at `docs/Instructions-update test environment.txt`. In summary:
+Copy the entire folder tree to your network location:
+```
+\\<file-server>\<share>\Parcel Fabric\<Env>Environment\
+```
 
-1. Copy the folder tree to `\\<file-server>\<share>\Parcel Fabric\<Env>Environment\`.
-2. Flip `CNFG.Environment` in that copy's `Configs.py`.
-3. Re-import the Task item from [Tasks/](Tasks/) into the `.aprx`.
-4. Repoint **every** script tool's `tool.script.execute.link` to the new UNC path.
-5. Repoint **every** layer's feature-service URL in the `.aprx`.
+Then follow these **critical repointing steps**:
 
-> ⚠️ Flipping `CNFG.Environment` is **not sufficient on its own** — steps 3–5 are mandatory, and two known gaps bite here (see [Configuration](#configuration)).
+1. ✅ Flip `CNFG.Environment` in your copy's `Configs.py`
+2. ✅ Re-import the Task item from [Tasks/](Tasks/) into the `.aprx`
+3. ✅ Repoint **every** script tool's `tool.script.execute.link` to the new UNC path
+4. ✅ Repoint **every** layer's feature-service URL in the `.aprx`
 
-### 4. Verify
+> 🚨 **Critical:** Simply flipping `CNFG.Environment` is **NOT sufficient**. Steps 2–4 are mandatory or tools will fail silently.
 
-Verification happens **by running the script tool inside ArcGIS Pro** against the target environment — not from a terminal. Run one Start Task end to end and confirm the shelf folder, the branch version and the activated record all appear.
+### Step 4️⃣ — Verify in ArcGIS Pro
+
+**No CLI test path exists.** Verification is manual:
+
+1. Open `Project.aprx` in ArcGIS Pro
+2. Run one **Start Task** end-to-end against your target environment
+3. Confirm these appear: shelf folder, branch version, activated record
 
 ---
 
@@ -260,32 +316,58 @@ Layer files come in two flavours: **environment-suffixed** process groups (`<Gro
 
 ---
 
-## Key invariants
+## ⚡ Key Invariants
 
-Read these before your first change — they are load-bearing.
+**Read these before your first change — they are load-bearing.**
 
-- **Branch versioning.** All edits happen in a per-process branch version `<ProcessName>_<user>_<n>` created by `VersionManagement.open_version`. `close_version` reconciles with `FAVOR_EDIT_VERSION` / `NO_ABORT` and posts to `sde.DEFAULT`. **Never edit `sde.DEFAULT` directly.**
-- **The shelf.** Each process gets `Library/<ProcessName with / → _>/` holding `RecordGUID.txt`, `RetiredParcels2D.txt`, `RetiredBlocks.txt`, `Versions.csv`, `EarlyConflictsReport.xlsx`, `Modifications/`. These are the durable side-channel later steps read back — the record GUID alone has 20+ read sites. Writing them is not optional bookkeeping.
-- **Layers are addressed by Hebrew display name** in the active map (`get_layer('חלקות')`), never by path. Renaming a layer in the `.aprx` breaks the scripts.
-- **Editing sessions.** Feature edits are wrapped in `start_editing(ENV.workspace)` / `stop_editing(editor)`. `ENV.preserveGlobalIds = False` is set deliberately.
-- **Coded domains.** Statuses, record types and process types are integers with Hebrew meanings, commented inline (e.g. `RecordType in [1, 2, 11]  # [תצ"ר, תצ"ר בשטח לא מוסדר, תמ"ר]`). **Keep the inline comment when you touch such a literal.**
-- **Two parallel stacks.** The New Cadaster family duplicates helper names from the classic one — `Utils/NewCadasterHelpers.py` / `Utils/ValidationsNewCadaster.py` vs `Utils/Helpers.py` / `Utils/Validations.py`. They are **not interchangeable**; check which module a symbol comes from before editing.
-- **Output.** Use `arcpy.AddMessage` / `AddWarning` / `AddError` — never `print`. Convention: `f'{timestamp()} | ✔️ ...'`, with a `f'\n ⭕ <phase>:'` header per phase.
-
----
-
-## Contributing
-
-1. Work on a feature branch; `main` is the release branch.
-2. Never commit `ScriptsAndTools/Utils/Configs.py` — it is git-ignored for a reason. Update `Configs.example.py` instead when you add a key.
-3. If you change a tool's parameters, update `tool.content` inside the `.atbx` **and** the script's `__main__` block in the same commit.
-4. Verify by running the affected script tool in ArcGIS Pro against Development. There is no CLI test path.
-5. Shipping a Task version: export a new `.esriTasks` into [Tasks/](Tasks/) and update the changelog section of the docs page.
+| Invariant | Rule | Why It Matters |
+|-----------|------|----------------|
+| **🔀 Branch Versioning** | All edits in per-process branch `<ProcessName>_<user>_<n>` created by `VersionManagement.open_version`. Reconcile with `FAVOR_EDIT_VERSION` / `NO_ABORT`, post to `sde.DEFAULT`. | ❌ Never edit `sde.DEFAULT` directly — breaks the fabric |
+| **📚 The Shelf** | Each process gets `Library/<ProcessName>/` with `RecordGUID.txt`, `RetiredParcels2D.txt`, `RetiredBlocks.txt`, `Versions.csv`, `EarlyConflictsReport.xlsx`, `Modifications/`. This is the durable side-channel. | Writing these is **not optional** — 20+ read sites depend on RecordGUID alone |
+| **🏷️ Layer Names** | Address layers by Hebrew display name in active map: `get_layer('חלקות')`, **never by path**. | Renaming a layer in `.aprx` silently breaks scripts |
+| **✏️ Editing Sessions** | Wrap all feature edits in `start_editing(ENV.workspace)` / `stop_editing(editor)`. `ENV.preserveGlobalIds = False` is intentional. | Ensures transaction safety & consistent GlobalID handling |
+| **🔢 Coded Domains** | Statuses, record types, process types are integers with Hebrew meanings. Always add inline comment: `RecordType in [1, 2, 11]  # [תצ"ר, ...]` | Prevents silent semantic bugs when domains change |
+| **📦 Dual Stacks** | New Cadaster duplicates helper names: `NewCadasterHelpers.py` + `NewCadasterValidations.py` vs `Helpers.py` + `Validations.py`. **Not interchangeable.** | Wrong import = quiet runtime failures; always verify module |
+| **📢 User Output** | Use `arcpy.AddMessage` / `AddWarning` / `AddError` only. Never `print`. Format: `f'{timestamp()} \| ✔️ ...'` with phase headers. | Terminal output never reaches the operator; arcpy messages appear in task UI |
 
 ---
 
-## License
+## 🤝 Contributing
 
-No license file is present in this repository. This is internal software for the National Cadaster Database; treat it as **proprietary and all rights reserved** unless the project owner states otherwise.
+**Before you start:**
 
-If this repository should carry an explicit license, add a `LICENSE` file and update this section.
+1. ✅ Work on a **feature branch** — `main` is the release branch
+2. ❌ **Never commit** `ScriptsAndTools/Utils/Configs.py` (git-ignored). Update `Configs.example.py` when adding keys
+3. 🔗 **Tool parameters are positional & bound to `.atbx`** — update both `tool.content` *and* the script's `__main__` block in the same commit
+4. 🧪 **Verify in ArcGIS Pro** against Development — no CLI test path exists
+5. 🚀 **Shipping a Task version:** Export `.esriTasks` to [Tasks/](Tasks/) and update the docs changelog
+
+> 💡 **Pro tip:** Use `unzip -p "Project/NCDBCustomTools.atbx" "<ToolName>.tool/tool.content"` to inspect the parameter contract without opening ArcGIS Pro.
+
+---
+
+## 📜 License
+
+This repository contains **internal software for the National Cadaster Database**.
+
+- **No explicit license file** is present
+- Treat as **proprietary — all rights reserved** unless the project owner states otherwise
+- To add an explicit license, create a `LICENSE` file and update this section
+
+---
+
+## 🔗 Quick Links
+
+- 📊 **Configuration:** [Configs.py](ScriptsAndTools/Utils/Configs.py) — the single source of truth for environments
+- 📖 **Deployment guide** (Hebrew): [docs/Instructions-update test environment.txt](docs/Instructions-update%20test%20environment.txt)
+- 🎯 **Task types:** [TypeHints.py::TaskType](ScriptsAndTools/Utils/TypeHints.py#L40)
+- 🛠️ **Toolbox definition:** [Project/NCDBCustomTools.atbx](Project/NCDBCustomTools.atbx)
+- 📋 **Task versions:** [Tasks/](Tasks/) — `MNCDB_Tasks_1.7` → `1.8.2`
+
+---
+
+<div align="center">
+
+**Made with 🗺️ for cadastral editing in ArcGIS Pro**
+
+</div>
