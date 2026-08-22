@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Code Review</title>
+    <style>
+        /* ---- Design tokens (dataviz-validated light palette) ---------------- */
+        :root {
+            --page:        #f3f3f0;   /* page plane */
+            --surface:     #fcfcfb;   /* card surface */
+            --surface-2:   #ffffff;
+            --ink:         #0b0b0b;   /* primary text */
+            --ink-2:       #52514e;   /* secondary text */
+            --muted:       #898781;   /* axis / labels */
+            --grid:        #e1e0d9;   /* hairline */
+            --baseline:    #c3c2b7;
+            --border:      rgba(11,11,11,0.10);
+            --accent:      #2a78d6;   /* blue */
+            --accent-soft: #eaf2fc;
+
+            /* status / severity palette (fixed, never themed) */
+            --bugs:        #d03b3b;   /* critical  → correctness bugs   */
+            --bugs-soft:   #fbeaea;
+            --reliability: #e07b1a;   /* warning   → robustness         */
+            --reliability-soft: #fdf1e2;
+            --style:       #7f8c8d;   /* muted     → style / docs       */
+            --style-soft:  #eef0f0;
+            --good:        #0ca30c;   /* clean / verified-as-fine       */
+            --good-soft:   #e7f6e7;
+
+            --radius: 10px;
+            --shadow: 0 1px 2px rgba(11,11,11,0.04), 0 4px 16px rgba(11,11,11,0.06);
+            --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --mono: "Cascadia Code", "SF Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--sans);
+            line-height: 1.6;
+            color: var(--ink);
+            background: var(--page);
+            padding: 2rem 1rem 4rem;
+        }
+
+        .container {
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+
+        /* ---- Header --------------------------------------------------------- */
+        header.report-head { margin-bottom: 1.5rem; }
+
+        h1 {
+            color: var(--ink);
+            font-size: 1.9rem;
+            line-height: 1.25;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .subtitle {
+            color: var(--ink-2);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            font-family: var(--mono);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem 1rem;
+        }
+        .subtitle .meta-chip {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0.15rem 0.7rem;
+        }
+
+        /* ---- Cards ---------------------------------------------------------- */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem 1.75rem;
+            margin: 1.25rem 0;
+        }
+
+        h2 {
+            font-size: 1.15rem;
+            font-weight: 650;
+            color: var(--ink);
+            margin-bottom: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        h2 .count-pill {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--ink-2);
+            background: var(--page);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0.05rem 0.55rem;
+        }
+
+        .summary p { margin: 0.35rem 0; color: var(--ink-2); }
+        .summary strong { color: var(--ink); }
+        .summary ul { margin: 0.5rem 0 0.5rem 1.4rem; color: var(--ink-2); }
+        .summary li { margin: 0.2rem 0; }
+        .positive { color: var(--good); }
+
+        /* ---- Dashboard ------------------------------------------------------ */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1.1fr 2fr;
+            gap: 1.25rem;
+            align-items: stretch;
+        }
+        @media (max-width: 820px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+
+        .stat-hero {
+            background: linear-gradient(180deg, var(--accent-soft), var(--surface));
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem 1.75rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .stat-hero .stat-value {
+            font-size: 3.4rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--ink);
+            letter-spacing: -0.02em;
+        }
+        .stat-hero .stat-label {
+            font-size: 0.95rem;
+            color: var(--ink-2);
+            margin-top: 0.35rem;
+        }
+        .stat-hero .stat-sub {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-top: 0.75rem;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.9rem;
+        }
+        @media (max-width: 560px) {
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .stat-tile {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-top: 3px solid var(--baseline);
+            border-radius: 8px;
+            padding: 0.9rem 1rem;
+        }
+        .stat-tile.tile-bugs        { border-top-color: var(--bugs); }
+        .stat-tile.tile-reliability { border-top-color: var(--reliability); }
+        .stat-tile.tile-style       { border-top-color: var(--style); }
+        .stat-tile.tile-scope       { border-top-color: var(--accent); }
+        .stat-tile.tile-good        { border-top-color: var(--good); }
+
+        .stat-tile .stat-tile-value {
+            font-size: 1.9rem;
+            font-weight: 700;
+            line-height: 1.1;
+            color: var(--ink);
+        }
+        .stat-tile .stat-tile-label {
+            font-size: 0.82rem;
+            color: var(--ink-2);
+            margin-top: 0.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* severity distribution meter (the one chart) */
+        .sevbar-wrap { grid-column: 1 / -1; margin-top: 0.25rem; }
+        .sevbar-title { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .sevbar {
+            display: flex;
+            gap: 2px;                 /* 2px surface gap between segments */
+            height: 14px;
+            background: var(--page);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .sevbar-seg { min-width: 3px; }
+        .seg-bugs        { background: var(--bugs); }
+        .seg-reliability { background: var(--reliability); }
+        .seg-style       { background: var(--style); }
+        .sevbar-empty { flex: 1; background: var(--good); opacity: 0.5; }
+
+        .sevbar-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem 1.25rem;
+            margin-top: 0.6rem;
+            font-size: 0.82rem;
+            color: var(--ink-2);
+        }
+        .sevbar-legend .lg { display: inline-flex; align-items: center; gap: 0.4rem; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+        .dot-bugs        { background: var(--bugs); }
+        .dot-reliability { background: var(--reliability); }
+        .dot-style       { background: var(--style); }
+        .dot-good        { background: var(--good); }
+
+        /* ---- Filter bar ----------------------------------------------------- */
+        .filter-bar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(252,252,251,0.92);
+            backdrop-filter: saturate(1.1) blur(6px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 0.85rem 1rem;
+            margin: 1.25rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.6rem 0.9rem;
+        }
+        .filter-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin-right: 0.1rem;
+        }
+        .chip-group { display: inline-flex; flex-wrap: wrap; gap: 0.4rem; }
+        .chip {
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            color: var(--ink-2);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0.32rem 0.8rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: background 0.12s, border-color 0.12s, color 0.12s;
+        }
+        .chip:hover { background: var(--page); }
+        .chip .chip-count {
+            font-size: 0.72rem;
+            font-weight: 600;
+            background: var(--page);
+            border-radius: 999px;
+            padding: 0.02rem 0.4rem;
+            color: var(--ink-2);
+        }
+        .chip.chip-active { color: #fff; border-color: transparent; }
+        .chip.chip-active .chip-count { background: rgba(255,255,255,0.28); color: #fff; }
+        .chip[data-filter-severity="all"].chip-active         { background: var(--accent); }
+        .chip[data-filter-severity="bugs"].chip-active        { background: var(--bugs); }
+        .chip[data-filter-severity="reliability"].chip-active { background: var(--reliability); }
+        .chip[data-filter-severity="style"].chip-active       { background: var(--style); }
+
+        .filter-field { display: inline-flex; align-items: center; gap: 0.4rem; }
+        select#subjectFilter, input#searchFilter {
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            color: var(--ink);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.35rem 0.6rem;
+        }
+        input#searchFilter { min-width: 200px; }
+        select#subjectFilter:focus-visible,
+        input#searchFilter:focus-visible,
+        .chip:focus-visible,
+        .clear-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        .filter-spacer { flex: 1 1 auto; }
+        .result-count { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .clear-btn {
+            font-family: var(--sans);
+            font-size: 0.82rem;
+            color: var(--accent);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.2rem 0.3rem;
+            text-decoration: underline;
+        }
+
+        /* ---- Findings table ------------------------------------------------- */
+        .findings-card { padding-top: 1.25rem; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        thead th {
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--muted);
+            padding: 0.5rem 0.7rem;
+            border-bottom: 2px solid var(--grid);
+            position: sticky;
+            top: 64px;               /* clears the sticky filter bar */
+            background: var(--surface);
+        }
+        tbody td {
+            padding: 0.75rem 0.7rem;
+            border-bottom: 1px solid var(--grid);
+            vertical-align: top;
+        }
+        tbody tr.finding-row:hover td { background: var(--accent-soft); }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+        .badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
+        .badge-bugs        { background: var(--bugs-soft);        color: #8f2020; }
+        .badge-bugs::before        { background: var(--bugs); }
+        .badge-reliability { background: var(--reliability-soft); color: #955210; }
+        .badge-reliability::before { background: var(--reliability); }
+        .badge-style       { background: var(--style-soft);       color: #4c5657; }
+        .badge-style::before       { background: var(--style); }
+
+        .line-ref { font-family: var(--mono); font-weight: 600; color: var(--accent); white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .function-name { font-family: var(--mono); color: #6d3aa3; font-weight: 500; }
+        .col-title { font-weight: 600; color: var(--ink); }
+        .col-desc { color: var(--ink-2); }
+        .col-fix { color: var(--ink-2); }
+
+        code {
+            background: var(--page);
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 0.85em;
+            color: #b5305a;
+        }
+        pre {
+            background: #f6f8fa;
+            border: 1px solid var(--grid);
+            border-left: 3px solid var(--accent);
+            padding: 0.75rem 0.9rem;
+            overflow-x: auto;
+            border-radius: 6px;
+            margin: 0.4rem 0 0;
+        }
+        pre code { background: none; padding: 0; color: var(--ink); font-size: 0.82rem; }
+        details { margin-top: 0.4rem; }
+        summary { cursor: pointer; color: var(--accent); font-size: 0.82rem; }
+
+        .empty-state {
+            text-align: center;
+            color: var(--muted);
+            padding: 2.5rem 1rem;
+            font-size: 0.95rem;
+        }
+
+        /* ---- Priority + verified ------------------------------------------- */
+        .priority { border-left: 4px solid var(--reliability); }
+        .priority ol { margin: 0.5rem 0 0.5rem 1.3rem; }
+        .priority li { margin: 0.6rem 0; color: var(--ink-2); }
+        .priority li strong { color: var(--ink); }
+        .note {
+            font-style: italic;
+            color: var(--ink-2);
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background: var(--page);
+            border-left: 3px solid var(--muted);
+            border-radius: 0 6px 6px 0;
+        }
+        .verified { border-left: 4px solid var(--good); }
+
+        .visually-hidden {
+            position: absolute; width: 1px; height: 1px;
+            padding: 0; margin: -1px; overflow: hidden;
+            clip: rect(0,0,0,0); border: 0;
+        }
+
+        /* ---- Multi-file shell (sidebar + panels) --------------------------- */
+        /* Present only when ≥2 files are reviewed; single-file reports omit all
+           of this and render the plain container. */
+        .report-shell {
+            display: grid;
+            grid-template-columns: 250px minmax(0, 1fr);
+            gap: 1.25rem;
+            align-items: start;
+            margin-top: 1.25rem;
+        }
+        @media (max-width: 880px) {
+            .report-shell { grid-template-columns: 1fr; }
+        }
+
+        .file-nav {
+            position: sticky;
+            top: 1rem;
+            align-self: start;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1rem 0.9rem;
+            max-height: calc(100vh - 2rem);
+            overflow: auto;
+        }
+        @media (max-width: 880px) {
+            .file-nav { position: static; max-height: none; }
+        }
+        .file-nav h2 { font-size: 0.95rem; margin-bottom: 0.75rem; }
+
+        .file-nav .global-search-field { margin-bottom: 0.85rem; }
+        .file-nav input.js-global-search {
+            width: 100%;
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            color: var(--ink);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.4rem 0.6rem;
+        }
+        .file-nav input.js-global-search:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .global-search-summary {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin: 0.4rem 0 0.2rem;
+            min-height: 1em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .file-list { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; }
+
+        .file-link {
+            width: 100%;
+            text-align: left;
+            font-family: var(--sans);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--baseline);
+            border-radius: 8px;
+            padding: 0.55rem 0.6rem;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            transition: background 0.12s, border-color 0.12s;
+        }
+        .file-link:hover { background: var(--page); }
+        .file-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .file-link.active { border-left-color: var(--accent); background: var(--accent-soft); }
+        .file-link.no-match { opacity: 0.4; }
+
+        .file-link-name {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--ink);
+            word-break: break-all;
+        }
+        .file-link-counts { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
+        .mini {
+            font-size: 0.7rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            border-radius: 999px;
+            padding: 0.02rem 0.4rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .mini::before { content: ""; width: 6px; height: 6px; border-radius: 50%; }
+        .mini-bugs        { background: var(--bugs-soft);        color: #8f2020; }
+        .mini-bugs::before        { background: var(--bugs); }
+        .mini-reliability { background: var(--reliability-soft); color: #955210; }
+        .mini-reliability::before { background: var(--reliability); }
+        .mini-style       { background: var(--style-soft);       color: #4c5657; }
+        .mini-style::before       { background: var(--style); }
+        .file-link-match {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #fff;
+            background: var(--accent);
+            border-radius: 999px;
+            padding: 0.02rem 0.45rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* One panel per file; only the active one is shown. */
+        .file-panels { min-width: 0; }
+        .file-panel { display: none; }
+        .file-panel.active { display: block; }
+        /* First card inside a panel shouldn't add a doubled top margin */
+        .file-panel > .card:first-child,
+        .file-panel > .filter-bar:first-child { margin-top: 0; }
+        /* Per-panel sticky filter bars clear nothing above them inside the panel */
+        .file-panel .filter-bar { top: 0.5rem; }
+        .file-panel thead th { top: 0; }
+
+        @media print {
+            /* Print every panel; hide the navigator */
+            .file-nav { display: none; }
+            .report-shell { display: block; }
+            .file-panel { display: block !important; break-before: page; }
+            .file-panel:first-child { break-before: auto; }
+        }
+
+        @media print {
+            body { background: #fff; padding: 0; }
+            .filter-bar { display: none; }
+            .card { box-shadow: none; break-inside: avoid; }
+            thead th { position: static; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+  <header class="report-head"><h1>Python Code Review — <span>2 files</span></h1>
+  <p class="subtitle"><span class="meta-chip">🕒 2026-08-20 12:00</span><span class="meta-chip">🌿 Branch: Agent</span><span class="meta-chip">🤖 Model: demo</span></p></header>
+  <section class="card summary"><h2>Review summary</h2><p><strong>Trigger:</strong> Multi-file layout demo (hand-built from the template — not a real review).</p><p><strong>Scope:</strong> 2 files · 82 functions · 5 findings</p>
+  <ul><li><code>ScriptsAndTools/Utils/Helpers.py</code> — 3 findings</li><li><code>ScriptsAndTools/Utils/QA.py</code> — 2 findings</li></ul></section>
+  <div class="report-shell">
+    <nav class="file-nav" aria-label="Reviewed files"><h2>Files</h2>
+      <div class="global-search-field"><label class="visually-hidden" for="gs">Search across all files</label>
+        <input type="search" class="js-global-search" id="gs" placeholder="Search all files…"><div class="global-search-summary js-global-summary"></div></div>
+      <ul class="file-list">
+        <li><button class="file-link active" data-target="file-helpers"><span class="file-link-name">Helpers.py</span><span class="file-link-counts"><span class="mini mini-bugs">1</span><span class="mini mini-reliability">1</span><span class="mini mini-style">1</span><span class="file-link-match" hidden></span></span></button></li>
+        <li><button class="file-link" data-target="file-qa"><span class="file-link-name">QA.py</span><span class="file-link-counts"><span class="mini mini-bugs">1</span><span class="mini mini-style">1</span><span class="file-link-match" hidden></span></span></button></li>
+      </ul></nav>
+    <div class="file-panels">
+      
+<section class="file-panel review-scope active" id="file-helpers" data-file="Helpers.py">
+  <section class="card">
+    <h2>Dashboard — Helpers.py</h2>
+    <div class="dashboard">
+      <div class="stat-hero"><div class="stat-value">3</div><div class="stat-label">Total findings</div><div class="stat-sub">Helpers.py · 3 functions</div></div>
+      <div class="stat-grid">
+        <div class="stat-tile tile-bugs"><div class="stat-tile-value">1</div><div class="stat-tile-label"><span class="dot dot-bugs"></span>🐛 Correctness</div></div>
+        <div class="stat-tile tile-reliability"><div class="stat-tile-value">1</div><div class="stat-tile-label"><span class="dot dot-reliability"></span>⚠️ Robustness</div></div>
+        <div class="stat-tile tile-style"><div class="stat-tile-value">1</div><div class="stat-tile-label"><span class="dot dot-style"></span>🧹 Style / docs</div></div>
+        <div class="sevbar-wrap"><div class="sevbar-title">Findings by severity</div><div class="sevbar"><div class="sevbar-seg seg-bugs" style="flex:1"></div>
+<div class="sevbar-seg seg-reliability" style="flex:1"></div>
+<div class="sevbar-seg seg-style" style="flex:1"></div></div>
+          <div class="sevbar-legend"><span class="lg"><span class="dot dot-bugs"></span>Correctness · 1</span><span class="lg"><span class="dot dot-reliability"></span>Robustness · 1</span><span class="lg"><span class="dot dot-style"></span>Style / docs · 1</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="filter-bar" role="region" aria-label="Filter findings">
+    <span class="filter-label">Type</span>
+    <div class="chip-group" role="group">
+      <button class="chip chip-active" data-filter-severity="all" aria-pressed="true">All <span class="chip-count">3</span></button>
+      <button class="chip" data-filter-severity="bugs" aria-pressed="false">🐛 <span class="chip-count">1</span></button>
+      <button class="chip" data-filter-severity="reliability" aria-pressed="false">⚠️ <span class="chip-count">1</span></button>
+      <button class="chip" data-filter-severity="style" aria-pressed="false">🧹 <span class="chip-count">1</span></button>
+    </div>
+    <span class="filter-field"><label class="filter-label">Subject</label><select class="js-subject"><option value="all">All subjects</option><option value="get_layer">get_layer</option>
+<option value="get_table">get_table</option>
+<option value="get_feature_layer_id">get_feature_layer_id</option></select></span>
+    <span class="filter-field"><input type="search" class="js-search" placeholder="Search Helpers.py…"></span>
+    <span class="filter-spacer"></span><span class="result-count js-result-count">0 findings</span>
+    <button class="clear-btn js-clear" hidden>Clear filters</button>
+  </div>
+  <section class="card findings-card">
+    <h2>Findings <span class="count-pill js-findings-count">3</span></h2>
+    <table><thead><tr><th>Type</th><th>Lines</th><th>Function</th><th>Title</th><th>Description</th><th>Fix suggestion</th></tr></thead>
+    <tbody><tr class="finding-row" data-severity="bugs" data-subject="get_layer"><td><span class="badge badge-bugs">🐛 Correctness</span></td><td><span class="line-ref">173</span></td><td><span class="function-name">get_layer</span></td><td class="col-title">AddError on optional layer</td><td class="col-desc">Reports failure for a handled None return.</td><td class="col-fix">Use AddWarning for a non-fatal miss.</td></tr>
+<tr class="finding-row" data-severity="reliability" data-subject="get_table"><td><span class="badge badge-reliability">⚠️ Robustness</span></td><td><span class="line-ref">196</span></td><td><span class="function-name">get_table</span></td><td class="col-title">Message lacks timestamp</td><td class="col-desc">Inconsistent with get_layer's format.</td><td class="col-fix">Add timestamp() prefix.</td></tr>
+<tr class="finding-row" data-severity="style" data-subject="get_feature_layer_id"><td><span class="badge badge-style">🧹 Style</span></td><td><span class="line-ref">212</span></td><td><span class="function-name">get_feature_layer_id</span></td><td class="col-title">Trailing whitespace</td><td class="col-desc">Cosmetic residue after refactor.</td><td class="col-fix">Strip the blank line.</td></tr></tbody></table>
+    <div class="empty-state js-empty-state" hidden>No findings match the current filters.</div>
+  </section>
+</section>
+      
+<section class="file-panel review-scope" id="file-qa" data-file="QA.py">
+  <section class="card">
+    <h2>Dashboard — QA.py</h2>
+    <div class="dashboard">
+      <div class="stat-hero"><div class="stat-value">2</div><div class="stat-label">Total findings</div><div class="stat-sub">QA.py · 2 functions</div></div>
+      <div class="stat-grid">
+        <div class="stat-tile tile-bugs"><div class="stat-tile-value">1</div><div class="stat-tile-label"><span class="dot dot-bugs"></span>🐛 Correctness</div></div>
+        <div class="stat-tile tile-reliability"><div class="stat-tile-value">0</div><div class="stat-tile-label"><span class="dot dot-reliability"></span>⚠️ Robustness</div></div>
+        <div class="stat-tile tile-style"><div class="stat-tile-value">1</div><div class="stat-tile-label"><span class="dot dot-style"></span>🧹 Style / docs</div></div>
+        <div class="sevbar-wrap"><div class="sevbar-title">Findings by severity</div><div class="sevbar"><div class="sevbar-seg seg-bugs" style="flex:1"></div>
+<div class="sevbar-seg seg-style" style="flex:1"></div></div>
+          <div class="sevbar-legend"><span class="lg"><span class="dot dot-bugs"></span>Correctness · 1</span><span class="lg"><span class="dot dot-reliability"></span>Robustness · 0</span><span class="lg"><span class="dot dot-style"></span>Style / docs · 1</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="filter-bar" role="region" aria-label="Filter findings">
+    <span class="filter-label">Type</span>
+    <div class="chip-group" role="group">
+      <button class="chip chip-active" data-filter-severity="all" aria-pressed="true">All <span class="chip-count">2</span></button>
+      <button class="chip" data-filter-severity="bugs" aria-pressed="false">🐛 <span class="chip-count">1</span></button>
+      <button class="chip" data-filter-severity="reliability" aria-pressed="false">⚠️ <span class="chip-count">0</span></button>
+      <button class="chip" data-filter-severity="style" aria-pressed="false">🧹 <span class="chip-count">1</span></button>
+    </div>
+    <span class="filter-field"><label class="filter-label">Subject</label><select class="js-subject"><option value="all">All subjects</option><option value="track_gaps_overlaps">track_gaps_overlaps</option>
+<option value="eval_topology_rules">eval_topology_rules</option></select></span>
+    <span class="filter-field"><input type="search" class="js-search" placeholder="Search QA.py…"></span>
+    <span class="filter-spacer"></span><span class="result-count js-result-count">0 findings</span>
+    <button class="clear-btn js-clear" hidden>Clear filters</button>
+  </div>
+  <section class="card findings-card">
+    <h2>Findings <span class="count-pill js-findings-count">2</span></h2>
+    <table><thead><tr><th>Type</th><th>Lines</th><th>Function</th><th>Title</th><th>Description</th><th>Fix suggestion</th></tr></thead>
+    <tbody><tr class="finding-row" data-severity="bugs" data-subject="track_gaps_overlaps"><td><span class="badge badge-bugs">🐛 Correctness</span></td><td><span class="line-ref">88</span></td><td><span class="function-name">track_gaps_overlaps</span></td><td class="col-title">Off-by-one on max_width</td><td class="col-desc">Misses gaps exactly max_width wide.</td><td class="col-fix">Use &lt;= comparison.</td></tr>
+<tr class="finding-row" data-severity="style" data-subject="eval_topology_rules"><td><span class="badge badge-style">🧹 Style</span></td><td><span class="line-ref">140</span></td><td><span class="function-name">eval_topology_rules</span></td><td class="col-title">Docstring missing Returns</td><td class="col-desc">Contract incomplete.</td><td class="col-fix">Add a Returns: section.</td></tr></tbody></table>
+    <div class="empty-state js-empty-state" hidden>No findings match the current filters.</div>
+  </section>
+</section>
+    </div>
+  </div>
+</div>
+<script>
+/* Findings filter + multi-file navigation.
+   - A "scope" (.review-scope) is one filterable unit: the whole page in a
+     single-file report, or one .file-panel per file in a multi-file report.
+   - Each scope gets its own severity chips + subject <select> + text search,
+     found by class (js-*) with the single-file ids as a fallback. Filtering
+     only toggles row visibility (no DOM injection) and updates that scope's
+     counts + empty state.
+   - When a .file-nav sidebar is present (≥2 files), clicking a file-link swaps
+     the active panel, and a global search box ANDs a query across every panel,
+     badging each file-link with its match count and jumping to the first hit. */
+(function () {
+    function qsa(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+    function qs(sel, root) { return (root || document).querySelector(sel); }
+
+    var globalQuery = '';
+
+    /* ---- one filterable scope (single page, or one file panel) ------------ */
+    function initScope(scope) {
+        var rows        = qsa('.finding-row', scope);
+        var chips       = qsa('[data-filter-severity]', scope);
+        var subjectSel  = qs('.js-subject', scope)      || qs('#subjectFilter', scope);
+        var searchInp   = qs('.js-search', scope)       || qs('#searchFilter', scope);
+        var resultCount = qs('.js-result-count', scope) || qs('#resultCount', scope);
+        var findingsCnt = qs('.js-findings-count', scope) || qs('#findingsCount', scope);
+        var emptyState  = qs('.js-empty-state', scope)  || qs('#emptyState', scope);
+        var clearBtn    = qs('.js-clear', scope)        || qs('#clearFilters', scope);
+        var activeSev   = 'all';
+
+        function matchesGlobal(row) {
+            return globalQuery === '' || row.textContent.toLowerCase().indexOf(globalQuery) !== -1;
+        }
+
+        function apply() {
+            var subj = subjectSel ? subjectSel.value : 'all';
+            var q = searchInp ? searchInp.value.trim().toLowerCase() : '';
+            var visible = 0;
+            rows.forEach(function (row) {
+                var okSev  = activeSev === 'all' || row.getAttribute('data-severity') === activeSev;
+                var okSubj = subj === 'all' || row.getAttribute('data-subject') === subj;
+                var okText = q === '' || row.textContent.toLowerCase().indexOf(q) !== -1;
+                var show = okSev && okSubj && okText && matchesGlobal(row);
+                row.style.display = show ? '' : 'none';
+                if (show) { visible++; }
+            });
+            var label = visible + (visible === 1 ? ' finding' : ' findings');
+            if (resultCount) { resultCount.textContent = label; }
+            if (findingsCnt) { findingsCnt.textContent = String(visible); }
+            if (emptyState)  { emptyState.hidden = visible !== 0 || rows.length === 0; }
+            var filtering = activeSev !== 'all' || subj !== 'all' || q !== '';
+            if (clearBtn) { clearBtn.hidden = !filtering; }
+        }
+
+        /* rows in this scope matching only the global query (for sidebar badges) */
+        function globalMatchCount() {
+            if (globalQuery === '') { return rows.length; }
+            var n = 0;
+            rows.forEach(function (row) { if (matchesGlobal(row)) { n++; } });
+            return n;
+        }
+
+        chips.forEach(function (chip) {
+            chip.addEventListener('click', function () {
+                activeSev = chip.getAttribute('data-filter-severity');
+                chips.forEach(function (c) {
+                    var on = c === chip;
+                    c.classList.toggle('chip-active', on);
+                    c.setAttribute('aria-pressed', on ? 'true' : 'false');
+                });
+                apply();
+            });
+        });
+        if (subjectSel) { subjectSel.addEventListener('change', apply); }
+        if (searchInp)  { searchInp.addEventListener('input', apply); }
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                activeSev = 'all';
+                chips.forEach(function (c) {
+                    var on = c.getAttribute('data-filter-severity') === 'all';
+                    c.classList.toggle('chip-active', on);
+                    c.setAttribute('aria-pressed', on ? 'true' : 'false');
+                });
+                if (subjectSel) { subjectSel.value = 'all'; }
+                if (searchInp)  { searchInp.value = ''; }
+                apply();
+            });
+        }
+
+        return { el: scope, apply: apply, globalMatchCount: globalMatchCount };
+    }
+
+    var scopeEls = qsa('.review-scope');
+    if (!scopeEls.length) { scopeEls = [document.body]; }   /* defensive fallback */
+    var scopes = scopeEls.map(initScope);
+    scopes.forEach(function (s) { s.apply(); });
+
+    /* ---- multi-file navigation (only when the sidebar exists) ------------- */
+    var fileLinks = qsa('.file-link');
+    var globalInp = qs('.js-global-search');
+    var globalSum = qs('.js-global-summary');
+
+    function scopeById(id) {
+        for (var i = 0; i < scopes.length; i++) {
+            if (scopes[i].el.id === id) { return scopes[i]; }
+        }
+        return null;
+    }
+
+    function activatePanel(id) {
+        qsa('.file-panel').forEach(function (p) { p.classList.toggle('active', p.id === id); });
+        fileLinks.forEach(function (l) {
+            var on = l.getAttribute('data-target') === id;
+            l.classList.toggle('active', on);
+            l.setAttribute('aria-current', on ? 'true' : 'false');
+        });
+    }
+
+    fileLinks.forEach(function (link) {
+        link.addEventListener('click', function () { activatePanel(link.getAttribute('data-target')); });
+    });
+
+    if (globalInp) {
+        globalInp.addEventListener('input', function () {
+            globalQuery = globalInp.value.trim().toLowerCase();
+            scopes.forEach(function (s) { s.apply(); });
+
+            var totalMatches = 0, filesWithMatch = 0, firstMatchId = null;
+            fileLinks.forEach(function (link) {
+                var id = link.getAttribute('data-target');
+                var scope = scopeById(id);
+                var n = scope ? scope.globalMatchCount() : 0;
+                var badge = qs('.file-link-match', link);
+                if (globalQuery === '') {
+                    if (badge) { badge.hidden = true; }
+                    link.classList.remove('no-match');
+                } else {
+                    if (badge) { badge.hidden = false; badge.textContent = n + ' hit' + (n === 1 ? '' : 's'); }
+                    link.classList.toggle('no-match', n === 0);
+                    if (n > 0) {
+                        totalMatches += n;
+                        filesWithMatch++;
+                        if (!firstMatchId) { firstMatchId = id; }
+                    }
+                }
+            });
+
+            if (globalSum) {
+                globalSum.textContent = globalQuery === ''
+                    ? ''
+                    : (totalMatches + ' match' + (totalMatches === 1 ? '' : 'es') +
+                       ' in ' + filesWithMatch + ' file' + (filesWithMatch === 1 ? '' : 's'));
+            }
+            if (globalQuery !== '' && firstMatchId) { activatePanel(firstMatchId); }
+        });
+    }
+})();
+</script>
+</body>
+</html>
