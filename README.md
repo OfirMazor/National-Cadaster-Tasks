@@ -152,8 +152,6 @@ arcpy  ·  arcgis  ·  pandas  ·  numpy  ·  requests
 ├── 🗺️ Layers/                                    .lyrx files (process groups & QA layers)
 ├── 📐 Templates/                                Seeds & templates for new processes
 ├── 📚 Library/                                  Sample per-process shelf data (not code)
-├── 📖 docs/                                     Changelog, tutorials, deployment checklist (Hebrew)
-├── 🐛 Bugs/                                     Minimal reproductions of ArcGIS Pro bugs
 └── 📄 README.md                                 This file
 ```
 
@@ -167,7 +165,6 @@ arcpy  ·  arcgis  ·  pandas  ·  numpy  ·  requests
 | [Layers/](Layers/) | **Layer definitions** (process groups + QA result layers). |
 | [Templates/](Templates/) | **Seed data:** `Versions.csv`, `Templates.gdb`, expression files. |
 | [Library/](Library/) | **Sample shelf data.** Not code — real/test process artifacts. |
-| [docs/](docs/) | **Documentation** (Hebrew): deployment checklist, configuration, changelog. |
 
 ---
 
@@ -359,7 +356,6 @@ This repository contains **internal software for the National Cadaster Database*
 ## 🔗 Quick Links
 
 - 📊 **Configuration:** [Configs.py](ScriptsAndTools/Utils/Configs.py) — the single source of truth for environments
-- 📖 **Deployment guide** (Hebrew): [docs/Instructions-update test environment.txt](docs/Instructions-update%20test%20environment.txt)
 - 🎯 **Task types:** [TypeHints.py::TaskType](ScriptsAndTools/Utils/TypeHints.py#L40)
 - 🛠️ **Toolbox definition:** [Project/NCDBCustomTools.atbx](Project/NCDBCustomTools.atbx)
 - 📋 **Task versions:** [Tasks/](Tasks/) — `MNCDB_Tasks_1.7` → `1.8.2`

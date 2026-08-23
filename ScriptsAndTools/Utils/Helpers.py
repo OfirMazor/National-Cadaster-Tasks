@@ -14,8 +14,12 @@ from arcpy.management import SelectLayerByLocation as SelectByLocation, Append, 
 
 
 def timestamp() -> str:
-    """Returns the current time"""
-    current_time: str = str(dt.datetime.now().strftime("%H:%M:%S"))
+    """Returns the current time.
+
+    Returns:
+        str: The current time formatted as HH:MM:SS.
+    """
+    current_time: str = dt.datetime.now().strftime("%H:%M:%S")
     return current_time
 
 
@@ -26,6 +30,10 @@ def set_priority(priority: Literal['RealTime', 'High', 'AboveNormal', 'Normal', 
     Parameters:
         priority (str, optional): The priority level to set. Default is 'High'.
     """
+
+    # Get the ArcGIS Pro Windows process ID
+    pid: str = str(os.getpid())
+
     # Mapping string priority to WMIC integer value
     priority_map: dict[str, int] = {'Idle': 64,
                                     'BelowNormal': 16384,
@@ -34,18 +42,25 @@ def set_priority(priority: Literal['RealTime', 'High', 'AboveNormal', 'Normal', 
                                     'High': 128,  # Default
                                     'RealTime': 256}
 
-    # Get the process ID
-    pid: str = str(os.getpid())
-    # Get the corresponding integer priority
-    priority_code = priority_map.get(priority, 128)
-    # Construct the command
-    command = f'wmic process where processid="{pid}" CALL setpriority {priority_code}'
-    # Run the command
+    if priority not in priority_map:
+        AddError(f"{timestamp()} | Invalid priority: {priority} is not a valid priority level")
+        return None
+
+    # Construct and run the command
+    command: str = f'wmic process where processid="{pid}" CALL setpriority {priority_map[priority]}'
     subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def cursor_length(cursor: Scur|Ucur) -> int:
-    """Counts the rows in a cursor"""
+    """
+    Counts the rows in a cursor.
+    
+    Parameters:
+        cursor (Scur|Ucur):  A SearchCursor or UpdateCursor object.
+    
+    Returns:
+        int: The number of rows in the cursor.
+    """
     cursor.reset()
     count: int = len([row[0] for row in cursor])
     cursor.reset()
@@ -54,7 +69,12 @@ def cursor_length(cursor: Scur|Ucur) -> int:
 
 
 def drop_layer(layer_name: str) -> None:
-    """ Remove a layer from a map in a project (if exists). """
+    """
+    Remove a layer from the active map (if exists).
+    
+    Parameters:
+        layer_name (str): The name of the layer to remove.
+    """
     current_map: Map = ArcGISProject('current').activeMap
     layer_list: list[Layer|None] = current_map.listLayers(layer_name)
     if layer_list:
@@ -62,7 +82,12 @@ def drop_layer(layer_name: str) -> None:
 
 
 def drop_dbtable(table_name: str) -> None:
-    """ Remove a table from a map in a project (if exists). """
+    """
+    Remove a table from the active map (if exists).
+    
+    Parameters:
+        table_name (str): The name of the table to remove.
+    """
     current_map: Map = ArcGISProject('current').activeMap
     table_list: list[Table|None] = current_map.listTables(table_name)
     if table_list:
@@ -331,7 +356,17 @@ def get_RecordType(RecordName: str, source: Literal['SDE', 'ActiveMap'] = 'SDE')
 
 
 def get_ProcessStatus(ProcessName: str, source: Literal['MAP', 'SDE'] = 'SDE') -> int | None:
-    """Returns the current status of a cadastral process border by an input process name"""
+    """
+    Returns the current status of a cadastral process border by an input process name.
+
+    Parameters:
+        ProcessName (str): The name of the process to search for.
+        source (Literal['MAP', 'SDE'], optional): The source of the data. Defaults to 'SDE'.
+    
+    Returns:
+        int | None: The status of the process border if found, otherwise None.
+    
+    """
 
     if source == 'SDE':
         table: str = f'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}CadasterProcessBorders'
@@ -355,9 +390,6 @@ def get_ProcessStatus(ProcessName: str, source: Literal['MAP', 'SDE'] = 'SDE') -
 
     if Scursor_len > 1:
         AddMessage(f'{timestamp()} |  ⚠️ Found {Scursor_len} processes named {ProcessName}')
-        return None
-
-    else:
         return None
 
 
@@ -394,13 +426,23 @@ def get_ProcessGUID(ProcessName: str, source: Literal['MAP', 'SDE'] = 'SDE') -> 
 
 
 def get_RecordGUID(ProcessName: str, source: Literal['MAP', 'SDE', 'SHELF'] = 'SDE', warnings: bool = True) -> str|None:
-    """Returns the Global ID of a cadastral record border by an input process name"""
+    """
+    Fetch the Global ID of a cadastral record border by an input process name.
+    
+    Parameters:
+        ProcessName (str): The name of the process to search for.
+        source (Literal['MAP', 'SDE', 'SHELF'], optional): The source of the data. Defaults to 'SDE'.
+        warnings (bool, optional): Whether to show warnings if the RecordGUID is not found. Defaults to True.
+    
+    Returns:
+        str|None: The Global ID of the record border if found, otherwise None.
+    """
 
     if source == 'SHELF':
         txt_file: str = fr"{CNFG.Library}{ProcessName.replace('/', '_')}/RecordGUID.txt"
         if exists(txt_file):
-            RecordGUID: str = open(txt_file, "r").read().strip()
-            return RecordGUID
+            with open(txt_file, "r") as file:
+                return file.read().strip()
         else:
             if warnings:
                 AddError(f'{timestamp()} | Text file {txt_file} not exists')
@@ -472,20 +514,25 @@ def get_BlockGUID(by: Literal['ProcessName', 'BlockName'], name: str) -> str | N
 
     if by == 'ProcessName':
         table: str = f'{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}CadasterProcessBorders'
-        Scursor: Scur = SearchCursor(table, 'BlockUniqueID', f"ProcessName = '{name}'")
-        BlockGUID: str = [row[0] for row in Scursor][0]
-        del Scursor
-
+        search: Scur = SearchCursor(table, 'BlockUniqueID', f"ProcessName = '{name}'")
+    
     elif by == 'BlockName':
         table: str = f'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Blocks'
-        Scursor: Scur = SearchCursor(table, 'GlobalID', f"Name = '{name}'")
-        BlockGUID: str = [row[0] for row in Scursor][0]
-        del Scursor
+        search: Scur = SearchCursor(table, 'GlobalID', f"Name = '{name}'")
+    
+    else:
+        AddError(f"{timestamp()} | by parameter must be on of ['ProcessName', 'BlockName']")
+        return None
 
-    if not BlockGUID:
-        AddMessage('Block Global ID returned as None')
-
-    return BlockGUID
+    GUIDs: list[str] = [row[0] for row in search]
+    del search
+    
+    if len(GUIDs) == 1:
+        BlockGUID: str = GUIDs[0]
+        return BlockGUID
+    else:
+        AddMessage(f'{timestamp()} | Block Global ID returned as None for {by} {name}')
+        return None
 
 
 def get_BlockName(guid: str) -> str | None:
@@ -585,8 +632,8 @@ def get_ActiveParcel3DGUID(name: str, source: Literal['MAP', 'SDE'] = 'MAP') -> 
     Returns the Global ID of an active 3D parcel on it's provided name.
 
     Parameters:
-    name (str): The name of the 3D parcel.
-    source (str): The source of the 3D parcels table.
+        name (str): The name of the 3D parcel.
+        source (str): The source of the 3D parcels table.
 
     Returns:
         str|None: The Global ID value if found, otherwise None.
@@ -597,27 +644,25 @@ def get_ActiveParcel3DGUID(name: str, source: Literal['MAP', 'SDE'] = 'MAP') -> 
     elif source == 'MAP':
         table: Layer = get_layer('חלקות תלת-ממדיות')
     else:
-        table: None = None
-        AddError(f"{timestamp()} | Parameter ️'source' must be on of ['SDE', 'MAP']")
+        AddError(f"{timestamp()} | Parameter 'source' must be on of ['SDE', 'MAP']")
+        return None
 
     if table:
-        Scursor: Scur = SearchCursor(table, 'GlobalID', f""" Name = '{name}' AND RetiredByRecord IS NULL""")
+        Scursor: Scur = SearchCursor(table, 'GlobalID', f"Name = '{name}' AND RetiredByRecord IS NULL")
         Scursor_len: int = cursor_length(Scursor)
 
         if Scursor_len == 1:
             ParcelGUID: str = Scursor.next()[0]
+            del Scursor
             return ParcelGUID
-        if Scursor_len == 0:
+        elif Scursor_len == 0:
             AddMessage(f'{timestamp()} | ⚠️ Parcel {name} does not exist or not active')
-            return None
-        if Scursor_len > 1:
-            AddMessage(f'{timestamp()} | ⚠️ Found {Scursor_len} parcels named {name}')
+            del Scursor
             return None
         else:
+            AddMessage(f'{timestamp()} | ⚠️ Found {Scursor_len} parcels named {name}')
+            del Scursor
             return None
-    else:
-        return None
-
 
 
 def get_FinalParcel(temp_number: int, block_number: int, subblock_number: int = 0, process_guid: str|None = None) -> int|None:
@@ -1066,7 +1111,12 @@ def get_ActiveRecord(value: Literal['Name', 'GUID'] = 'Name') -> str|None:
 
 
 def Type2CreateType(Type: int) -> int | None:
-    """ Convert ProcessType domain value to it's CreateProcessType domain value """
+    """
+    Convert ProcessType domain value to it's CreateProcessType domain value.
+    
+    Returns:
+        int | None: The CreateProcessType value if found, otherwise None.
+    """
 
     mapping: dict[int, int] = {1: 1,    # Tazar
                                2: 5,    # Tamar
@@ -1084,7 +1134,11 @@ def Type2CreateType(Type: int) -> int | None:
 
 
 def Type2CancelType(Type: int) -> int | None:
-    """ Convert ProcessType domain value to it's CancelProcessType domain value """
+    """Convert ProcessType domain value to it's CancelProcessType domain value.
+    
+    Returns:
+        int | None: The CancelProcessType value if found, otherwise None.
+    """
 
     mapping: dict[int, int] = {1: 1,    # Tazar
                                2: 4,    # Tamar
@@ -1103,7 +1157,12 @@ def Type2CancelType(Type: int) -> int | None:
 
 
 def zoom_to_aoi(map_name: MapType = 'Active map') -> None:
-    """ Zoom-in the canvas camera view to the area of interest (the process border feature) """
+    """
+    Zoom-in the canvas camera view to the area of interest (the process border feature).
+    
+    Parameters:
+        map_name (str): The name of the map to zoom-in. Default is 'Active map'.
+    """
 
     current_camera: Camera = ArcGISProject('current').activeView.camera
     aoi_layer: Layer = get_layer('*גבול תכנית', map_name)
@@ -1156,7 +1215,12 @@ def get_LayerExtent(layer_name: str) -> Extent|None:
 
 
 def get_AOIExtent() -> Extent:
-    """Returns the area of interest Extent object"""
+    """
+    Zoom to the Area of Interest and capture the camera view as Extent object.
+
+    Returns:
+        Extent: The Extent object of the Area of Interest.
+    """
     zoom_to_aoi()
     aoi_extent: Extent = ArcGISProject("current").activeView.camera.getExtent()
 
@@ -1164,7 +1228,15 @@ def get_AOIExtent() -> Extent:
 
 
 def get_display_extent(output: Literal['Extent', 'Polygon'] = 'Extent') -> Extent|Polygon:
-    """Returns the current extent of the active map as an Extent object or Polygon object"""
+    """
+    Capture the current map view as Extent or Polygon object.
+
+    Parameters:
+        output(Literal['Extent', 'Polygon'] = 'Extent'): The type of the object to return. Default is 'Extent'.
+
+    Returns:
+        Extent | Polygon: The Extent or Polygon object of the current map view.
+    """
     extent: Extent = ArcGISProject('current').activeView.camera.getExtent()
 
     if output == 'Polygon':
@@ -1177,7 +1249,14 @@ def get_display_extent(output: Literal['Extent', 'Polygon'] = 'Extent') -> Exten
 
 
 def AddDefinitionQuery(layer: Layer, query: dict[str, Any]) -> None:
-    """ Adds a single definition query to a layer"""
+    """
+    Adds a single definition query to a layer and activate it.
+    If the query is already active, it will be updated.
+
+    Parameters:
+        layer (Layer): The layer to add the definition query to.
+        query (dict): The definition query to add.
+    """
     queries: list[dict[str, Any]] = layer.listDefinitionQueries()
 
     if query['isActive']:
