@@ -1,4 +1,4 @@
-# 🗺️ National Cadaster Tasks (MNCDB)
+# 🗺️ National Cadaster Tasks
 
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![ArcGIS Pro 3.3+](https://img.shields.io/badge/ArcGIS%20Pro-3.3%2B-green?logo=esri&logoColor=white)](https://www.esri.com/)
@@ -110,10 +110,9 @@ Parcel Fabric (branch version)  ·  Shelf folder  ·  CMS endpoint
 
 ### 💻 Software
 
-- ✅ **ArcGIS Pro 3.3+** with bundled Python (`arcpy`)
-  - PEP 604 unions (`str | None`) require **Python 3.10 minimum**
+- ✅ **ArcGIS Pro 3.6+** with bundled Python (`arcpy`)
 - ✅ **Parcel Fabric** licensing + **Standard/Advanced** ArcGIS Pro license
-- ✅ **3D Analyst** extension for 3D task family (auto-checked at runtime)
+- ✅ **3D Analyst** extension for 3D task (auto-checked at runtime)
 
 ### 📦 Python Packages
 
