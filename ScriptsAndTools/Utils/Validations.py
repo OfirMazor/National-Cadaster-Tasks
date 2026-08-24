@@ -10,7 +10,9 @@ from arcpy.management import GetCount
 
 
 def user_is_signed_in() -> Validation:
-    """Validates user is signed in to the organization portal in the correct environment"""
+    """
+    Validates user is signed in to the organization portal in the correct environment.
+    """
 
     user_name: str|None = get_active_user()
     portal_name: bool = True if GetActivePortalURL().split('/')[2] == CNFG.gis_url.split('/')[2] else False
@@ -144,10 +146,14 @@ def record_exist(RecordName: str) -> Validation:
 
 def validate_status(ProcessName: str, desire_status: int | list[int]) -> Validation:
     """
-    Validate if the current process status is equal to desired status.
+    Validate if the current status of a process is equal to the desired status.
+
     Parameters:
         ProcessName (str): The name of the process to search for.
         desire_status (int or list[int]): the desire status or statues to validate.
+    
+    Returns:
+        Validation: 'Valid' if the process status is equal to the desired status, 'Invalid' otherwise.
     """
 
     status_text: list = []
@@ -283,11 +289,11 @@ def final_parcels_obtained(ProcessName: str) -> Validation:
         ProcessName (str): The name of the process to be checked.
 
     Returns:
-        str: Valid if all temporary parcels have final parcel numbers assigned, Invalid otherwise.
-        """
+        Validation: 'Valid' if all temporary parcels have final parcel numbers assigned, 'Invalid' otherwise.
+    """
 
     count: int = 0
-    SequenceActions: str = fr'{CNFG.ParcelFabricDatabase}\{CNFG.OwnerName}.SequenceActions'
+    SequenceActions: str = fr'{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}SequenceActions'
     CPBUniqueID: str = get_ProcessGUID(ProcessName, 'MAP')
 
     Search: Scur = SearchCursor(SequenceActions, ['ToParcelTemp', 'ToParcelFinal'], f"CPBUniqueID = '{CPBUniqueID}'")
@@ -324,7 +330,7 @@ def final_substractions_obtained(ProcessName: str) -> Validation:
     """
 
     count: int = 0
-    InProSubstractions: str = fr'{CNFG.ParcelFabricDatabase}\{CNFG.OwnerName}.InProcessSubstractions'
+    InProSubstractions: str = fr'{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}InProcessSubstractions'
     CPBUniqueID: str = get_ProcessGUID(ProcessName, 'MAP')
 
     Search: Scur = SearchCursor(InProSubstractions, ['TemporarySubstractionNumber', 'FinalSubstractionNumber'], f"CPBUniqueID = '{CPBUniqueID}'")
@@ -352,7 +358,7 @@ def absorbing_block_exist(ProcessName: str, map_name: MapType = 'Active map') ->
         map_name (MapType): The name of the map object to use. Default is the currently active map view.
 
     Returns:
-        str: Valid if all absorbing blocks exist in Blocks table, Invalid otherwise.
+        Validation: 'Valid' if all absorbing blocks exist in Blocks table, 'Invalid' otherwise.
     """
     if process_is_transferring(ProcessName, source='SDE'):
         current_map: Map = ArcGISProject('current').activeMap if map_name == 'Active map' else ArcGISProject('current').listMaps(map_name)[0]
@@ -391,6 +397,9 @@ def validate_substantiated_Parcels2D(ProcessName: str) -> Validation:
 
     Parameters:
         ProcessName (str): The name of the process contains the in-process substractions.
+
+    Returns:
+        Validation: 'Valid' if all 2D parcel numbers are final and exist as active parcels, 'Invalid' otherwise.
     """
 
     errors: int = 0
@@ -446,9 +455,8 @@ def validate_substantiated_Parcels3D(ProcessName: str) -> Validation:
         ProcessName (str): The name of the process whose 3D parcel data needs validation.
 
     Returns:
-        Literal['Valid', 'Invalid']:
-            - 'Valid' if all parcels in the process match the active layer's data or
-             if the process is only for creating parcels.
+        Validation: 
+            - 'Valid' if all parcels match or process only creates.
             - 'Invalid' if any mismatches or errors are detected.
     """
 
@@ -463,9 +471,9 @@ def validate_substantiated_Parcels3D(ProcessName: str) -> Validation:
         parcels_names: str = ", ".join(f"'{key}'" for key in process_parcels.keys())
 
 
-        active_parcels: Scur = SearchCursor(fr'{CNFG.ParcelFabricDataset}\{CNFG.OwnerName}.Parcels3D',
+        active_parcels: Scur = SearchCursor(fr'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Parcels3D',
                                             ['Name', 'StatedVolume', 'ProjectedArea', 'UpperLevel', 'LowerLevel'],
-                                            f" Name IN ({parcels_names}) And RetiredByRecord Is Null")
+                                            f"Name IN ({parcels_names}) And RetiredByRecord Is Null")
 
         active_parcels: dict[str, list[float]] = {row[0]: [row[3], row[4], row[5], row[6]] for row in active_parcels}  # -> {Name: ['StatedVolume', 'ProjectedArea', 'UpperLevel', 'LowerLevel']}
 
@@ -527,8 +535,9 @@ def validation_set(task: TaskType, ProcessName: str) -> bool:
     Parameters:
         task (TaskType): the type of the task to map the validations.
         ProcessName (str): The name of the process that contains the features to validate,
+    
     Returns:
-        True if all validation checks pass (all 'Results' are 'Valid'),
+        True if all validation checks pass (all results are 'Valid'),
         False if any check fails or if an invalid task type is provided.
     """
 

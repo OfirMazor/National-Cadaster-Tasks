@@ -132,4 +132,3 @@ if __name__ == '__main__':
          distance= GetParameterAsText(1),
          update_mode= GetParameterAsText(2),
          update_type= GetParameterAsText(3))
-

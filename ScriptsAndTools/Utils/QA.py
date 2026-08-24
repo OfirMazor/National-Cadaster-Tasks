@@ -51,12 +51,12 @@ def eval_topology_rules() -> None:
     """
     AddMessage(f'\n{timestamp()} | Evaluating topology rules')
 
-    with EnvManager(extent= get_display_extent()):
+    with EnvManager(extent= get_display_extent(), workspace= fr"{CNFG.ParcelFabricFeatureServer};version={get_VersionName('רישומים')}"):
         ValidateTopology(get_layer('טופולוגיה'), "Visible_Extent")
 
-    polygon_errors_count: int = int(GetCount(get_layer('שגיאות מסוג פוליגון')).getOutput(0))
-    line_errors_count: int = int(GetCount(get_layer('שגיאות מסוג קו')).getOutput(0))
-    point_errors_count: int = int(GetCount(get_layer('שגיאות מסוג נקודה')).getOutput(0))
+    polygon_errors_count: int = int(GetCount(get_layer('שגיאות מסוג פוליגון'))[0])
+    line_errors_count: int = int(GetCount(get_layer('שגיאות מסוג קו'))[0])
+    point_errors_count: int = int(GetCount(get_layer('שגיאות מסוג נקודה'))[0])
 
     total: int = polygon_errors_count + line_errors_count + point_errors_count
     if total > 0:
@@ -100,7 +100,7 @@ def track_deviated_parcel_areas() -> None:
                                              Point(extent.XMax, extent.YMax), Point(extent.XMax, extent.YMin)]),
                                       SpatialReference(2039))
 
-    selected_parcels: Layer = SelectByLocation(in_layer=get_layer("חלקות"), select_features=extent_polygon).getOutput(0)
+    selected_parcels: Layer = SelectByLocation(in_layer=get_layer("חלקות"), select_features=extent_polygon)[0]
 
     search: Scur = SearchCursor(selected_parcels, cols)
     data: df = DataFrame(search, columns= cols).astype(schema).sort_values(['BlockNumber', 'SubBlockNumber', 'ParcelNumber'])

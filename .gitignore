@@ -1,0 +1,20 @@
+# Esri support-case reproductions (aprx/atbx/video artifacts)
+/Bugs/
+
+# Claude Code local settings, skills and agents
+/.claude/
+
+# Code review report (regenerated on every review run)
+/code review.html
+
+# User-facing changelog/tutorials page
+/docs/
+
+# Environment switch: internal SDE/portal/CMS hosts and IPs
+/ScriptsAndTools/Utils/Configs.py
+
+# Claude Code project instructions
+/CLAUDE.md
+
+# JetBrains/PyCharm project settings
+/ScriptsAndTools/.idea/
