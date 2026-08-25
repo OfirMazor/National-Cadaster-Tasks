@@ -1,9 +1,8 @@
 # 🗺️ National Cadaster Tasks
 
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![ArcGIS Pro 3.3+](https://img.shields.io/badge/ArcGIS%20Pro-3.3%2B-green?logo=esri&logoColor=white)](https://www.esri.com/)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![ArcGIS Pro 3.6+](https://img.shields.io/badge/ArcGIS%20Pro-3.6%2B-green?logo=esri&logoColor=white)](https://www.esri.com/)
 [![License](https://img.shields.io/badge/License-Proprietary-red)](./LICENSE)
-[![Environments](https://img.shields.io/badge/Environments-Dev%20%7C%20Test%20%7C%20Prod-orange)](./ScriptsAndTools/Utils/Configs.py)
 
 **Python toolset backing the ArcGIS Pro Task items** (*"אשפי בנק"ל"*) used to edit Israel's National Cadaster Database — a branch-versioned **Parcel Fabric** hosted on ArcGIS Enterprise.
 
