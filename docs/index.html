@@ -103,7 +103,7 @@
                     Download (ZIP)
                 </a>
                 <p class="mt-4 text-sm text-gray-500">
-                    Current Version: v1.8.2
+                    Current Version: v1.8.4
                 </p>
             </section>
 
@@ -132,21 +132,109 @@
                 <!-- Release List -->
                 <div class="divide-y divide-gray-800 bg-gray-900/30">
 
+                    <!-- Version 1.8.4 -->
+                    <div class="flex flex-col md:flex-row gap-6 md:gap-12 p-6 sm:p-10 hover:bg-gray-800/30 transition-colors">
+                        <div class="md:w-1/4 shrink-0">
+                            <div class="sticky top-28">
+                                <button onclick="toggleChangelog('v184')" class="w-full text-left flex flex-col focus:outline-none group">
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <h3 class="text-2xl font-bold text-white tracking-tight group-hover:text-[#58a6ff] transition-colors">1.8.4</h3>
+                                        <svg id="arrow-v184" class="w-5 h-5 text-[#58a6ff] transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-[#238636]/20 text-[#238636] border border-[#238636]/30">Latest</span>
+                                    </div>
+                                    <time class="text-sm font-medium text-gray-500 block">August 25, 2026</time>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="v184-content" class="md:w-3/4 collapse-content">
+                            <div class="space-y-6 mt-2 md:mt-0">
+
+                                <!-- New Features -->
+                                <div>
+                                    <button onclick="toggleSection('v184-features')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v184-features" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">New Features</h4>
+                                    </button>
+                                    <div id="v184-features-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#58a6ff]"></span>
+                                                <span class="text-gray-300 leading-relaxed">New tool Update Selected Fronts Attributes for updating fronts attributes by selection.</span>
+                                            </li>
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#58a6ff]"></span>
+                                                <span class="text-gray-300 leading-relaxed">New Locate Unmatched Points tool for locating process points that don't match yet with active points.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Fixes -->
+                                <div>
+                                    <button onclick="toggleSection('v184-fixes')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v184-fixes" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Fixes</h4>
+                                    </button>
+                                    <div id="v184-fixes-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#ff7b72]"></span>
+                                                <span class="text-gray-300 leading-relaxed">Title fix in the pop-up window for retired blocks layer.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Deprecated -->
+                                <div>
+                                    <button onclick="toggleSection('v184-deprecated')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v184-deprecated" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Deprecated</h4>
+                                    </button>
+                                    <div id="v184-deprecated-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-[#d1a800]"></span>
+                                                <span class="text-gray-300 leading-relaxed">The build-active command has been removed from the Update Attributes step.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Other -->
+                                <div>
+                                    <button onclick="toggleSection('v184-other')" class="flex items-center gap-2 focus:outline-none group w-full text-left mb-2">
+                                        <svg id="arrow-v184-other" class="w-4 h-4 text-gray-500 group-hover:text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        <h4 class="text-md font-bold text-gray-300 group-hover:text-white transition-colors">Other</h4>
+                                    </button>
+                                    <div id="v184-other-content" class="collapse-content pl-2 sm:pl-6">
+                                        <ul class="space-y-3">
+                                            <li class="relative pl-6">
+                                                <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-gray-500"></span>
+                                                <span class="text-gray-300 leading-relaxed">Tools in the Toolbox have been reorganized into 2 shelves: Assistants and Steps.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Version 1.8.2 -->
                     <div class="flex flex-col md:flex-row gap-6 md:gap-12 p-6 sm:p-10 hover:bg-gray-800/30 transition-colors">
                         <div class="md:w-1/4 shrink-0">
                             <div class="sticky top-28">
                                 <button onclick="toggleChangelog('v182')" class="w-full text-left flex flex-col focus:outline-none group">
                                     <div class="flex items-center gap-3 mb-1">
-                                        <h3 class="text-2xl font-bold text-white tracking-tight group-hover:text-[#58a6ff] transition-colors">1.8.2</h3>
-                                        <svg id="arrow-v180" class="w-5 h-5 text-[#58a6ff] transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-[#238636]/20 text-[#238636] border border-[#238636]/30">Latest</span>
+                                        <h3 class="text-2xl font-bold text-gray-300 tracking-tight group-hover:text-white transition-colors">1.8.2</h3>
+                                        <svg id="arrow-v182" class="w-5 h-5 text-gray-500 group-hover:text-white transition-transform transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
                                     </div>
                                     <time class="text-sm font-medium text-gray-500 block">July 5, 2026</time>
                                 </button>
                             </div>
                         </div>
-                        <div id="v182-content" class="md:w-3/4 collapse-content">
+                        <div id="v182-content" class="md:w-3/4 collapse-content hidden">
                             <div class="space-y-6 mt-2 md:mt-0">
 
                                 <!-- Fixes -->
