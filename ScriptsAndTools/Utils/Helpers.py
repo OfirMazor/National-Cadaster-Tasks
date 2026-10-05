@@ -963,7 +963,7 @@ def process_is_establish_block(ProcessName: str, source: Literal['MAP', 'SDE'] =
 
 def get_AbsorbingBlockGUIDs() -> list[str] | None:
     """
-    Retrieves the Global IDs for blocks that absorb new parcels following a transfer action (3) in the currently edited process.
+    Retrieves the Global IDs for active blocks that absorb new parcels following a transfer action (3) in the currently edited process.
     If there is only one unique block, the function returns a list containing the GUID for that block.
     If there are multiple unique blocks, the function returns a list of GUIDs for all unique blocks.
 
@@ -978,14 +978,21 @@ def get_AbsorbingBlockGUIDs() -> list[str] | None:
     names: list[str] = blocks_df['Name'].unique().tolist()
     total: int = len(names)
 
+    blocks_fc: str = f'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Blocks'
+
     if total == 1:
-        guids: str = get_BlockGUID(by= 'BlockName', name = names[0])
+        query: str = f"Name = '{names}' And RetiredByRecord Is Null"
+        if get_ProcessType(ProcessName) in [1, 2]:
+            query: str = f"{query} And IsTax = 0"
+        guids: str = SearchCursor(blocks_fc, 'GlobalID', query).next()[0]
         return [guids]
 
     if total > 1:
-        guids: list[str] = []
-        for name in names:
-            guids.append(get_BlockGUID(by= 'BlockName', name = name))
+        query: str = f"GlobalID Is In ({','.join(names)}) And RetiredByRecord Is Null"
+        if get_ProcessType(ProcessName) in [1, 2]:
+            query: str = f"{query} And IsTax = 0"
+
+        guids: list[str] = [row[0] for row in SearchCursor(blocks_fc, query)]
         return guids
 
     else:
@@ -1662,7 +1669,7 @@ def layer_selection_info(layer: Layer) -> dict[str, list[int]|None|bool|int]:
     Return an informative Dictionary object regarding a selected features in a Layer object.
 
     Parameters:
-        layer (Layer): The Layer object to examine).
+        layer (Layer): The Layer object to examine.
     """
     from arcpy.da import Describe
 
