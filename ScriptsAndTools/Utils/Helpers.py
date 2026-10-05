@@ -969,7 +969,7 @@ def get_AbsorbingBlockGUIDs(ProcessName: str) -> set[str] | None:
     Returns:
         set[str]: A set of unique Global IDs for the resulting  blocks.
     """
-    sender_block_guid: str = get_BlockGUID(ProcessName)
+    sender_block_guid: str = get_BlockGUID('ProcessName', ProcessName)
     process_guid: str = get_ProcessGUID(ProcessName)
     inprocess_parcels: str = f'{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}InProcessParcels2D'
     query: str = f"CPBUniqueID = '{process_guid}' And ParcelRole = 2 And BlockUniqueID != '{sender_block_guid}'"
