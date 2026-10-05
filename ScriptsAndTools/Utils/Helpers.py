@@ -961,36 +961,24 @@ def process_is_establish_block(ProcessName: str, source: Literal['MAP', 'SDE'] =
         return None
 
 
-def get_AbsorbingBlockGUIDs() -> list[str] | None:
+def get_AbsorbingBlockGUIDs(ProcessName: str) -> set[str] | None:
     """
-    Retrieves the Global IDs for blocks that absorb new parcels following a transfer action (3) in the currently edited process.
-    If there is only one unique block, the function returns a list containing the GUID for that block.
-    If there are multiple unique blocks, the function returns a list of GUIDs for all unique blocks.
+    Retrives the Global IDs of the absorbing block or blocks as a resulting of transfer action in the process.
+    Note: This function does not verify whether the transfer action is actually taking place. It assumes that the transfer has already been tested and confirmed independently before this function is called.
 
     Returns:
-        list[str]: A list of unique Global IDs for the resulting  blocks.
+        set[str]: A set of unique Global IDs for the resulting  blocks.
     """
+    sender_block_guid: str = get_BlockGUID(ProcessName)
+    process_guid: str = get_ProcessGUID(ProcessName)
+    inprocess_parcels: str = f'{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}InProcessParcels2D'
+    query: str = f"CPBUniqueID = '{process_guid}' And ParcelRole = 2 And BlockUniqueID != '{sender_block_guid}'"
+    transfered_parcels: Scur = SearchCursor(inprocess_parcels, 'BlockUniqueID', query)
+    absorbing_blocks_guids: set[str] = {i[0] for i in transfered_parcels}
+    
+    del sender_block_guid, process_guid, inprocess_parcels, query, transfered_parcels
 
-    process_actions: Table = get_table('פעולות בתכנית')
-    block_cols: list[str] = ['ToBlockNumber', 'ToSubBlockNumber']
-    blocks_df: df = DataFrame(data = SearchCursor(process_actions, block_cols, 'ActionType = 3'), columns = block_cols).astype(int)
-    blocks_df['Name'] = blocks_df['ToBlockNumber'].astype(str) + '/' + blocks_df['ToSubBlockNumber'].astype(str)
-    names: list[str] = blocks_df['Name'].unique().tolist()
-    total: int = len(names)
-
-    if total == 1:
-        guids: str = get_BlockGUID(by= 'BlockName', name = names[0])
-        return [guids]
-
-    if total > 1:
-        guids: list[str] = []
-        for name in names:
-            guids.append(get_BlockGUID(by= 'BlockName', name = name))
-        return guids
-
-    else:
-        AddError('No absorbing Blocks found for the transfer action')
-        return None
+    return absorbing_blocks_guids
 
 
 def remove_intermediate_vertices(layer: Layer) -> None:
@@ -1368,7 +1356,7 @@ def filter_to_aoi(ProcessName: str, map_name: MapType = 'Active map') -> None:
 
     if get_ProcessType(ProcessName) not in [9, 15]:  # תנאי לתהליכים מסוג הסדר מקרקעין ותת"ג להסדר מקרקעין משום שאין להם פעולות בטבלת סדר פעולות
         if process_is_establish_block(ProcessName):
-            AbsorbingBlocks: str = ', '.join(["'" + guid + "'" for guid in get_AbsorbingBlockGUIDs()])
+            AbsorbingBlocks: str = ', '.join(["'" + guid + "'" for guid in get_AbsorbingBlockGUIDs(ProcessName)])
             aoi_blocks: str = f'{aoi_blocks}, {AbsorbingBlocks}'
             del AbsorbingBlocks
 
@@ -1662,7 +1650,7 @@ def layer_selection_info(layer: Layer) -> dict[str, list[int]|None|bool|int]:
     Return an informative Dictionary object regarding a selected features in a Layer object.
 
     Parameters:
-        layer (Layer): The Layer object to examine).
+        layer (Layer): The Layer object to examine.
     """
     from arcpy.da import Describe
 

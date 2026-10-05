@@ -769,7 +769,7 @@ def reshape_or_construct_absorbing_blocks(ProcessName: str) -> None:
 
     refresh_map_view()
 
-    absorbing_blocks_guids: list[str] = get_AbsorbingBlockGUIDs()
+    absorbing_blocks_guids: set[str] = get_AbsorbingBlockGUIDs(ProcessName)
     total_absorbing: int = len(absorbing_blocks_guids)
     record_guid: str = get_RecordGUID(ProcessName, 'SHELF')
     process_guid: str = get_ProcessGUID(ProcessName)

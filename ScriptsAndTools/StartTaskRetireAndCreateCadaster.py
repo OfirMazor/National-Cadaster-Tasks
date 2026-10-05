@@ -61,7 +61,7 @@ def load_intermediate_parcels(ProcessName: str) -> None:
         ProcessName (str): The name of the process that creating and retiring the intermediate parcels.
     """
 
-    inprocess_fields: list[str] = ['ParcelNumber', 'BlockNumber', 'SubBlockNumber', 'LandType', 'IsTax', 'LegalArea', 'LandDesignationPlan', 'Shape@']
+    inprocess_fields: list[str] = ['ParcelNumber', 'BlockNumber', 'SubBlockNumber', 'LandType', 'IsTax', 'LegalArea', 'LandDesignationPlan', 'BlockUniqueID', 'Shape@']
     intermediate: Scur = SearchCursor(get_layer('חלקות בתהליך'), inprocess_fields, f"CPBUniqueID = '{get_ProcessGUID(ProcessName)}' And ParcelRole = 4")
     total: int = cursor_length(intermediate)
     del inprocess_fields
@@ -80,15 +80,13 @@ def load_intermediate_parcels(ProcessName: str) -> None:
         editor: Editor = start_editing(ENV.workspace)
         AddMessage(f'{timestamp()} | ⚡ {total} intermediate parcels will be added')
 
-
-        Parcels2DFields: list[str] = ['ParcelNumber', 'BlockNumber', 'SubBlockNumber', 'LandType', 'IsTax', 'StatedArea', 'LandDesignationPlan', 'Shape@', 'CreatedByRecord', 'CreateProcessType', 'BlockUniqueID', 'ParcelType', 'RetiredByRecord', 'CancelProcessType']
+        Parcels2DFields: list[str] = ['ParcelNumber', 'BlockNumber', 'SubBlockNumber', 'LandType', 'IsTax', 'StatedArea', 'LandDesignationPlan', 'BlockUniqueID', 'Shape@', 'CreatedByRecord', 'CreateProcessType', 'ParcelType', 'RetiredByRecord', 'CancelProcessType']
         Parcels2DData: Icur = InsertCursor(Parcels2D_layer, Parcels2DFields)
         for idx, parcel_data in enumerate(intermediate, start=1):
-            block_guid: str = get_BlockGUID(by= 'BlockName', name= f'{parcel_data[1]}/{parcel_data[2]}')
             temporary_parcel: int = parcel_data[0]
             parcel_final_number: int = get_FinalParcel(parcel_data[0], parcel_data[1], parcel_data[2])
-            geometry: Polygon = get_process_shape(ProcessName) if not parcel_data[7] else parcel_data[7]  # For older in-process intermediate parcels where geometry were not saved.
-            parcel_data: tuple[Any] = (parcel_final_number,) + parcel_data[1:7] + (geometry, record_guid, CreateProcessType, block_guid, parcel_type, record_guid, CancelProcessType)
+            geometry: Polygon = get_process_shape(ProcessName) if not parcel_data[8] else parcel_data[8]  # For older in-process intermediate parcels where geometry were not saved.
+            parcel_data: tuple[Any] = (parcel_final_number,) + parcel_data[1:8] + (geometry, record_guid, CreateProcessType, parcel_type, record_guid, CancelProcessType)
             Parcels2DData.insertRow(parcel_data)
 
             AddMessage(f'{timestamp()} | {idx}/{total} | ✔️ Temporary parcel {temporary_parcel} added as intermediate parcel {parcel_final_number} at block {parcel_data[1]}/{parcel_data[2]}')
@@ -115,20 +113,19 @@ def load_new_parcels(ProcessName: str) -> None:
     parcel_type: int = 2  # סופית
 
     editor: Editor = start_editing(ENV.workspace)
-    InProcessFields: list[str] = ['ParcelNumber', 'BlockNumber', 'SubBlockNumber', 'LandType', 'IsTax', 'LegalArea', 'LandDesignationPlan', 'Shape@']
+    InProcessFields: list[str] = ['ParcelNumber', 'BlockNumber', 'SubBlockNumber', 'LandType', 'IsTax', 'LegalArea', 'LandDesignationPlan', 'Shape@', 'BlockUniqueID']
     NewParcelsData: Scur = SearchCursor(NewParcels_layer, InProcessFields)
 
     total: int = cursor_length(NewParcelsData)
     AddMessage(f'{timestamp()} | ⚡ {total} New parcels will be added')
 
-    Parcels2DFields: list[str] = ['ParcelNumber', 'BlockNumber', 'SubBlockNumber', 'LandType', 'IsTax', 'StatedArea', 'LandDesignationPlan', 'Shape@', 'CreatedByRecord', 'CreateProcessType', 'BlockUniqueID', 'ParcelType']
+    Parcels2DFields: list[str] = ['ParcelNumber', 'BlockNumber', 'SubBlockNumber', 'LandType', 'IsTax', 'StatedArea', 'LandDesignationPlan', 'Shape@', 'BlockUniqueID', 'CreatedByRecord', 'CreateProcessType', 'ParcelType']
     Parcels2DData: Icur = InsertCursor(Parcels2D_layer, Parcels2DFields)
     for idx, parcel_data in enumerate(NewParcelsData, start=1):
-        block_guid: str = get_BlockGUID(by = 'BlockName', name = f'{parcel_data[1]}/{parcel_data[2]}')
         temporary_parcel: int = parcel_data[0]
         parcel_final_number: int = get_FinalParcel(parcel_data[0], parcel_data[1], parcel_data[2])
 
-        parcel_data: tuple[Any] = (parcel_final_number,) + parcel_data[1:8] + (record_guid, CreateProcessType, block_guid, parcel_type)
+        parcel_data: tuple[Any] = (parcel_final_number,) + parcel_data[1:9] + (record_guid, CreateProcessType, parcel_type)
         Parcels2DData.insertRow(parcel_data)
 
         AddMessage(f'{timestamp()} | {idx}/{total} | ✔️ Temporary parcel {temporary_parcel} added as active parcel {parcel_final_number} at block {parcel_data[1]}/{parcel_data[2]}')
