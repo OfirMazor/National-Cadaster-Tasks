@@ -14,7 +14,8 @@ from arcpy.management import SelectLayerByLocation as SelectByLocation, Append, 
 
 
 def timestamp() -> str:
-    """Returns the current time.
+    """
+    Returns the current time.
 
     Returns:
         str: The current time formatted as HH:MM:SS.
@@ -102,6 +103,9 @@ def create_shelf(ProcessName: str, auto_open: bool = False) -> str:
       ProcessName (str): The name of the process used to create the shelf.
                          This name will be sanitized by replacing '/' with '_' to ensure valid directory naming.
       auto_open (bool, optional): Whether to open the folder on completion. Defaults to False.
+    
+    Returns:
+        The path to the created shelf.
     """
 
     shelf: str = ProcessName.replace('/', '_')
@@ -225,8 +229,12 @@ def get_table(table_name: str, map_name: MapType = 'Active map') -> Table | None
 def get_feature_layer_id(layer_name: str) -> int|None:
     """
     Return the ID number of the feature service layer.
+    
     Parameters:
         layer_name (str): The name of the layer in the active map.
+    
+    Returns:
+        The ID number of the feature service layer if found, otherwise None.
     """
     layer: Layer|None = get_layer(layer_name)
     if layer:
@@ -240,8 +248,12 @@ def get_feature_layer_id(layer_name: str) -> int|None:
 def get_feature_table_id(table_name: str) -> int|None:
     """
     Return the ID number of the feature service table.
+    
     Parameters:
         table_name (str): The name of the table in the active map.
+
+    Returns:
+        The ID number of the feature service table if found, otherwise None.
     """
     table: Table|None = get_table(table_name)
     if table:
@@ -252,10 +264,11 @@ def get_feature_table_id(table_name: str) -> int|None:
 
 
 def refresh_map_view(scale: float = 0.1) -> None:
-    """Refresh the map view by changing the map scale
+    """
+    Refresh the map view by changing the map scale
 
-        Parameters:
-            scale: the scale (in meters) that will be added to the active map camera view. Default is  0.1 meters.
+    Parameters:
+        scale (float): The scale (in meters) that will be added to the active map camera view. Default is 0.1 meters.
     """
     view = ArcGISProject("current").activeView
     if view:
@@ -263,11 +276,12 @@ def refresh_map_view(scale: float = 0.1) -> None:
 
 
 def reopen_map(map_name: MapType = 'Active map') -> None:
-    """Close and reopen the active map in the current ArcGIS project object.
-       Use for refreshing the changes on the map after actions has been implemented to the objects in the map.
+    """
+    Close and reopen the active map in the current ArcGIS project object.
+    Use for refreshing the changes on the map after actions has been implemented to the objects in the map.
 
-        Parameters:
-            map_name (MapType): The name of the map the close and reopen. Default is current active map.
+    Parameters:
+        map_name (MapType): The name of the map the close and reopen. Default is current active map.
     """
 
     current_project: Pro = ArcGISProject('current')
@@ -327,7 +341,15 @@ def get_DomainValue(domain: str, code: int) -> str:
 
 
 def get_ProcessType(ProcessName: str) -> int:
-    """Returns the type of cadastral process border by an input process name"""
+    """
+    Returns the type of cadastral process border by an input process name
+    
+    Parameters:
+        ProcessName (str): The name of the process to search for.
+    
+    Returns:
+        int: The type of the process border.
+    """
 
     table: str = f'{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}CadasterProcessBorders'
     query: str = f"ProcessName = '{ProcessName}'"
@@ -339,7 +361,16 @@ def get_ProcessType(ProcessName: str) -> int:
 
 
 def get_RecordType(RecordName: str, source: Literal['SDE', 'ActiveMap'] = 'SDE') -> int|None:
-    """Returns the type of cadastral record border by an input record name"""
+    """
+    Returns the type of cadastral record border by an input record name
+    
+    Parameters:
+        RecordName (str): The name of the record to search for.
+        source (Literal['SDE', 'ActiveMap'], optional): The source of the data. Defaults to 'SDE'.
+    
+    Returns:
+        int | None: The type of the record border if found, otherwise None.
+    """
     if source == 'SDE':
         table: str = fr'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}CadasterRecordsBorders'
     elif source == 'ActiveMap':
@@ -394,7 +425,16 @@ def get_ProcessStatus(ProcessName: str, source: Literal['MAP', 'SDE'] = 'SDE') -
 
 
 def get_ProcessGUID(ProcessName: str, source: Literal['MAP', 'SDE'] = 'SDE') -> str | None:
-    """Returns the Global ID of a cadastral process border by an input process name"""
+    """
+    Returns the Global ID of a cadastral process border by an input process name
+    
+    Parameters:
+        ProcessName (str): The name of the process to search for.
+        source (Literal['MAP', 'SDE'], optional): The source of the data. Defaults to 'SDE'.
+    
+    Returns:
+        str | None: The Global ID of the process border if found, otherwise None.
+    """
 
     if source == 'SDE':
         table: str = f'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}CadasterProcessBorders'
@@ -503,11 +543,11 @@ def get_BlockGUID(by: Literal['ProcessName', 'BlockName'], name: str) -> str | N
     Returns the Global ID of a block based on the provided criteria.
 
     Parameters:
-    by (str): The criteria to search for the block. Can be either 'ProcessName' or 'BlockName'.
-    name (str): The name of the process or block to search for.
+        by (Literal['ProcessName', 'BlockName']): The criteria to search for the block. Can be either 'ProcessName' or 'BlockName'.
+        name (str): The name of the process or block to search for.
 
     Returns:
-    str|None: The Global ID of the block if found, otherwise None.
+        str|None: The Global ID of the block if found, otherwise None.
     """
 
     BlockGUID: str | None = None
@@ -540,19 +580,19 @@ def get_BlockName(guid: str) -> str | None:
     Returns the Name of a block based on the block Global ID.
 
     Parameters:
-    guid (str): The block's Global ID to search for.
+        guid (str): The block's Global ID to search for.
 
     Returns:
-    str|None: The Name of the block if found, otherwise None.
+        str|None: The Name of the block if found, otherwise None.
     """
 
     table: str = f'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Blocks'
-    Scursor: Scur = SearchCursor(table, 'Name', f""" GlobalID = '{guid}' """)
+    Scursor: Scur = SearchCursor(table, 'Name', f"GlobalID = '{guid}'")
     if cursor_length(Scursor) == 1:
         Name: str = Scursor.next()[0]
     else:
         Name: None = None
-        AddMessage('Block Name returned as None')
+        AddMessage(f'{timestamp()} | Block Name returned as None for GlobalID {guid}')
 
     del Scursor, table
     return Name
@@ -560,14 +600,14 @@ def get_BlockName(guid: str) -> str | None:
 
 def get_BlockStatus(by: Literal['Name', 'GlobalID'], value: str) -> int | None:
     """
-    Returns the status of a block based on the provided criteria.
+    Returns the status of an active block based on the provided criteria.
 
     Parameters:
-    by (str): The criteria to search for the block. Can be either 'Name' or 'GlobalID'.
-    value (str): The value of the criteria to search for.
+        by (Literal['Name', 'GlobalID']): The criteria to search for the block. Can be either 'Name' or 'GlobalID'.
+        value (str): The value of the criteria to search for.
 
     Returns:
-    int|None: The status code of the block if found, otherwise None.
+        int|None: The status code of the block if found, otherwise None.
     """
 
     search: Scur = SearchCursor(f'{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Blocks', 'BlockStatus', f"{by} = '{value}' AND RetiredByRecord IS NULL")
@@ -594,8 +634,8 @@ def get_ActiveParcel2DGUID(name: str, source: Literal['MAP', 'SDE'] = 'MAP') -> 
     Returns the Global ID of an active 2D parcel on it's provided name.
 
     Parameters:
-    name (str): The name of the 2D parcel.
-    source (str): The source of the 2D parcels table.
+        name (str): The name of the 2D parcel.
+        source (Literal['MAP', 'SDE']): The source of the 2D parcels table.
 
     Returns:
         str|None: The Global ID value if found, otherwise None.
@@ -789,7 +829,12 @@ def process_will_retire_its_block(ProcessName: str) -> bool:
     Note: this check is not relevant for 3D cadastral processes or process that improve the active cadaster since they are not allowed to retire a block.
 
     Parameters:
-        ProcessName (str): The name of the process to verify whether it's block will be retired.
+        ProcessName (str): The name of the process to verify if it results in retiring the block it is modifying.
+    
+    Returns:
+        bool:
+            - True if the process results in retiring the block it is modifying.
+            - False if the process does not result in retiring the block it is modifying.
     """
     ProcessGUID: str = get_ProcessGUID(ProcessName)
     BlockGUID: str = get_BlockGUID("ProcessName", ProcessName)
@@ -841,7 +886,12 @@ def process_is_transferring(ProcessName: str, source: Literal['MAP', 'SDE'] = 'M
 
     Parameters:
         ProcessName (str): The name of the process to check.
-        source (str): The source of the table to query. Must be either 'MAP' or 'SDE'.
+        source (Literal['MAP', 'SDE']): The source of the table to query. Must be either 'MAP' or 'SDE'.
+    
+    Returns:
+        bool:
+            - True if the process includes transfer action.
+            - False if the process does not include transfer action.
     """
     table: Table|str = get_table('פעולות בתכנית') if source == 'MAP' else fr'{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}SequenceActions'
     query: str = "ActionType = 3" if source == 'MAP' else f"ActionType = 3 AND CPBUniqueID = '{get_ProcessGUID(ProcessName, source)}'"
@@ -862,6 +912,11 @@ def process_only_creates(ProcessName: str) -> bool:
 
     Parameters:
         ProcessName (str): The name of the (Tamar) process to check.
+    
+    Returns:
+        bool:
+            - True if the process includes only creation action.
+            - False if the process includes other actions than creation.
     """
 
     table: str = fr'{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}SequenceActions'
@@ -879,6 +934,16 @@ def process_is_establish_block(ProcessName: str, source: Literal['MAP', 'SDE'] =
     """
     Check whether a process with a transfer action leads to preplanned block to establish
     Note: this check is not relevant for 3D cadastral processes since they are not allowed to create a block.
+
+    Parameters:
+        ProcessName (str): The name of the process to check.
+        source (Literal['MAP', 'SDE']): The source of the table to query. Must be either 'MAP' or 'SDE'.
+
+    Returns:
+        bool|None:
+            - True if the process includes transfer action and leads to preplanned block to establish.
+            - False if the process includes transfer action and does not lead to preplanned block to establish.
+            - None if the process does not include transfer action.
     """
     if process_is_transferring(ProcessName, source):
         ProcessGUID: str = get_ProcessGUID(ProcessName, source)
@@ -934,7 +999,7 @@ def remove_intermediate_vertices(layer: Layer) -> None:
     ensuring each line contains only two vertices of start & end.
 
     Parameters:
-    - layer (str): The name or path of the input feature layer or feature class containing multiline geometries.
+        layer (Layer): The name or path of the input feature layer or feature class containing multiline geometries.
 
     """
     vertices_cursor: Ucur = UpdateCursor(layer, ['GlobalID', 'SHAPE@WKT'])
@@ -958,7 +1023,12 @@ def remove_intermediate_vertices(layer: Layer) -> None:
 
 
 def delete_file(file_path: str) -> None:
-    """Deletes a file if exist"""
+    """
+    Deletes a file if exist
+    
+    Parameters:
+        file_path (str): The path to the file to delete.
+    """
     try:
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -1058,7 +1128,12 @@ def activate_record(ProcessName: str, map_name: MapType = 'Active map') -> None:
 
 
 def deactivate_record(map_name: MapType = 'Active map') -> None:
-    """Deactivate the current active record """
+    """
+    Deactivate the current active record
+    
+    Parameters:
+        map_name (MapType, optional): The name of the map in which to deactivate the record. Defaults to "Active map".
+    """
 
     current_project: Pro = ArcGISProject('current')
     map_object: Map = current_project.activeMap if map_name == 'Active map' else current_project.listMaps(map_name)[0]
@@ -1089,7 +1164,6 @@ def get_ActiveRecord(value: Literal['Name', 'GUID'] = 'Name') -> str|None:
     Returns:
         str|None:
             The requested information (Name or GUID) if an active record exists; otherwise, None.
-
     """
 
     active_record: parcelCIM = get_layer('רישומים').getDefinition('V3').parcelFabricActiveRecord

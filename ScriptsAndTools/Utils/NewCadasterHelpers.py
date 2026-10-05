@@ -67,6 +67,7 @@ def is_process_border_valid(ProcessName:str) -> bool:
     clear_map_selections()
     return result
 
+
 def get_default_gdb() -> str:
     ''' 
     Retrieves the default geodatabase path from the current ArcGIS Pro project
@@ -77,6 +78,7 @@ def get_default_gdb() -> str:
     aprx = ArcGISProject("CURRENT")
     default_gdb = aprx.defaultGeodatabase
     return default_gdb
+
 
 def match_process_border_to_process_parcels(ProcessName:str) -> None:
     cadaster_process_borders = get_layer('גבולות תהליכי קדסטר')
@@ -117,7 +119,6 @@ def match_process_border_to_process_parcels(ProcessName:str) -> None:
     clear_map_selections()
     Delete(dissolved_parcels)
     reopen_map()
-
 
 
 def match_active_tax_blocks_to_active_tax_parcels(ProcessName:str) -> None:
@@ -170,6 +171,7 @@ def match_active_tax_blocks_to_active_tax_parcels(ProcessName:str) -> None:
     clear_map_selections()
     reopen_map()
     AddMessage(f'{timestamp()} | Restored {len(retired_block_guids)} tax blocks to active blocks layer and updated their geometry')
+
 
 def split_merged_tax_fronts(ProcessName:str) -> None:
     ''' 
@@ -244,10 +246,6 @@ def split_merged_tax_fronts(ProcessName:str) -> None:
     Delete(splitted_fronts)
 
 
-
-
-
-
 def get_inprocess_parcels_contour(ProcessName:str) -> Polygon|None:
     return
 
@@ -305,7 +303,8 @@ def get_block_parameters_by_guid(block_guid: str) -> tuple[int, int, bool]:
             is_tax = bool(row[2])
             return block_number, sub_block_number, is_tax
     return None
-        
+
+
 def get_RecordGUID_NewCadaster(process_name: str) -> str:
     
     if is_guid_txt_file_exists(process_name):
@@ -320,6 +319,7 @@ def get_RecordGUID_NewCadaster(process_name: str) -> str:
         return None
 
     return RecordGUID
+
 
 def is_guid_txt_file_exists(process_name: str) -> bool:
     """
@@ -349,6 +349,7 @@ def is_tax_process(process_name:str) -> bool:
     #TODO return error if block not found
     return is_tax
 
+
 def is_settled_block_by_process(process_name:str) -> bool:
 
     block_GUID = get_BlockGUID('ProcessName',process_name)
@@ -364,7 +365,6 @@ def is_settled_block_by_process(process_name:str) -> bool:
             break  
 
     return is_tax
-
 
 
 def get_ProcessName() -> str:
@@ -384,8 +384,6 @@ def get_ProcessName() -> str:
             break
 
     return process_name
-
-
 
 
 def append_first_registration_parcels(ProcessName:str) -> None:
@@ -440,7 +438,6 @@ def append_first_registration_parcels(ProcessName:str) -> None:
     reopen_map()
 
     return num_of_features
-
 
 
 def insert_first_registration_parcels(process_name:str) -> None:
@@ -512,23 +509,18 @@ def update_blocks_geometry_by_active_parcels(block_guid:str, record_guid:str) ->
 
 
 def update_settled_block_geometry(processName:str) -> None:
-    ''' 
+    """
     Updating current block's data (Shape,LastSetteledParcel,CreatedByRecord,BlockStatus,LandType)
 
-    '''
-    
-
+    """
     Process_border_layer = get_layer('גבול תכנית')
     Block_layer = get_layer('גוש הסדר')
 
     editor = start_editing(CNFG.ParcelFabricDatabase)
-    
-
    
     # Get the single feature from Process_border_layer
     with SearchCursor(Process_border_layer, field_names="SHAPE@") as cursor:
         process_geometry = cursor.next()[0]
-
 
 
     is_updated = False
@@ -542,15 +534,11 @@ def update_settled_block_geometry(processName:str) -> None:
 
 
     if is_updated:
-
         AddMessage(f'                Geometry was updated')
-
     else:
         AddWarning(f'                Was unable to update the block\'s geometry')
 
     stop_editing(editor)
-
-
 
 
 def layer_exists(layer_name)-> bool:
@@ -596,6 +584,7 @@ def print_empty_layers(layers_list:list, layers_type:str = 'required' or 'not re
                 AddError(f'                 • The required layer {layer} is empty. Check in-Process data')
             else: # layers_type == 'not required'
                 AddMessage(f"                   • No {layer} were found")
+
 
 def count_features_in_group(group_layer, required_layers:list = None) -> None:
     '''
@@ -666,7 +655,6 @@ def count_features_in_group(group_layer, required_layers:list = None) -> None:
         AddError(f'{timestamp()} | ⚠️ The group layer {group_layer.name} was not created. Check the data and the existance of a proper *.lyrx file')
 
 
-
 def set_environment_extent(ProcessName:str, buffer_dist:int = 30) -> None:
     '''
     Sets the environment extent to the extent of the process borders layer with an optional addition of a buffer distance
@@ -733,6 +721,7 @@ def update_connections() -> None:
 
 
     reopen_map()
+
 
 def filter_process_layers_group(ProcessName:str, TaskType:str = 'CreateNewCadaster' or 'ImproveNewCadaster',search_distance:int="10") -> None:
     '''
@@ -895,9 +884,6 @@ def filter_process_layers_group(ProcessName:str, TaskType:str = 'CreateNewCadast
              del [process_operations_table]
        
 
-
-
-
 def update_layer_fields_dict(input_layer, updates_dict, method='UpdateCursor' or 'CalculateField', clear_selection:bool = True, where_clause=None):
     
     num_of_updated_rows = 0
@@ -948,6 +934,7 @@ def update_layer_fields_dict(input_layer, updates_dict, method='UpdateCursor' or
 
     return num_of_updated_rows
 
+
 def insert_process_to_records(ProcessName:str) -> int:
         
     process_borders_layer = get_layer('גבולות תהליכי קדסטר')
@@ -985,8 +972,6 @@ def insert_process_to_records(ProcessName:str) -> int:
     reopen_map()
 
     return inserted_count
-
-
 
 
 def append_process_to_records(ProcessName:str) -> int:
@@ -1192,6 +1177,7 @@ def insert_new_fronts(ProcessName:str, query:str) -> int:
 
     return inserted_count
 
+
 def append_new_fronts(ProcessName:str, query:str) -> int:
 
 
@@ -1227,6 +1213,7 @@ def append_new_fronts(ProcessName:str, query:str) -> int:
 
 
     pass
+
 
 def append_new_fronts_old(ProcessName:str, query:str) -> tuple[int,int]:
             
@@ -1339,7 +1326,6 @@ def append_new_border_points(ProcessName:str, query:str) -> int:
 
     return num_of_features
     
-
 
 def append_new_border_points_old(ProcessName:str,query:str) -> tuple[int, int]:
 

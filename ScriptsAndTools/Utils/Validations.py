@@ -2,7 +2,7 @@ from pandas import DataFrame
 from Utils.Configs import CNFG
 from Utils.TypeHints import Validation, Layer, Scur, df, Map, MapType, TaskType
 from Utils.Helpers import get_active_user, get_ProcessGUID, get_ProcessType, timestamp, get_DomainValue, get_layer, \
-    process_is_transferring, cursor_length, process_only_creates, AddTabularMessage
+                          process_is_transferring, cursor_length, process_only_creates, AddTabularMessage
 from arcpy import AddMessage, AddError, GetActivePortalURL
 from arcpy.da import SearchCursor
 from arcpy.mp import ArcGISProject
@@ -352,6 +352,7 @@ def final_substractions_obtained(ProcessName: str) -> Validation:
 def absorbing_block_exist(ProcessName: str, map_name: MapType = 'Active map') -> Validation:
     """
     Checks if the absorbing blocks exists for a given process in the current map.
+    This validation applies only to processes with transfer action.
 
     Parameters:
         ProcessName (str): The name of the process to check for an absorbing block.
@@ -360,25 +361,34 @@ def absorbing_block_exist(ProcessName: str, map_name: MapType = 'Active map') ->
     Returns:
         Validation: 'Valid' if all absorbing blocks exist in Blocks table, 'Invalid' otherwise.
     """
+
+    # Make sure the process contains atleast one transfer action
     if process_is_transferring(ProcessName, source='SDE'):
         current_map: Map = ArcGISProject('current').activeMap if map_name == 'Active map' else ArcGISProject('current').listMaps(map_name)[0]
         current_map.clearSelection()
 
+        # Identify the absorbing block or blocks in the current process
         table: str = fr"{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}SequenceActions".replace("/", "\\")
-        query: str = f"CPBUniqueID = '{get_ProcessGUID(ProcessName, source='MAP')}' AND ActionType = 3"  # AND IsTax = 0
+        query: str = f"CPBUniqueID = '{get_ProcessGUID(ProcessName, source='MAP')}' AND ActionType = 3"
         absorbing_blocks: Scur = SearchCursor(table, ['ToBlockNumber', 'ToSubBlockNumber'], query)
         absorbing_blocks: set[str] = {f'{row[0]}/{row[1]}' if row[1] is not None else f'{row[0]}/0' for row in absorbing_blocks}
 
+        # Search for absorbing blocks in Blocks table
         table: str = fr"{CNFG.ParcelFabricDataset}{CNFG.OwnerName}Blocks".replace("/", "\\")
         errors: int = 0
+        
         for name in absorbing_blocks:
-            block: Scur = SearchCursor(table, 'Name', f"Name = '{name}'")
+            query: str = f"RetiredByRecord Is Null And Name = '{name}'"
+            if get_ProcessType(ProcessName) != 11:
+                query: str = f"{query} AND IsTax = 0"
+            
+            block: Scur = SearchCursor(table, 'Name', query)
             block: int = cursor_length(block)
             if block != 1:
                 errors += 1
                 AddError(f'{timestamp()} | ❌ Absorbing block {name} is not exist or not active')
 
-
+        # Summarize the result
         if errors == 0:
             AddMessage(f"{timestamp()} | ✅ Absorbing blocks {', '.join(sorted(absorbing_blocks))} are available")
             return 'Valid'
