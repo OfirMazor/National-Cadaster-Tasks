@@ -1,13 +1,13 @@
 from arcpy import AddMessage, GetParameter, GetParameterAsText, env as ENV, Exists
 from arcpy.mp import ArcGISProject
-from arcpy.conversion import ExportFeatures
+from arcpy.conversion import ExportFeatures, ExportTable
 from arcpy.da import SearchCursor, UpdateCursor, InsertCursor
 from arcpy.management import Append, MakeFeatureLayer as MakeLayer, CalculateField, AddField, AlterField, MakeQueryLayer, SelectLayerByLocation as SelectByLocation
-from Utils.TypeHints import *
 from Utils.Configs import CNFG
 from Utils.VersionManagement import open_version
-from Utils.UpdateAttributes import retire_3D_parcels_and_substractions, retire_3D_points, update_record_status
+from Utils.TypeHints import Layer, Table, Map, Ucur, Icur, Scur, Result
 from Utils.Validations import validation_set, features_exist, creating_record_is_duplicated
+from Utils.UpdateAttributes import retire_3D_parcels_and_substractions, retire_3D_points, update_record_status
 from Utils.Helpers import create_shelf, get_ProcessGUID, get_RecordGUID, timestamp, zoom_to_aoi, filter_to_aoi, \
                           get_FinalParcel, reopen_map, cursor_length, set_priority, load_to_records, Type2CreateType, \
                           get_ProcessType, get_layer, get_aprx_name, activate_record, get_BlockGUID, process_only_creates, \
@@ -240,7 +240,10 @@ def load_intermediate_3D_parcels(ProcessName: str) -> None:
 
 def load_new_projected_3D_parcels() -> None:
     """
+    Loads projections of new 3D parcels from the process.
 
+    Returns:
+        None
     """
 
     AddMessage(f'\n ⭕ Adding new projections of 3D parcels:')
@@ -254,7 +257,6 @@ def load_new_projected_3D_parcels() -> None:
         AddMessage(f'{timestamp()} | ⚡ {count} New parcel projections will be added')
 
         # Export inprocess 3D parcels projections to home GDB
-
         new_3D_parcels_guids: list[str] = []
         projections_export: str = fr"{ArcGISProject('current').defaultGeodatabase}\new_parcels_projections"
 
@@ -271,25 +273,38 @@ def load_new_projected_3D_parcels() -> None:
         for idx, row in enumerate(new_projections_cursor, start=1):
             temporary_parcel: list[int] = [[i[0], i[1], i[2]] for i in SearchCursor(inprocess_parcels3D, ['ParcelNumber', 'BlockNumber', 'SubBlockNumber'], f"GlobalID='{row[0]}'")][0]
             final_parcel_number: int = get_FinalParcel(temporary_parcel[0], temporary_parcel[1], temporary_parcel[2])
-            final_parcel_name: str = f"{final_parcel_number}/{ temporary_parcel[1]}/{temporary_parcel[2]}"
-            final_parcel_guid_query: str = f"""SELECT TOP 1 GlobalID
-                                               FROM PF.Parcels3D
-                                               WHERE Name = '{final_parcel_name}' AND GDB_IS_DELETE = 0
-                                               ORDER BY GDB_ARCHIVE_OID DESC"""
-            final_parcel_guid_result: Table = MakeQueryLayer(CNFG.ParcelFabricDatabase, 'final_parcel_guid_result', final_parcel_guid_query)[0]
-            final_parcel_guid: str = SearchCursor(final_parcel_guid_result, 'GlobalID').next()[0]
-            row[1]: str = final_parcel_guid
-            new_projections_cursor.updateRow(row)
+            query: str = f"""SELECT TOP 1 GlobalID
+                           FROM PF.Parcels3D
+                           WHERE Name = '{final_parcel_number}/{temporary_parcel[1]}/{temporary_parcel[2]}'
+                           AND GDB_IS_DELETE = 0
+                           ORDER BY GDB_ARCHIVE_OID DESC"""
+            
+            params: dict[str, str] = {"input_database": fr"{CNFG.ParcelFabricDatabase}", "out_layer_name": 'temp_table', "query": query, "oid_fields": 'GlobalID'}
+            
+            # Try-Except block following a bug: Try to return the GUID from a Table object, then from a Result object:
+            try:
+                obj: Table = MakeQueryLayer(**params)[0]
+                final_parcel_guid: str = SearchCursor(obj, 'GlobalID').next()[0]
+            except:
+                obj: Result = MakeQueryLayer(**params)
+                final_parcel_guid: str = SearchCursor(obj, 'GlobalID').next()[0]
 
-            new_3D_parcels_guids.append(final_parcel_guid)
-            AddMessage(f'{timestamp()} | {idx}/{count} | ✔️ Projection for parcel {final_parcel_number} at block {temporary_parcel[1]}/{temporary_parcel[2]} added')
+            if not final_parcel_guid:
+                AddMessage(f'{timestamp()} | {idx}/{count} | ⚠️ Matching GUID for temp parcel {temporary_parcel[0]} were not found')
+            else:
+                row[1]: str = final_parcel_guid
+                new_projections_cursor.updateRow(row)
 
+                new_3D_parcels_guids.append(final_parcel_guid)
+                AddMessage(f'{timestamp()} | {idx}/{count} | ✔️ Projection for parcel {final_parcel_number} at block {temporary_parcel[1]}/{temporary_parcel[2]} added')
+
+        # Load calculated feature class to the versioned layer in the project.
         FieldMap: str = fr'Parcel3DUniqueID "מזהה חלקה תלת-ממדית" true true false 38 Guid 0 0,First,#,{projections_export},FinalParcelGlobalID,-1,-1;'
         projected_layer: Layer = get_layer('היטלי חלקות תלת-ממדיות')
         Append(projections_export, projected_layer, "NO_TEST", FieldMap, feature_service_mode="USE_FEATURE_SERVICE_MODE")
         del new_projections_cursor, FieldMap, inprocess_parcels3D, new_projections, projections_export
 
-        # Update the filter of active projected layer
+        # Update the filter of active projections layer
         new_3D_parcels: str = ', '.join(["'" + guid + "'" for guid in new_3D_parcels_guids])
 
         aoi_blocks_layer: Layer = SelectByLocation(get_layer('גושים'), 'INTERSECT', get_layer('גבול תכנית'), "1 Meter")[0]
@@ -326,7 +341,10 @@ def load_intermediate_3D_parcels_projections() -> None:
 
 def load_new_substractions(ProcessName: str) -> None:
     """
+    Loads new substractions from a process into the active substraction layer based on a specific process name.
 
+    Parameters:
+        ProcessName (str): The name of the process that created the substractions.
     """
     AddMessage(f'\n ⭕ Adding new substractions:')
     # Count the new substractions to be loaded.
@@ -373,19 +391,17 @@ def load_new_substractions(ProcessName: str) -> None:
         AddField(exported_name, "CreateProcessType", field_type= "SHORT", field_alias= "סוג תהליך יוצר", )
         CalculateField(exported_name, "CreateProcessType", expression= Type2CreateType(get_ProcessType(ProcessName)), expression_type= "PYTHON3")
         #   - Final parcels numbers, block guid and 2D parcel type:
-        fields: list[str] = ['Parcel3DNumber', 'BlockNumber', 'SubBlockNumber', 'TemporarySubstractionNumber', 'SubstractionNumber', 'Parcel2DNumber', 'Parcel2DType', 'BlockUniqueID', 'Parcel2DUniqueID']
-        # row indexes               0                1               2                        3                         4                   5                6                7                 8
+        fields: list[str] = ['Parcel3DNumber', 'BlockNumber', 'SubBlockNumber', 'TemporarySubstractionNumber', 'SubstractionNumber', 'Parcel2DNumber', 'Parcel2DType', 'Parcel2DUniqueID']
+        # row indexes               0                1               2                        3                         4                   5                6                7
         info: Ucur = UpdateCursor(exported_name, fields)
         for idx, row in enumerate(info, start=1):
             block_name: str  = fr"{row[1]}/{row[2]}"
-            # BlockUniqueID
-            row[7]: str = get_BlockGUID('BlockName', block_name)
             # Final 3D Parcel Number
             row[0]: int = get_FinalParcel(row[0], row[1], row[2])
-            # If 2D parcel is temporary...
+            # If 2D parcel is temporary:
             if row[6] == 1:
                 # Final 2D Parcel Number
-                referenced_process_guid: str = SearchCursor(fr"{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}InProcessParcels2D", 'CPBUniqueID', f"GlobalID = '{row[8]}'").next()[0]
+                referenced_process_guid: str = SearchCursor(fr"{CNFG.ParcelFabricDatabase}{CNFG.OwnerName}InProcessParcels2D", 'CPBUniqueID', f"GlobalID = '{row[7]}'").next()[0]
                 row[5]: int = get_FinalParcel(row[5], row[1], row[2], referenced_process_guid)
                 # Final 2D Parcel Type (סופית)
                 row[6]: int = 2
@@ -421,7 +437,10 @@ def load_new_substractions(ProcessName: str) -> None:
 
 def load_new_projected_substractions(ProcessName: str) -> None:
     """
+    Loads projections of new substractions from the process.
 
+    Returns:
+        None
     """
 
     AddMessage(f'\n ⭕ Adding new projections of substractions:')
@@ -457,17 +476,33 @@ def load_new_projected_substractions(ProcessName: str) -> None:
             for idx, row in enumerate(new_projections_cursor, start=1):
                 final_substraction: list[int] = [[i[0], i[1], i[2]] for i in SearchCursor(inprocess_substractions, ['FinalSubstractionNumber', 'BlockNumber', 'SubBlockNumber'], f"GlobalID='{row[0]}'")][0]
                 final_name: str = f"{final_substraction[0]}/{final_substraction[1]}/{final_substraction[2]}"
-                final_guid_query: str = f"""SELECT TOP 1 GlobalID
-                                            FROM PF.Substractions
-                                            WHERE Name = '{final_name}' AND GDB_IS_DELETE = 0
-                                            ORDER BY GDB_ARCHIVE_OID DESC"""
-                final_guid_result: Table = MakeQueryLayer(CNFG.ParcelFabricDatabase, 'final_substraction_guid_result', final_guid_query)[0]
-                final_substraction_guid: str = SearchCursor(final_guid_result, 'GlobalID').next()[0]
-                row[1]: str = final_substraction_guid
-                new_projections_cursor.updateRow(row)
-                new_substractions_guids.append(final_substraction_guid)
-                AddMessage(f'{timestamp()} | {idx}/{count_new_projections} | ✔️ Projection for parcel {final_substraction[0]} at block {final_substraction[1]}/{final_substraction[2]} added')
+                query: str = f"""SELECT TOP 1 GlobalID
+                                FROM PF.Substractions
+                                WHERE Name = '{final_name}'
+                                AND GDB_IS_DELETE = 0
+                                ORDER BY GDB_ARCHIVE_OID DESC"""
+                
+                params: dict[str, str] = {"input_database": fr"{CNFG.ParcelFabricDatabase}", "out_layer_name": 'temp_table', "query": query, "oid_fields": 'GlobalID'}
+                
+                # Try-Except block following a bug: Try to return the GUID from a Table object, then from a Result object:
+                try:
+                    obj: Table = MakeQueryLayer(**params)[0]
+                    final_substraction_guid: str = SearchCursor(obj, 'GlobalID').next()[0]
+                
+                except:
+                    obj: Result = MakeQueryLayer(**params)
+                    final_substraction_guid: str = SearchCursor(obj, 'GlobalID').next()[0]
 
+                if not final_substraction_guid:
+                    AddMessage(f'{timestamp()} | {idx}/{count_new_projections} | ⚠️ Matching GUID for temp substraction {final_name} were not found')
+                
+                else:
+                    row[1]: str = final_substraction_guid
+                    new_projections_cursor.updateRow(row)
+                    new_substractions_guids.append(final_substraction_guid)
+                    AddMessage(f'{timestamp()} | {idx}/{count_new_projections} | ✔️ Projection for parcel {final_substraction[0]} at block {final_substraction[1]}/{final_substraction[2]} added')
+
+            # Load calculated feature class to the versioned layer in the project.
             FieldMap: str = fr'SubstractionUniqueID "מזהה גריעה" true true false 38 Guid 0 0,First,#,{projections_export},FinalSubstractionGlobalID,-1,-1;'
             projected_layer: Layer = get_layer('היטלי גריעות')
             Append(projections_export, projected_layer, "NO_TEST", FieldMap, feature_service_mode="USE_FEATURE_SERVICE_MODE")
@@ -535,6 +570,22 @@ def load_new_3D_points(ProcessName: str) -> None:
     del process_points_patch, data_fields, query, new_data, total
 
 
+def load_intermediate_3D_points(ProcessName: str) -> None:
+    """
+    Loads intermediate 3D border points from the process.
+    
+    Parameters:
+        ProcessName (str): The name of the process.
+    
+    Returns:
+        None
+    """
+    
+    # AddMessage(f'\n ⭕ Adding intermediate 3D points:')
+    
+    pass
+
+
 def start_record_editing(Independent: bool, ProcessName: str|None,) -> None:
     """
     Workflow for starting the Create And Retire Cadaster 3D task.
@@ -579,6 +630,8 @@ def start_record_editing(Independent: bool, ProcessName: str|None,) -> None:
         load_new_substractions(ProcessName)
 
         load_new_3D_points(ProcessName)
+
+        load_intermediate_3D_points(ProcessName)
 
         load_new_projected_3D_parcels()
 
